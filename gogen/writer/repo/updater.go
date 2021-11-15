@@ -7,7 +7,6 @@ import (
 
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
-	"github.com/liasece/log"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -68,6 +67,15 @@ func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) goc
 	setC := gocoder.NewCode()
 	var addToSetV gocoder.Value
 	var pullV gocoder.Value
+	var setV gocoder.Value
+	initSetV := func() {
+		if setV == nil {
+			setV = cde.Value("set", bson.M{})
+			setC.C(
+				setV.AutoSet(cde.Make(bson.M{})),
+			)
+		}
+	}
 	for _, f := range fs {
 		rf := receiver.GetValue().Dot(f.gf.GetName())
 		bsonFiled := utils.GetFieldBSONName(f.f)
@@ -77,7 +85,8 @@ func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) goc
 		var setter gocoder.Value
 		switch f.opt {
 		case "":
-			setter = resV.Index(bsonFiled).Set(rf)
+			initSetV()
+			setter = setV.Index(bsonFiled).Set(rf)
 		case "Add":
 			if addToSetV == nil {
 				addToSetV = cde.Value("addToSet", bson.M{})
@@ -95,11 +104,13 @@ func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) goc
 			}
 			setter = pullV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$in": f.`+f.gf.GetName()+`}`, nil))
 		case "Inc":
-			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$inc": *f.`+f.gf.GetName()+` }`, nil))
+			initSetV()
+			setter = setV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$inc": *f.`+f.gf.GetName()+` }`, nil))
 		case "Replace":
-			setter = resV.Index(bsonFiled + ".$").Set(rf)
+			initSetV()
+			setter = setV.Index(bsonFiled + ".$").Set(rf)
 		default:
-			log.Info("unknown opt", log.Any("opt", f.opt))
+			// log.Info("unknown opt", log.Any("opt", f.opt))
 		}
 		if setter == nil {
 			continue
@@ -118,6 +129,13 @@ func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) goc
 	if pullV != nil {
 		setC.C(
 			resV.Index("$pull").Set(pullV),
+		)
+	}
+	if setV != nil {
+		setC.C(
+			cde.If(cde.Len(setV).GT(0)).C(
+				resV.Index("$set").Set(setV),
+			),
 		)
 	}
 	f.C(

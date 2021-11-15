@@ -7,7 +7,6 @@ import (
 	"github.com/liasece/go-mate/utils"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
-	"github.com/liasece/log"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
@@ -56,7 +55,7 @@ func getFieldFilterFields(f reflect.StructField) []*FieldFilterField {
 			fs = append(fs, newFieldFilterField(f, "Nin", cde.Type(ft).Slice()))
 		}
 	}
-	if ft.Kind() >= reflect.Int && ft.Kind() <= reflect.Float64 {
+	if (ft.Kind() >= reflect.Int && ft.Kind() <= reflect.Float64) || ft.String() == "time.Time" {
 		fs = append(fs, newFieldFilterField(f, "Gt", filterFt))
 		fs = append(fs, newFieldFilterField(f, "Gte", filterFt))
 		fs = append(fs, newFieldFilterField(f, "Lt", filterFt))
@@ -90,11 +89,11 @@ func getFieldFilterMethodToBSON(st gocoder.Struct, fs []*FieldFilterField) gocod
 		case "Nin":
 			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$nin": f.`+f.gf.GetName()+` }`, nil))
 		case "Gt", "Gte", "Lt", "Lte":
-			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$`+strings.ToLower(f.opt)+`": f.`+f.gf.GetName()+` }`, nil))
+			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$`+strings.ToLower(f.opt)+`": *f.`+f.gf.GetName()+` }`, nil))
 		case "Reg":
 			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.Regex{Pattern: *f.`+f.gf.GetName()+`, Options: "i"}`, nil))
 		default:
-			log.Info("unknown opt", log.Any("opt", f.opt))
+			// log.Info("unknown opt", log.Any("opt", f.opt))
 		}
 		if setter == nil {
 			continue

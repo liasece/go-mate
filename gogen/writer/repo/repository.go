@@ -19,6 +19,16 @@ func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
 	}
 }
 
+func (w *RepositoryWriter) GetFilterTypeStructCodeStruct() gocoder.Struct {
+	res, _ := w.GetFilterTypeStructCode()
+	return res
+}
+
+func (w *RepositoryWriter) GetUpdaterTypeStructCodeStruct() gocoder.Struct {
+	res, _ := w.GetUpdaterTypeStructCode()
+	return res
+}
+
 func (w *RepositoryWriter) GetFilterTypeStructCode() (gocoder.Struct, []*FieldFilterField) {
 	mfs := make([]*FieldFilterField, 0)
 	mfs = append(mfs, newFieldFilterField(reflect.StructField{}, "NoCount", cde.Type(false)))
@@ -80,7 +90,7 @@ func (w *RepositoryWriter) getQueryCode(receiver gocoder.Receiver, filter gocode
 	bsonQueryV := cde.Value("bsonQuery", cde.Type(bson.M{}))
 	method.C(
 		bsonQueryV.AutoSet(queryArgV.GetValue().Method("ToBSON").Call()),
-		cde.Values(countV, errV).AutoSet(receiver.GetValue().Field("Mongo").Method("Count").Call()),
+		// cde.Values(countV, errV).AutoSet(receiver.GetValue().Field("Mongo").Method("Count").Call()),
 		cde.Return(resV, countV, cde.Value("nil", nil)),
 	)
 	c.C(method)
@@ -99,4 +109,8 @@ func (w *RepositoryWriter) GetEntityRepositoryCode(filter gocoder.Struct, update
 	c.C(w.getQueryCode(receiver, filter))
 
 	return c
+}
+
+func (w *RepositoryWriter) GetEntityRepositoryStructCode() gocoder.Code {
+	return w.GetEntityRepositoryCode(w.GetFilterTypeStructCodeStruct(), w.GetUpdaterTypeStructCodeStruct())
 }
