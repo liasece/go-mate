@@ -106,7 +106,7 @@ func buildRunner() {
 			return
 		}
 	}
-	// os.Remove(mainPath)
+	os.Remove(mainPath)
 }
 
 func main() {
