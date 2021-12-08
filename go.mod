@@ -6,7 +6,7 @@ require (
 	github.com/liasece/gocoder v0.0.6-0.20211115034408-340418b57c65
 	github.com/liasece/log v0.0.3
 	github.com/spf13/cobra v0.0.5
-	go.mongodb.org/mongo-driver v1.7.3
+	go.mongodb.org/mongo-driver v1.8.0
 )
 
 require (
@@ -49,3 +49,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	howett.net/plist v0.0.0-20201203080718-1454fab16a06 // indirect
 )
+
+replace github.com/liasece/gocoder => /Users/jansen/src/gocoder

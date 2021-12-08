@@ -10,12 +10,22 @@ import (
 )
 
 type RepositoryWriter struct {
-	entity reflect.Type
+	entity     reflect.Type
+	entityName string
 }
 
 func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
+	t := reflect.TypeOf(i)
 	return &RepositoryWriter{
-		entity: reflect.TypeOf(i),
+		entity:     t,
+		entityName: t.Name(),
+	}
+}
+
+func NewRepositoryWriterByType(t reflect.Type, name string) *RepositoryWriter {
+	return &RepositoryWriter{
+		entity:     t,
+		entityName: name,
 	}
 }
 
@@ -35,7 +45,7 @@ func (w *RepositoryWriter) GetFilterTypeStructCode() (gocoder.Struct, []*FieldFi
 	for i := 0; i < w.entity.NumField(); i++ {
 		mfs = append(mfs, getFieldFilterFields(w.entity.Field(i))...)
 	}
-	strT := cde.Struct(fmt.Sprintf("%sFilter", w.entity.Name()), fieldFilterFieldsToGocoder(mfs)...)
+	strT := cde.Struct(fmt.Sprintf("%sFilter", w.entityName), fieldFilterFieldsToGocoder(mfs)...)
 	return strT, mfs
 }
 
@@ -55,7 +65,7 @@ func (w *RepositoryWriter) GetUpdaterTypeStructCode() (gocoder.Struct, []*FieldU
 		mfs = append(mfs, getFieldUpdaterFields(w.entity.Field(i))...)
 	}
 
-	strT := cde.Struct(fmt.Sprintf("%sUpdater", w.entity.Name()), fieldUpdaterFieldsToGocoder(mfs)...)
+	strT := cde.Struct(fmt.Sprintf("%sUpdater", w.entityName), fieldUpdaterFieldsToGocoder(mfs)...)
 	return strT, mfs
 }
 
@@ -103,7 +113,7 @@ func (w *RepositoryWriter) GetEntityRepositoryCode(filter gocoder.Struct, update
 	mfs := make([]gocoder.Field, 0)
 	mfs = append(mfs)
 
-	strT := cde.Struct(fmt.Sprintf("%sRepository", w.entity.Name()), mfs...)
+	strT := cde.Struct(fmt.Sprintf("%sRepository", w.entityName), mfs...)
 	c.C(strT)
 	receiver := cde.Receiver("r", strT.GetType().TackPtr())
 	c.C(w.getQueryCode(receiver, filter))
