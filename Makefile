@@ -1,7 +1,10 @@
 
 .PHONY: all
-all: run
+all: build
 
+.PHONY: build
+build:
+	go build -o bin/ github.com/liasece/go-mate/main
 
 .PHONY: run
 run:
