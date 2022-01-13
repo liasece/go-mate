@@ -6,12 +6,17 @@ import (
 
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
+	"github.com/liasece/gocoder/cdt"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
 type RepositoryWriter struct {
 	entity     reflect.Type
 	entityName string
+	entityPkg  string
+
+	Filter  gocoder.Struct
+	Updater gocoder.Struct
 }
 
 func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
@@ -22,19 +27,26 @@ func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
 	}
 }
 
-func NewRepositoryWriterByType(t reflect.Type, name string) *RepositoryWriter {
+func NewRepositoryWriterByType(t reflect.Type, name string, pkg string) *RepositoryWriter {
 	return &RepositoryWriter{
 		entity:     t,
 		entityName: name,
+		entityPkg:  pkg,
 	}
 }
 
 func (w *RepositoryWriter) GetFilterTypeStructCodeStruct() gocoder.Struct {
+	if w.Filter != nil {
+		return w.Filter
+	}
 	res, _ := w.GetFilterTypeStructCode()
 	return res
 }
 
 func (w *RepositoryWriter) GetUpdaterTypeStructCodeStruct() gocoder.Struct {
+	if w.Updater != nil {
+		return w.Updater
+	}
 	res, _ := w.GetUpdaterTypeStructCode()
 	return res
 }
@@ -123,4 +135,20 @@ func (w *RepositoryWriter) GetEntityRepositoryCode(filter gocoder.Struct, update
 
 func (w *RepositoryWriter) GetEntityRepositoryStructCode() gocoder.Code {
 	return w.GetEntityRepositoryCode(w.GetFilterTypeStructCodeStruct(), w.GetUpdaterTypeStructCodeStruct())
+}
+
+func (w *RepositoryWriter) GetEntityRepositoryInterfaceCode() gocoder.Code {
+	c := gocoder.NewCode()
+
+	mfs := make([]gocoder.Func, 0)
+	mfs = append(mfs, cde.Func("InitDB", []gocoder.Arg{cde.Arg("ctx", cdt.Context())}, nil))
+	mfs = append(mfs, cde.Func("Insert", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.ArgVar("docs", cde.TypeD(w.entityPkg, w.entityName))}, []gocoder.Type{cde.TypeError()}))
+	mfs = append(mfs, cde.Func("Update", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("filter", cde.TypeD("", fmt.Sprintf("%sFilter", w.entityName))), cde.Arg("updater", cde.TypeD("", fmt.Sprintf("%sUpdater", w.entityName)))}, []gocoder.Type{cde.TypeError()}))
+	mfs = append(mfs, cde.Func("Get", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("id", cdt.String())}, []gocoder.Type{cde.TypeD(w.entityPkg, w.entityName).TackPtr(), cde.TypeError()}))
+	mfs = append(mfs, cde.Func("GetBatch", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("ids", cdt.StringSlice())}, []gocoder.Type{cde.TypeD(w.entityPkg, w.entityName).TackPtr().Slice(), cde.TypeError()}))
+	mfs = append(mfs, cde.Func("Query", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("filter", cde.TypeD("", fmt.Sprintf("%sFilter", w.entityName))), cde.Arg("skipLen", cdt.Int()), cde.Arg("limitLen", cdt.Int())}, []gocoder.Type{cde.TypeD(w.entityPkg, w.entityName).TackPtr().Slice(), cdt.Int(), cde.TypeError()}))
+
+	strT := cde.Interface(fmt.Sprintf("Base%sRepository", w.entityName), mfs...)
+	c.C(strT)
+	return c
 }

@@ -1,10 +1,7 @@
 package main
 
 import (
-	"go/parser"
-	"go/token"
 	"path/filepath"
-	"strings"
 
 	"github.com/liasece/go-mate/gogen/writer/repo"
 	"github.com/liasece/gocoder"
@@ -13,58 +10,63 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var entityFile string
-var outputFile string
-var entityNames []string
-
-func buildRunner() {
+func buildRunner(cfg *BuildCfg) {
 	tmpPaths := make([]string, 0)
 	_ = tmpPaths
 	tmpFiles := make([]string, 0)
 	_ = tmpFiles
-	path, entityFileName := filepath.Split(entityFile)
-	log.Info("in", log.Any("entityFile", entityFile), log.Any("path", path), log.Any("entityNames", entityNames))
-	entityFileBaseName := strings.TrimSuffix(entityFileName, ".go")
+	path, _ := filepath.Split(cfg.EntityFile)
+	log.Info("in", log.Any("entityFile", cfg.EntityFile), log.Any("entityPkg", calGoFilePkgName(cfg.EntityFile)), log.Any("path", path), log.Any("entityNames", cfg.EntityNames))
 
-	fset := token.NewFileSet()
-	// 这里取绝对路径，方便打印出来的语法树可以转跳到编辑器
-	f, err := parser.ParseFile(fset, entityFile, nil, parser.AllErrors)
-	if err != nil {
-		log.Error("parser.ParseFile error", log.ErrorField(err))
-		return
-	}
-	_ = f
-	if outputFile == "" {
-		outputFile = filepath.Join(entityFileBaseName + "_struct_gen.go")
-	}
-
-	c := gocoder.NewCode()
-	for _, entity := range entityNames {
-		t, err := cde.LoadTypeFromSource(entityFile, entity)
+	optCode := gocoder.NewCode()
+	repositoryInterfaceCode := gocoder.NewCode()
+	for _, entity := range cfg.EntityNames {
+		t, err := cde.LoadTypeFromSource(cfg.EntityFile, entity)
 		if err != nil {
-			log.Error("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", entityFile), log.Any("entity", entity))
+			log.Error("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", cfg.EntityFile), log.Any("entity", entity))
 		}
-		enGameEntry := repo.NewRepositoryWriterByType(t.RefType(), entity)
-		c.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode())
+		if cfg.EntityPkg == "" {
+			cfg.EntityPkg = calGoFilePkgName(cfg.EntityFile)
+		}
+		enGameEntry := repo.NewRepositoryWriterByType(t.RefType(), entity, cfg.EntityPkg)
+		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode())
+		repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
 	}
+	if cfg.OutputFile != "" {
+		if cfg.OutputPkg == "" {
+			cfg.OutputPkg = calGoFilePkgName(cfg.OutputFile)
+		}
+		gocoder.WriteToFile(cfg.OutputFile, optCode, gocoder.NewToCodeOpt().PkgName(cfg.OutputPkg))
+	}
+	if cfg.OutputRepositoryInterfaceFile != "" {
+		gocoder.WriteToFile(cfg.OutputRepositoryInterfaceFile, repositoryInterfaceCode, gocoder.NewToCodeOpt().PkgName(calGoFilePkgName(cfg.OutputRepositoryInterfaceFile)))
+	}
+}
 
-	gocoder.WriteToFile(outputFile, c, gocoder.NewToCodeOpt().PkgName(f.Name.Name))
+type BuildCfg struct {
+	EntityFile  string   `arg:"name: file; short: f; usage: the file path of target entity; required;"`
+	EntityNames []string `arg:"name: name; short: n; usage: the name list of target entity; required"`
+	EntityPkg   string   `arg:"name: entity-pkg; usage: the entity package path of target entity"`
+
+	// output
+	OutputFile                    string `arg:"name: out; short: o; usage: the output file path"`
+	OutputPkg                     string `arg:"name: pkg; short: p; usage: the output pkg name"`
+	OutputRepositoryInterfaceFile string `arg:"name: out-rep-inf-file; usage: output repository interface file"`
+	OutputRepositoryAdpterFile    string `arg:"name: out-rep-adp-file; usage: output repository adpter file"`
 }
 
 func main() {
+	cfg := &BuildCfg{}
+
 	var buildRunnerCmd = &cobra.Command{
 		Use:   "buildRunner",
 		Short: "build a go main.go to target entity folder",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
-			buildRunner()
+			buildRunner(cfg)
 		},
 	}
-	buildRunnerCmd.Flags().StringVarP(&entityFile, "file", "f", "", "The file path of target entity")
-	buildRunnerCmd.MarkFlagRequired("file")
-	buildRunnerCmd.Flags().StringArrayVarP(&entityNames, "name", "n", nil, "The name list of target entity")
-	buildRunnerCmd.MarkFlagRequired("name")
-	buildRunnerCmd.Flags().StringVarP(&outputFile, "out", "o", "", "The output file path")
+	initFlag(buildRunnerCmd, cfg)
 
 	var rootCmd = &cobra.Command{Use: "app"}
 	rootCmd.AddCommand(buildRunnerCmd)

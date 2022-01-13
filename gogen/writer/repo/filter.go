@@ -47,7 +47,7 @@ func getFieldFilterFields(f reflect.StructField) []*FieldFilterField {
 		ft = ft.Elem()
 	}
 	filterFt := cde.Type(ft).TackPtr()
-	if ft.Kind() != reflect.Struct && ft.Kind() != reflect.Map {
+	if (ft.Kind() != reflect.Struct && ft.Kind() != reflect.Map) || ft.String() == "time.Time" {
 		fs = append(fs, newFieldFilterField(f, "Eq", filterFt))
 		fs = append(fs, newFieldFilterField(f, "Ne", filterFt))
 		if ft.Kind() != reflect.Slice {
