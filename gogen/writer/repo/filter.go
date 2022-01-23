@@ -53,7 +53,9 @@ func getFieldFilterFields(f reflect.StructField) []*FieldFilterField {
 		if ft.Kind() != reflect.Slice {
 			fs = append(fs, newFieldFilterField(f, "In", cde.Type(ft).Slice()))
 			fs = append(fs, newFieldFilterField(f, "Nin", cde.Type(ft).Slice()))
-			fs = append(fs, newFieldFilterField(f, "Include", cde.Type(ft).Slice()))
+		} else {
+			// slice
+			fs = append(fs, newFieldFilterField(f, "Include", cde.Type(ft)))
 		}
 	}
 	if (ft.Kind() >= reflect.Int && ft.Kind() <= reflect.Float64) || ft.String() == "time.Time" {
