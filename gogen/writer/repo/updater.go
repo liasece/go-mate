@@ -68,11 +68,20 @@ func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) goc
 	var addToSetV gocoder.Value
 	var pullV gocoder.Value
 	var setV gocoder.Value
+	var incV gocoder.Value
 	initSetV := func() {
 		if setV == nil {
 			setV = cde.Value("set", bson.M{})
 			setC.C(
 				setV.AutoSet(cde.Make(bson.M{})),
+			)
+		}
+	}
+	initIncV := func() {
+		if incV == nil {
+			incV = cde.Value("inc", bson.M{})
+			setC.C(
+				incV.AutoSet(cde.Make(bson.M{})),
 			)
 		}
 	}
@@ -104,8 +113,8 @@ func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) goc
 			}
 			setter = pullV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$in": f.`+f.gf.GetName()+`}`, nil))
 		case "Inc":
-			initSetV()
-			setter = setV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$inc": *f.`+f.gf.GetName()+` }`, nil))
+			initIncV()
+			setter = incV.Index(bsonFiled).Set(rf)
 		case "Replace":
 			initSetV()
 			setter = setV.Index(bsonFiled + ".$").Set(rf)
@@ -135,6 +144,13 @@ func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) goc
 		setC.C(
 			cde.If(cde.Len(setV).GT(0)).C(
 				resV.Index("$set").Set(setV),
+			),
+		)
+	}
+	if incV != nil {
+		setC.C(
+			cde.If(cde.Len(incV).GT(0)).C(
+				resV.Index("$inc").Set(incV),
 			),
 		)
 	}
