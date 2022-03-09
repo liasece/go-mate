@@ -132,12 +132,16 @@ func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) goc
 	}
 	if addToSetV != nil {
 		setC.C(
-			resV.Index("$addToSet").Set(addToSetV),
+			cde.If(cde.Len(addToSetV).GT(0)).C(
+				resV.Index("$addToSet").Set(addToSetV),
+			),
 		)
 	}
 	if pullV != nil {
 		setC.C(
-			resV.Index("$pull").Set(pullV),
+			cde.If(cde.Len(pullV).GT(0)).C(
+				resV.Index("$pull").Set(pullV),
+			),
 		)
 	}
 	if setV != nil {
