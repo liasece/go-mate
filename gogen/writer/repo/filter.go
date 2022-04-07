@@ -56,6 +56,7 @@ func getFieldFilterFields(f reflect.StructField) []*FieldFilterField {
 		} else {
 			// slice
 			fs = append(fs, newFieldFilterField(f, "Include", cde.Type(ft)))
+			fs = append(fs, newFieldFilterField(f, "ElemEq", cde.Type(ft).Elem().TackPtr()))
 		}
 	}
 	if (ft.Kind() >= reflect.Int && ft.Kind() <= reflect.Float64) || ft.String() == "time.Time" {
@@ -97,6 +98,8 @@ func getFieldFilterMethodToBSON(st gocoder.Struct, fs []*FieldFilterField) gocod
 			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.Regex{Pattern: *f.`+f.gf.GetName()+`, Options: "i"}`, nil))
 		case "Include":
 			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$elemMatch": primitive.M{"$in": f.`+f.gf.GetName()+`}}`, nil))
+		case "ElemEq":
+			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$eq": f.`+f.gf.GetName()+` }`, nil))
 		default:
 			// log.Info("unknown opt", log.Any("opt", f.opt))
 		}

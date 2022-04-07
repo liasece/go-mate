@@ -28,7 +28,7 @@ func buildRunner(cfg *BuildCfg) {
 		if cfg.EntityPkg == "" {
 			cfg.EntityPkg = calGoFilePkgName(cfg.EntityFile)
 		}
-		enGameEntry := repo.NewRepositoryWriterByType(t.RefType(), entity, cfg.EntityPkg)
+		enGameEntry := repo.NewRepositoryWriterByType(t.RefType(), entity, cfg.EntityPkg, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputTypeSuffix)
 		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode())
 		repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
 	}
@@ -53,6 +53,9 @@ type BuildCfg struct {
 	OutputPkg                     string `arg:"name: pkg; short: p; usage: the output pkg name"`
 	OutputRepositoryInterfaceFile string `arg:"name: out-rep-inf-file; usage: output repository interface file"`
 	OutputRepositoryAdpterFile    string `arg:"name: out-rep-adp-file; usage: output repository adpter file"`
+	OutputFilterSuffix            string `arg:"name: out-filter-suffix; usage: output filter type name suffix"`
+	OutputUpdaterSuffix           string `arg:"name: out-updater-suffix; usage: output updater type name suffix"`
+	OutputTypeSuffix              string `arg:"name: out-type-suffix; usage: output type name suffix"`
 }
 
 func main() {

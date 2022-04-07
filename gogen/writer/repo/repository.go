@@ -17,6 +17,10 @@ type RepositoryWriter struct {
 
 	Filter  gocoder.Struct
 	Updater gocoder.Struct
+
+	OutTypeSuffix    string
+	OutFilterSuffix  string
+	OutUpdaterSuffix string
 }
 
 func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
@@ -27,11 +31,14 @@ func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
 	}
 }
 
-func NewRepositoryWriterByType(t reflect.Type, name string, pkg string) *RepositoryWriter {
+func NewRepositoryWriterByType(t reflect.Type, name string, pkg string, outFilterSuffix string, outUpdaterSuffix string, outTypeSuffix string) *RepositoryWriter {
 	return &RepositoryWriter{
-		entity:     t,
-		entityName: name,
-		entityPkg:  pkg,
+		entity:           t,
+		entityName:       name,
+		entityPkg:        pkg,
+		OutTypeSuffix:    outTypeSuffix,
+		OutFilterSuffix:  outFilterSuffix,
+		OutUpdaterSuffix: outUpdaterSuffix,
 	}
 }
 
@@ -57,7 +64,7 @@ func (w *RepositoryWriter) GetFilterTypeStructCode() (gocoder.Struct, []*FieldFi
 	for i := 0; i < w.entity.NumField(); i++ {
 		mfs = append(mfs, getFieldFilterFields(w.entity.Field(i))...)
 	}
-	strT := cde.Struct(fmt.Sprintf("%sFilter", w.entityName), fieldFilterFieldsToGocoder(mfs)...)
+	strT := cde.Struct(fmt.Sprintf("%sFilter%s%s", w.entityName, w.OutFilterSuffix, w.OutTypeSuffix), fieldFilterFieldsToGocoder(mfs)...)
 	return strT, mfs
 }
 
@@ -77,7 +84,7 @@ func (w *RepositoryWriter) GetUpdaterTypeStructCode() (gocoder.Struct, []*FieldU
 		mfs = append(mfs, getFieldUpdaterFields(w.entity.Field(i))...)
 	}
 
-	strT := cde.Struct(fmt.Sprintf("%sUpdater", w.entityName), fieldUpdaterFieldsToGocoder(mfs)...)
+	strT := cde.Struct(fmt.Sprintf("%sUpdater%s%s", w.entityName, w.OutUpdaterSuffix, w.OutTypeSuffix), fieldUpdaterFieldsToGocoder(mfs)...)
 	return strT, mfs
 }
 
