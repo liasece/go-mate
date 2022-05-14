@@ -46,7 +46,10 @@ func getFieldFilterFields(f reflect.StructField) []*FieldFilterField {
 	if ft.Kind() == reflect.Ptr {
 		ft = ft.Elem()
 	}
-	filterFt := cde.Type(ft).TackPtr()
+	filterFt := cde.Type(ft)
+	if ft.Kind() != reflect.Interface {
+		filterFt = filterFt.TackPtr()
+	}
 	if (ft.Kind() != reflect.Struct && ft.Kind() != reflect.Map) || ft.String() == "time.Time" {
 		fs = append(fs, newFieldFilterField(f, "Eq", filterFt))
 		fs = append(fs, newFieldFilterField(f, "Ne", filterFt))
@@ -82,20 +85,24 @@ func getFieldFilterMethodToBSON(st gocoder.Struct, fs []*FieldFilterField) gocod
 		if bsonFiled == "-" {
 			continue
 		}
+		unPtrStr := ""
+		if f.gf.GetType().IsPtr() {
+			unPtrStr = "*"
+		}
 		var setter gocoder.Value
 		switch f.opt {
 		case "Eq":
 			setter = resV.Index(bsonFiled).Set(rf)
 		case "Ne":
-			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$ne": *f.`+f.gf.GetName()+` }`, nil))
+			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$ne": `+unPtrStr+`f.`+f.gf.GetName()+` }`, nil))
 		case "In":
 			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$in": f.`+f.gf.GetName()+` }`, nil))
 		case "Nin":
 			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$nin": f.`+f.gf.GetName()+` }`, nil))
 		case "Gt", "Gte", "Lt", "Lte":
-			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$`+strings.ToLower(f.opt)+`": *f.`+f.gf.GetName()+` }`, nil))
+			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$`+strings.ToLower(f.opt)+`": `+unPtrStr+`f.`+f.gf.GetName()+` }`, nil))
 		case "Reg":
-			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.Regex{Pattern: *f.`+f.gf.GetName()+`, Options: "i"}`, nil))
+			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.Regex{Pattern: `+unPtrStr+`f.`+f.gf.GetName()+`, Options: "i"}`, nil))
 		case "Include":
 			setter = resV.Index(bsonFiled).Set(cde.Value(`primitive.M{"$elemMatch": primitive.M{"$in": f.`+f.gf.GetName()+`}}`, nil))
 		case "ElemEq":

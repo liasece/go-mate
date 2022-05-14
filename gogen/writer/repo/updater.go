@@ -46,7 +46,10 @@ func getFieldUpdaterFields(f reflect.StructField) []*FieldUpdaterField {
 	if ft.Kind() == reflect.Ptr {
 		ft = ft.Elem()
 	}
-	filterFt := cde.Type(ft).TackPtr()
+	filterFt := cde.Type(ft)
+	if ft.Kind() != reflect.Interface {
+		filterFt = filterFt.TackPtr()
+	}
 	fs = append(fs, newFieldUpdaterField(f, "", filterFt))
 	if ft.Kind() == reflect.Slice {
 		fs = append(fs, newFieldUpdaterField(f, "Add", cde.Type(ft)))
