@@ -102,7 +102,8 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 	addFsStr := ""
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
-		typ := f.GetNamed()
+		// log.Error("in buildProtoContent filed", log.Any("i", i), log.Any("f", f))
+		typ := f.GetType().GetNamed()
 		isBaseType := true
 		ss := strings.Split(typ, ".")
 		for i, s := range ss {

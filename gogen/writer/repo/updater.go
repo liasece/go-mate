@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/liasece/go-mate/utils"
+	"github.com/liasece/log"
 
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
@@ -11,15 +12,17 @@ import (
 )
 
 type FieldUpdaterField struct {
-	f   reflect.StructField
+	f   gocoder.Field
 	opt string
 	gf  gocoder.Field
 }
 
-func newFieldUpdaterField(f reflect.StructField, opt string, gt gocoder.Type) *FieldUpdaterField {
-	fieldName := f.Name + opt
+func newFieldUpdaterField(f gocoder.Field, opt string, gt gocoder.Type) *FieldUpdaterField {
+	fieldName := ""
 	if opt == "JustDelete" {
 		fieldName = opt
+	} else {
+		fieldName = f.GetName() + opt
 	}
 	return &FieldUpdaterField{
 		f:   f,
@@ -36,17 +39,21 @@ func fieldUpdaterFieldsToGocoder(mfs []*FieldUpdaterField) []gocoder.Field {
 	return fs
 }
 
-func getFieldUpdaterFields(f reflect.StructField) []*FieldUpdaterField {
+func getFieldUpdaterFields(f gocoder.Field) []*FieldUpdaterField {
 	bsonFiled := utils.GetFieldBSONName(f)
 	if bsonFiled == "-" {
 		return nil
 	}
 	fs := make([]*FieldUpdaterField, 0)
-	ft := f.Type
+	ft := f.GetType()
 	if ft.Kind() == reflect.Ptr {
 		ft = ft.Elem()
 	}
 	filterFt := cde.Type(ft)
+	if f.GetType().Kind() == reflect.Struct && ft.GetRowStr() != "" {
+		log.Error("reflect.Struct down to str", log.Any("name", ft.Name()), log.Any("ft", ft.String()))
+		filterFt = cde.TypeD(ft.Package(), ft.Package()+"."+ft.Name())
+	}
 	if ft.Kind() != reflect.Interface {
 		filterFt = filterFt.TackPtr()
 	}

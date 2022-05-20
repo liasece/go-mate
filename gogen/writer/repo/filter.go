@@ -11,15 +11,17 @@ import (
 )
 
 type FieldFilterField struct {
-	f   reflect.StructField
+	f   gocoder.Field
 	opt string
 	gf  gocoder.Field
 }
 
-func newFieldFilterField(f reflect.StructField, opt string, gt gocoder.Type) *FieldFilterField {
-	fieldName := f.Name + opt
+func newFieldFilterField(f gocoder.Field, opt string, gt gocoder.Type) *FieldFilterField {
+	var fieldName string
 	if opt == "NoCount" {
 		fieldName = opt
+	} else {
+		fieldName = f.GetName() + opt
 	}
 	return &FieldFilterField{
 		f:   f,
@@ -36,13 +38,13 @@ func fieldFilterFieldsToGocoder(mfs []*FieldFilterField) []gocoder.Field {
 	return fs
 }
 
-func getFieldFilterFields(f reflect.StructField) []*FieldFilterField {
+func getFieldFilterFields(f gocoder.Field) []*FieldFilterField {
 	bsonFiled := utils.GetFieldBSONName(f)
 	if bsonFiled == "-" {
 		return nil
 	}
 	fs := make([]*FieldFilterField, 0)
-	ft := f.Type
+	ft := f.GetType()
 	if ft.Kind() == reflect.Ptr {
 		ft = ft.Elem()
 	}

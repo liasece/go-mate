@@ -2,7 +2,6 @@ package repo
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
@@ -11,7 +10,7 @@ import (
 )
 
 type RepositoryWriter struct {
-	entity     reflect.Type
+	entity     gocoder.Type
 	entityName string
 	entityPkg  string
 
@@ -24,14 +23,14 @@ type RepositoryWriter struct {
 }
 
 func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
-	t := reflect.TypeOf(i)
+	t := cde.Type(i)
 	return &RepositoryWriter{
 		entity:     t,
 		entityName: t.Name(),
 	}
 }
 
-func NewRepositoryWriterByType(t reflect.Type, name string, pkg string, outFilterSuffix string, outUpdaterSuffix string, outTypeSuffix string) *RepositoryWriter {
+func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, outFilterSuffix string, outUpdaterSuffix string, outTypeSuffix string) *RepositoryWriter {
 	return &RepositoryWriter{
 		entity:           t,
 		entityName:       name,
@@ -60,7 +59,7 @@ func (w *RepositoryWriter) GetUpdaterTypeStructCodeStruct() gocoder.Struct {
 
 func (w *RepositoryWriter) GetFilterTypeStructCode() (gocoder.Struct, []*FieldFilterField) {
 	mfs := make([]*FieldFilterField, 0)
-	mfs = append(mfs, newFieldFilterField(reflect.StructField{}, "NoCount", cde.Type(false)))
+	mfs = append(mfs, newFieldFilterField(nil, "NoCount", cde.Type(false)))
 	for i := 0; i < w.entity.NumField(); i++ {
 		mfs = append(mfs, getFieldFilterFields(w.entity.Field(i))...)
 	}
@@ -79,7 +78,7 @@ func (w *RepositoryWriter) GetFilterTypeCode() gocoder.Code {
 
 func (w *RepositoryWriter) GetUpdaterTypeStructCode() (gocoder.Struct, []*FieldUpdaterField) {
 	mfs := make([]*FieldUpdaterField, 0)
-	mfs = append(mfs, newFieldUpdaterField(reflect.StructField{}, "JustDelete", cde.Type(true)))
+	mfs = append(mfs, newFieldUpdaterField(nil, "JustDelete", cde.Type(true)))
 	for i := 0; i < w.entity.NumField(); i++ {
 		mfs = append(mfs, getFieldUpdaterFields(w.entity.Field(i))...)
 	}

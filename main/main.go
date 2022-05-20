@@ -39,13 +39,12 @@ func buildRunner(cfg *BuildCfg) {
 		}
 		{
 			filedNames := make([]string, 0)
-			rf := t.RefType()
-			for i := 0; i < rf.NumField(); i++ {
-				filedNames = append(filedNames, rf.Field(i).Name)
+			for i := 0; i < t.NumField(); i++ {
+				filedNames = append(filedNames, t.Field(i).GetName())
 			}
 			log.Info("buildRunner filedNames", log.Any("entity", entity), log.Any("filedNames", filedNames))
 		}
-		enGameEntry := repo.NewRepositoryWriterByType(t.RefType(), entity, cfg.EntityPkg, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputTypeSuffix)
+		enGameEntry := repo.NewRepositoryWriterByType(t, entity, cfg.EntityPkg, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputTypeSuffix)
 		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode())
 		repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
 		if cfg.OutputProtoFile != "" {
