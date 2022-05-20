@@ -2,7 +2,10 @@ package main
 
 import (
 	"path/filepath"
+	"strconv"
+	"strings"
 
+	"github.com/liasece/go-mate/gogen/writer"
 	"github.com/liasece/go-mate/gogen/writer/repo"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
@@ -24,13 +27,32 @@ func buildRunner(cfg *BuildCfg) {
 		t, err := cde.LoadTypeFromSource(cfg.EntityFile, entity)
 		if err != nil {
 			log.Error("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", cfg.EntityFile), log.Any("entity", entity))
+			continue
 		}
+		if t == nil {
+			log.Error("buildRunner LoadTypeFromSource not found", log.Any("entity", entity), log.Any("cfg", cfg))
+			continue
+		}
+		t.SetNamed(entity)
 		if cfg.EntityPkg == "" {
 			cfg.EntityPkg = calGoFilePkgName(cfg.EntityFile)
+		}
+		{
+			filedNames := make([]string, 0)
+			rf := t.RefType()
+			for i := 0; i < rf.NumField(); i++ {
+				filedNames = append(filedNames, rf.Field(i).Name)
+			}
+			log.Info("buildRunner filedNames", log.Any("entity", entity), log.Any("filedNames", filedNames))
 		}
 		enGameEntry := repo.NewRepositoryWriterByType(t.RefType(), entity, cfg.EntityPkg, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputTypeSuffix)
 		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode())
 		repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
+		if cfg.OutputProtoFile != "" {
+			writer.StructToProto(cfg.OutputProtoFile, t, cfg.GetOutputProtoIndent())
+			filterStr, _ := enGameEntry.GetFilterTypeStructCode()
+			writer.StructToProto(cfg.OutputProtoFile, filterStr.GetType(), cfg.GetOutputProtoIndent())
+		}
 	}
 	if cfg.OutputFile != "" {
 		if cfg.OutputPkg == "" {
@@ -56,6 +78,24 @@ type BuildCfg struct {
 	OutputFilterSuffix            string `arg:"name: out-filter-suffix; usage: output filter type name suffix"`
 	OutputUpdaterSuffix           string `arg:"name: out-updater-suffix; usage: output updater type name suffix"`
 	OutputTypeSuffix              string `arg:"name: out-type-suffix; usage: output type name suffix"`
+	OutputProtoFile               string `arg:"name: out-proto-file; usage: output proto file"`
+	OutputProtoIndent             string `arg:"name: out-proto-indent; usage: output proto file indent($4,$tab)"`
+}
+
+func (c *BuildCfg) GetOutputProtoIndent() string {
+	if c.OutputProtoIndent == "" {
+		return "\t"
+	}
+	if strings.HasPrefix(c.OutputProtoIndent, "$") {
+		switch c.OutputProtoIndent[1:] {
+		case "tab":
+			return "\t"
+		default:
+			a, _ := strconv.Atoi(c.OutputProtoIndent[1:])
+			return strings.Repeat(" ", a)
+		}
+	}
+	return c.OutputProtoIndent
 }
 
 func main() {
