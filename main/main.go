@@ -27,6 +27,9 @@ func buildRunner(cfg *BuildCfg) {
 	optCode := gocoder.NewCode()
 	repositoryInterfaceCode := gocoder.NewCode()
 	for _, entity := range cfg.EntityNames {
+		if entity == "" {
+			continue
+		}
 		t, err := cde.LoadTypeFromSource(cfg.EntityFile, entity)
 		if err != nil {
 			log.Error("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", cfg.EntityFile), log.Any("entity", entity))
@@ -56,12 +59,15 @@ func buildRunner(cfg *BuildCfg) {
 			writer.StructToProto(cfg.OutputProtoFile, updaterStr.GetType(), cfg.GetOutputProtoIndent())
 		}
 
-		if cfg.OutputMergeTmplFile != "" {
-			c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(cfg.MergeTmplFile)
+		for i := range cfg.OutputMergeTmplFile {
+			if cfg.OutputMergeTmplFile[i] == "" {
+				continue
+			}
+			c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(cfg.MergeTmplFile[i])
 			if err != nil {
 				log.Error("buildRunner OutputMergeTmplFile GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err))
 			} else {
-				writer.MergeProtoFromFile(cfg.OutputMergeTmplFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				writer.MergeProtoFromFile(cfg.OutputMergeTmplFile[i], gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
 			}
 		}
 
@@ -81,12 +87,15 @@ func buildRunner(cfg *BuildCfg) {
 			}
 		}
 
-		if cfg.OutputRepositoryAdapterFile != "" {
-			c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(cfg.RepositoryTmplPath)
+		for i := range cfg.OutputRepositoryAdapterFile {
+			if cfg.OutputRepositoryAdapterFile[i] == "" {
+				continue
+			}
+			c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(cfg.RepositoryTmplPath[i])
 			if err != nil {
-				log.Error("buildRunner OutputRepositoryAdapterFile GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err))
+				log.Error("buildRunner OutputRepositoryAdapterFile GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err), log.Any("cfg.RepositoryTmplPath[i]", cfg.RepositoryTmplPath[i]))
 			} else {
-				gocoder.WriteToFile(cfg.OutputRepositoryAdapterFile, c, gocoder.NewToCodeOpt().PkgName(""))
+				gocoder.WriteToFile(cfg.OutputRepositoryAdapterFile[i], c, gocoder.NewToCodeOpt().PkgName(""))
 			}
 		}
 	}
@@ -105,21 +114,21 @@ type BuildCfg struct {
 	EntityFile         string   `arg:"name: file; short: f; usage: the file path of target entity; required;"`
 	EntityNames        []string `arg:"name: name; short: n; usage: the name list of target entity; required"`
 	EntityPkg          string   `arg:"name: entity-pkg; usage: the entity package path of target entity"`
-	RepositoryTmplPath string   `arg:"name: repository-tmpl-path; usage: the repository gen from tmpl"`
-	MergeTmplFile      string   `arg:"name: merge-tmpl-file; usage: output tmpl file with merge target file"`
+	RepositoryTmplPath []string `arg:"name: repository-tmpl-path; usage: the repository gen from tmpl"`
+	MergeTmplFile      []string `arg:"name: merge-tmpl-file; usage: output tmpl file with merge target file"`
 
 	// output
-	OutputFile                    string `arg:"name: out; short: o; usage: the output file path"`
-	OutputPkg                     string `arg:"name: pkg; short: p; usage: the output pkg name"`
-	OutputRepositoryInterfaceFile string `arg:"name: out-rep-inf-file; usage: output repository interface file"`
-	OutputRepositoryAdapterFile   string `arg:"name: out-rep-adp-file; usage: output repository adapter file"`
-	OutputFilterSuffix            string `arg:"name: out-filter-suffix; usage: output filter type name suffix"`
-	OutputUpdaterSuffix           string `arg:"name: out-updater-suffix; usage: output updater type name suffix"`
-	OutputTypeSuffix              string `arg:"name: out-type-suffix; usage: output type name suffix"`
-	OutputProtoFile               string `arg:"name: out-proto-file; usage: output proto file"`
-	OutputProtoIndent             string `arg:"name: out-proto-indent; usage: output proto file indent($4,$tab)"`
-	OutputCopierFile              string `arg:"name: out-copier-file; usage: output copier file"`
-	OutputMergeTmplFile           string `arg:"name: out-merge-tmpl-file; usage: output tmpl file with merge target file"`
+	OutputFile                    string   `arg:"name: out; short: o; usage: the output file path"`
+	OutputPkg                     string   `arg:"name: pkg; short: p; usage: the output pkg name"`
+	OutputRepositoryInterfaceFile string   `arg:"name: out-rep-inf-file; usage: output repository interface file"`
+	OutputRepositoryAdapterFile   []string `arg:"name: out-rep-adp-file; usage: output repository adapter file"`
+	OutputFilterSuffix            string   `arg:"name: out-filter-suffix; usage: output filter type name suffix"`
+	OutputUpdaterSuffix           string   `arg:"name: out-updater-suffix; usage: output updater type name suffix"`
+	OutputTypeSuffix              string   `arg:"name: out-type-suffix; usage: output type name suffix"`
+	OutputProtoFile               string   `arg:"name: out-proto-file; usage: output proto file"`
+	OutputProtoIndent             string   `arg:"name: out-proto-indent; usage: output proto file indent($4,$tab)"`
+	OutputCopierFile              string   `arg:"name: out-copier-file; usage: output copier file"`
+	OutputMergeTmplFile           []string `arg:"name: out-merge-tmpl-file; usage: output tmpl file with merge target file"`
 }
 
 func (c *BuildCfg) GetOutputProtoIndent() string {
