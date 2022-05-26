@@ -2,6 +2,8 @@ package repo
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
 
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
@@ -137,6 +139,57 @@ func (w *RepositoryWriter) GetEntityRepositoryCode(filter gocoder.Struct, update
 	c.C(w.getQueryCode(receiver, filter))
 
 	return c
+}
+
+type RepositoryEnv struct {
+	w *RepositoryWriter
+}
+
+func (e *RepositoryEnv) EntityName() string {
+	return e.w.entityName
+}
+
+func (e *RepositoryEnv) GetTagOn(filterReg string, targetTag string) string {
+	filterSS := strings.Split(filterReg, ":")
+	filterTag := filterSS[0]
+	filterValue := ""
+	if len(filterSS) > 1 {
+		filterValue = filterSS[1]
+	}
+	for i := 0; i < e.w.entity.NumField(); i++ {
+		t := reflect.StructTag(e.w.entity.Field(i).GetTag())
+		find := false
+		if value := t.Get(filterTag); value != "" {
+			if filterValue == "" {
+				find = true
+			} else {
+				values := strings.Split(value, ",")
+				for _, v := range values {
+					if v == filterValue {
+						find = true
+						break
+					}
+				}
+			}
+		}
+		if !find {
+			continue
+		}
+		return t.Get(targetTag)
+	}
+	return ""
+}
+
+func (w *RepositoryWriter) GetEntityRepositoryCodeFromTmpl(tmplPath string) (gocoder.Code, error) {
+	c := gocoder.NewCode()
+	code, err := gocoder.TemplateFromFile(tmplPath, &RepositoryEnv{
+		w,
+	}, nil)
+	if err != nil {
+		return nil, err
+	}
+	c.C(code)
+	return c, nil
 }
 
 func (w *RepositoryWriter) GetEntityRepositoryStructCode() gocoder.Code {

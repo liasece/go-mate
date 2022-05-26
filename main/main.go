@@ -52,6 +52,14 @@ func buildRunner(cfg *BuildCfg) {
 			filterStr, _ := enGameEntry.GetFilterTypeStructCode()
 			writer.StructToProto(cfg.OutputProtoFile, filterStr.GetType(), cfg.GetOutputProtoIndent())
 		}
+		if cfg.OutputRepositoryAdapterFile != "" {
+			c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(cfg.RepositoryTmplPath)
+			if err != nil {
+				log.Error("buildRunner GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err))
+			} else {
+				gocoder.WriteToFile(cfg.OutputRepositoryAdapterFile, c, gocoder.NewToCodeOpt().PkgName(""))
+			}
+		}
 	}
 	if cfg.OutputFile != "" {
 		if cfg.OutputPkg == "" {
@@ -65,15 +73,16 @@ func buildRunner(cfg *BuildCfg) {
 }
 
 type BuildCfg struct {
-	EntityFile  string   `arg:"name: file; short: f; usage: the file path of target entity; required;"`
-	EntityNames []string `arg:"name: name; short: n; usage: the name list of target entity; required"`
-	EntityPkg   string   `arg:"name: entity-pkg; usage: the entity package path of target entity"`
+	EntityFile         string   `arg:"name: file; short: f; usage: the file path of target entity; required;"`
+	EntityNames        []string `arg:"name: name; short: n; usage: the name list of target entity; required"`
+	EntityPkg          string   `arg:"name: entity-pkg; usage: the entity package path of target entity"`
+	RepositoryTmplPath string   `arg:"name: repository-tmpl-path; usage: the repository gen from tmpl"`
 
 	// output
 	OutputFile                    string `arg:"name: out; short: o; usage: the output file path"`
 	OutputPkg                     string `arg:"name: pkg; short: p; usage: the output pkg name"`
 	OutputRepositoryInterfaceFile string `arg:"name: out-rep-inf-file; usage: output repository interface file"`
-	OutputRepositoryAdpterFile    string `arg:"name: out-rep-adp-file; usage: output repository adpter file"`
+	OutputRepositoryAdapterFile   string `arg:"name: out-rep-adp-file; usage: output repository adapter file"`
 	OutputFilterSuffix            string `arg:"name: out-filter-suffix; usage: output filter type name suffix"`
 	OutputUpdaterSuffix           string `arg:"name: out-updater-suffix; usage: output updater type name suffix"`
 	OutputTypeSuffix              string `arg:"name: out-type-suffix; usage: output type name suffix"`
