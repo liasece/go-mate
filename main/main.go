@@ -47,6 +47,7 @@ func buildRunner(cfg *BuildCfg) {
 		enGameEntry := repo.NewRepositoryWriterByType(t, entity, cfg.EntityPkg, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputTypeSuffix)
 		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode())
 		repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
+
 		if cfg.OutputProtoFile != "" {
 			writer.StructToProto(cfg.OutputProtoFile, t, cfg.GetOutputProtoIndent())
 			filterStr, _ := enGameEntry.GetFilterTypeStructCode()
@@ -54,6 +55,16 @@ func buildRunner(cfg *BuildCfg) {
 			updaterStr, _ := enGameEntry.GetUpdaterTypeStructCode()
 			writer.StructToProto(cfg.OutputProtoFile, updaterStr.GetType(), cfg.GetOutputProtoIndent())
 		}
+
+		if cfg.OutputMergeTmplFile != "" {
+			c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(cfg.MergeTmplFile)
+			if err != nil {
+				log.Error("buildRunner OutputMergeTmplFile GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err))
+			} else {
+				writer.MergeProtoFromFile(cfg.OutputMergeTmplFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+			}
+		}
+
 		if cfg.OutputCopierFile != "" {
 			var info *writer.ProtoInfo
 			if cfg.OutputProtoFile != "" {
@@ -62,16 +73,18 @@ func buildRunner(cfg *BuildCfg) {
 			if info != nil {
 				var names [][2]string = [][2]string{
 					{cfg.EntityPkg + "." + entity, info.Package + "." + entity},
+					{info.Package + "." + entity, cfg.EntityPkg + "." + entity},
 					{info.Package + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName(), cfg.EntityPkg + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName()},
 					{info.Package + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName(), cfg.EntityPkg + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName()},
 				}
 				writer.FillCopierLine(cfg.OutputCopierFile, names)
 			}
 		}
+
 		if cfg.OutputRepositoryAdapterFile != "" {
 			c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(cfg.RepositoryTmplPath)
 			if err != nil {
-				log.Error("buildRunner GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err))
+				log.Error("buildRunner OutputRepositoryAdapterFile GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err))
 			} else {
 				gocoder.WriteToFile(cfg.OutputRepositoryAdapterFile, c, gocoder.NewToCodeOpt().PkgName(""))
 			}
@@ -93,6 +106,7 @@ type BuildCfg struct {
 	EntityNames        []string `arg:"name: name; short: n; usage: the name list of target entity; required"`
 	EntityPkg          string   `arg:"name: entity-pkg; usage: the entity package path of target entity"`
 	RepositoryTmplPath string   `arg:"name: repository-tmpl-path; usage: the repository gen from tmpl"`
+	MergeTmplFile      string   `arg:"name: merge-tmpl-file; usage: output tmpl file with merge target file"`
 
 	// output
 	OutputFile                    string `arg:"name: out; short: o; usage: the output file path"`
@@ -105,6 +119,7 @@ type BuildCfg struct {
 	OutputProtoFile               string `arg:"name: out-proto-file; usage: output proto file"`
 	OutputProtoIndent             string `arg:"name: out-proto-indent; usage: output proto file indent($4,$tab)"`
 	OutputCopierFile              string `arg:"name: out-copier-file; usage: output copier file"`
+	OutputMergeTmplFile           string `arg:"name: out-merge-tmpl-file; usage: output tmpl file with merge target file"`
 }
 
 func (c *BuildCfg) GetOutputProtoIndent() string {
