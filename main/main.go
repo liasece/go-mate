@@ -19,7 +19,10 @@ func buildRunner(cfg *BuildCfg) {
 	tmpFiles := make([]string, 0)
 	_ = tmpFiles
 	path, _ := filepath.Split(cfg.EntityFile)
-	log.Info("in", log.Any("entityFile", cfg.EntityFile), log.Any("entityPkg", calGoFilePkgName(cfg.EntityFile)), log.Any("path", path), log.Any("entityNames", cfg.EntityNames))
+	if cfg.EntityPkg == "" {
+		cfg.EntityPkg = calGoFilePkgName(cfg.EntityFile)
+	}
+	log.Info("in", log.Any("entityFile", cfg.EntityFile), log.Any("entityPkg", cfg.EntityPkg), log.Any("path", path), log.Any("entityNames", cfg.EntityNames))
 
 	optCode := gocoder.NewCode()
 	repositoryInterfaceCode := gocoder.NewCode()
@@ -34,9 +37,6 @@ func buildRunner(cfg *BuildCfg) {
 			continue
 		}
 		t.SetNamed(entity)
-		if cfg.EntityPkg == "" {
-			cfg.EntityPkg = calGoFilePkgName(cfg.EntityFile)
-		}
 		{
 			filedNames := make([]string, 0)
 			for i := 0; i < t.NumField(); i++ {
@@ -51,6 +51,22 @@ func buildRunner(cfg *BuildCfg) {
 			writer.StructToProto(cfg.OutputProtoFile, t, cfg.GetOutputProtoIndent())
 			filterStr, _ := enGameEntry.GetFilterTypeStructCode()
 			writer.StructToProto(cfg.OutputProtoFile, filterStr.GetType(), cfg.GetOutputProtoIndent())
+			updaterStr, _ := enGameEntry.GetUpdaterTypeStructCode()
+			writer.StructToProto(cfg.OutputProtoFile, updaterStr.GetType(), cfg.GetOutputProtoIndent())
+		}
+		if cfg.OutputCopierFile != "" {
+			var info *writer.ProtoInfo
+			if cfg.OutputProtoFile != "" {
+				info, _ = writer.ReadProtoInfo(cfg.OutputProtoFile)
+			}
+			if info != nil {
+				var names [][2]string = [][2]string{
+					{cfg.EntityPkg + "." + entity, info.Package + "." + entity},
+					{info.Package + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName(), cfg.EntityPkg + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName()},
+					{info.Package + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName(), cfg.EntityPkg + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName()},
+				}
+				writer.FillCopierLine(cfg.OutputCopierFile, names)
+			}
 		}
 		if cfg.OutputRepositoryAdapterFile != "" {
 			c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(cfg.RepositoryTmplPath)
@@ -88,6 +104,7 @@ type BuildCfg struct {
 	OutputTypeSuffix              string `arg:"name: out-type-suffix; usage: output type name suffix"`
 	OutputProtoFile               string `arg:"name: out-proto-file; usage: output proto file"`
 	OutputProtoIndent             string `arg:"name: out-proto-indent; usage: output proto file indent($4,$tab)"`
+	OutputCopierFile              string `arg:"name: out-copier-file; usage: output copier file"`
 }
 
 func (c *BuildCfg) GetOutputProtoIndent() string {

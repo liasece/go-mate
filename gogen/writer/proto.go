@@ -20,7 +20,7 @@ func StructToProto(protoFile string, t gocoder.Type, indent string) error {
 		}
 	}
 	toContent := buildProtoContent(originFileContent, t, indent)
-	{
+	if toContent != originFileContent {
 		// write to file
 		err := ioutil.WriteFile(protoFile, []byte(toContent), 0644)
 		if err != nil {
@@ -28,6 +28,34 @@ func StructToProto(protoFile string, t gocoder.Type, indent string) error {
 		}
 	}
 	return nil
+}
+
+type ProtoInfo struct {
+	Package string
+}
+
+func ReadProtoInfo(protoFile string) (*ProtoInfo, error) {
+	// read from file
+	content, err := ioutil.ReadFile(protoFile)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &ProtoInfo{}
+
+	originContent := string(content)
+	scanner := bufio.NewScanner(strings.NewReader(originContent))
+	packageReg := regexp.MustCompile(`^\s*package\s+(\w+)\s*;?`)
+	for scanner.Scan() {
+		t := scanner.Text()
+		if strings.HasPrefix(t, "package") {
+			parts := packageReg.FindStringSubmatch(t)
+			if len(parts) > 1 {
+				res.Package = parts[1]
+			}
+		}
+	}
+	return res, nil
 }
 
 func getProtoFromStr(originContent string, typ string) string {
@@ -134,15 +162,17 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 		}
 		name := snakeString(f.GetName())
 		opt := ""
-		if isBaseType {
-			if isPtr {
+		if isPtr {
+			if isBaseType {
 				opt = "optional "
 			}
-			if isSlice {
-				opt = "repeated "
-			}
 		}
-		addFsStr += fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, i+1)
+		if isSlice {
+			opt = "repeated "
+		}
+		if typ != "" {
+			addFsStr += fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, i+1)
+		}
 	}
 	toStr := "message " + msgName + " {\n" + addFsStr + "}"
 	if matchOrigin != "" {
