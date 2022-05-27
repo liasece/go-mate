@@ -180,6 +180,46 @@ func (e *RepositoryEnv) GetTagOn(filterReg string, targetTag string) string {
 	return ""
 }
 
+func (e *RepositoryEnv) GetTypeByTagOn(filterReg string) string {
+	filterSS := strings.Split(filterReg, ":")
+	filterTag := filterSS[0]
+	filterValue := ""
+	if len(filterSS) > 1 {
+		filterValue = filterSS[1]
+	}
+	for i := 0; i < e.w.entity.NumField(); i++ {
+		t := reflect.StructTag(e.w.entity.Field(i).GetTag())
+		find := false
+		if value := t.Get(filterTag); value != "" {
+			if filterValue == "" {
+				find = true
+			} else {
+				values := strings.Split(value, ",")
+				for _, v := range values {
+					if v == filterValue {
+						find = true
+						break
+					}
+				}
+			}
+		}
+		if !find {
+			continue
+		}
+		return e.w.entity.Field(i).GetType().String()
+	}
+	return ""
+}
+
+func (e *RepositoryEnv) GetType(filedName string) string {
+	for i := 0; i < e.w.entity.NumField(); i++ {
+		if e.w.entity.Field(i).GetName() == filedName {
+			return e.w.entity.Field(i).GetType().String()
+		}
+	}
+	return ""
+}
+
 func (w *RepositoryWriter) GetEntityRepositoryCodeFromTmpl(tmplPath string) (gocoder.Code, error) {
 	c := gocoder.NewCode()
 	code, err := gocoder.TemplateFromFile(tmplPath, &RepositoryEnv{
