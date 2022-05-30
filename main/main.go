@@ -25,6 +25,7 @@ func buildRunner(cfg *BuildCfg) {
 		cfg.EntityPkg = calGoFilePkgName(cfg.EntityFile)
 	}
 	log.Info("in", log.Any("entityFile", cfg.EntityFile), log.Any("entityPkg", cfg.EntityPkg), log.Any("path", path), log.Any("entityNames", cfg.EntityNames))
+	// log.Info("in", log.Any("entityFile", cfg.EntityFile), log.Any("entityPkg", cfg.EntityPkg), log.Any("path", path), log.Any("entityNames", cfg.EntityNames), log.Any("cfg", cfg))
 
 	optCode := gocoder.NewCode()
 	repositoryInterfaceCode := gocoder.NewCode()
@@ -143,20 +144,35 @@ func firstLower(s string) string {
 func isDir(s string) bool {
 	if fileInfo, err := os.Stat(s); err == nil && fileInfo.IsDir() {
 		return true
+	} else if err != nil {
+		log.Error("isDir error", log.ErrorField(err), log.Any("s", s))
 	}
 	return false
 }
 
+func isFile(s string) bool {
+	if fileInfo, err := os.Stat(s); err == nil && fileInfo.IsDir() {
+		return false
+	} else if err != nil {
+		return false
+	}
+	return true
+}
+
 func (c *BuildCfg) AfterLoad() {
 	if c.OutputFile != "" {
-		if isDir(c.OutputFile) && len(c.EntityNames) > 0 {
-			c.OutputFile = filepath.Join(c.OutputFile, fmt.Sprint(firstLower(c.EntityNames[0]), "Opt.go"))
+		if isDir(c.OutputFile) {
+			if c.EntityFile != "" && isFile(c.EntityFile) {
+				c.OutputFile = filepath.Join(c.OutputFile, strings.ReplaceAll(filepath.Base(c.EntityFile), ".go", "Opt.go"))
+			} else if len(c.EntityNames) > 0 {
+				c.OutputFile = filepath.Join(c.OutputFile, fmt.Sprint(firstLower(c.EntityNames[0]), "Opt.go"))
+			}
 		}
 	}
 	for i := range c.OutputRepositoryAdapterFile {
 		if c.OutputRepositoryAdapterFile[i] != "" {
 			if isDir(c.OutputRepositoryAdapterFile[i]) && len(c.EntityNames) > 0 {
-				c.OutputRepositoryAdapterFile[i] = filepath.Join(c.OutputRepositoryAdapterFile[i], fmt.Sprint(firstLower(c.EntityNames[0]), "Opt.go"))
+				c.OutputRepositoryAdapterFile[i] = filepath.Join(c.OutputRepositoryAdapterFile[i], fmt.Sprint(firstLower(c.EntityNames[0]), "Base.go"))
 			}
 		}
 	}
@@ -186,6 +202,7 @@ func main() {
 		Short: "build a go main.go to target entity folder",
 		Long:  "",
 		Run: func(cmd *cobra.Command, args []string) {
+			cfg.AfterLoad()
 			buildRunner(cfg)
 		},
 	}
