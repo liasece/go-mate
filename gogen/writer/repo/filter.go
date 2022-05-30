@@ -18,7 +18,7 @@ type FieldFilterField struct {
 
 func newFieldFilterField(f gocoder.Field, opt string, gt gocoder.Type) *FieldFilterField {
 	var fieldName string
-	if opt == "NoCount" {
+	if opt == "NoCount" || opt == "Ands" || opt == "Ors" {
 		fieldName = opt
 	} else {
 		fieldName = f.GetName() + opt
@@ -30,7 +30,7 @@ func newFieldFilterField(f gocoder.Field, opt string, gt gocoder.Type) *FieldFil
 	}
 }
 
-func fieldFilterFieldsToGocoder(mfs []*FieldFilterField) []gocoder.Field {
+func fieldFilterFieldsToGocoder(mfs ...*FieldFilterField) []gocoder.Field {
 	fs := make([]gocoder.Field, 0)
 	for _, v := range mfs {
 		fs = append(fs, v.gf)
@@ -121,6 +121,26 @@ func getFieldFilterMethodToBSON(st gocoder.Struct, fs []*FieldFilterField) gocod
 			),
 		)
 	}
+	setC.C(
+		cde.Value(`
+			if len(f.Ands) > 0 {
+				ands := []primitive.M{}
+				for _, f := range f.Ands {
+					ands = append(ands, f.ToBSON())
+				}
+				res["$and"] = ands
+			}`, nil),
+	)
+	setC.C(
+		cde.Value(`
+			if len(f.Ors) > 0 {
+				ors := []primitive.M{}
+				for _, f := range f.Ors {
+					ors = append(ors, f.ToBSON())
+				}
+				res["$or"] = ors
+			}`, nil),
+	)
 	f.C(
 		resV.AutoSet(cde.Make(bson.M{})),
 		setC,

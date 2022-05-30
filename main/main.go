@@ -24,8 +24,8 @@ func buildRunner(cfg *BuildCfg) {
 	if cfg.EntityPkg == "" {
 		cfg.EntityPkg = calGoFilePkgName(cfg.EntityFile)
 	}
-	log.Info("in", log.Any("entityFile", cfg.EntityFile), log.Any("entityPkg", cfg.EntityPkg), log.Any("path", path), log.Any("entityNames", cfg.EntityNames))
-	// log.Info("in", log.Any("entityFile", cfg.EntityFile), log.Any("entityPkg", cfg.EntityPkg), log.Any("path", path), log.Any("entityNames", cfg.EntityNames), log.Any("cfg", cfg))
+	log.Info("buildRunner begin", log.Any("entityFile", cfg.EntityFile), log.Any("entityPkg", cfg.EntityPkg), log.Any("path", path), log.Any("entityNames", cfg.EntityNames))
+	// log.Info("buildRunner begin", log.Any("entityFile", cfg.EntityFile), log.Any("entityPkg", cfg.EntityPkg), log.Any("path", path), log.Any("entityNames", cfg.EntityNames), log.Any("cfg", cfg))
 
 	optCode := gocoder.NewCode()
 	repositoryInterfaceCode := gocoder.NewCode()

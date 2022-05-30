@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/liasece/gocoder"
+	"github.com/liasece/log"
 )
 
 func StructToProto(protoFile string, t gocoder.Type, indent string) error {
@@ -133,15 +134,31 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 		// log.Error("in buildProtoContent filed", log.Any("i", i), log.Any("f", f))
 		typ := f.GetType().GetNamed()
 		isBaseType := true
-		ss := strings.Split(typ, ".")
-		for i, s := range ss {
-			ss[i] = strings.Title(s)
-		}
-		typ = strings.Join(ss, "")
 		if typ == "" {
 			typ = f.GetType().String()
-		} else {
-			isBaseType = false
+		}
+		if strings.Count(typ, ".") == 0 && f.GetType().Package() != "" {
+			prefix := ""
+			if strings.HasPrefix(typ, "*") {
+				prefix = "*"
+				typ = strings.ReplaceAll(typ, "*", "")
+			}
+			if strings.HasPrefix(typ, "[]") {
+				prefix = "[]"
+				typ = strings.ReplaceAll(typ, "[]", "")
+			}
+			ps := strings.Split(f.GetType().Package(), "/")
+			typ = prefix + ps[len(ps)-1] + "." + typ
+		}
+		{
+			ss := strings.Split(typ, ".")
+			if len(ss) > 1 {
+				for i, s := range ss {
+					ss[i] = strings.Title(s)
+				}
+				typ = strings.Join(ss, "")
+				isBaseType = false
+			}
 		}
 		isPtr := false
 		if strings.HasPrefix(typ, "*") {
@@ -153,8 +170,12 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 			typ = typ[2:]
 			isSlice = true
 		}
+		if strings.HasPrefix(typ, "*") {
+			typ = typ[1:]
+			isPtr = true
+		}
 		switch typ {
-		case "time.Time":
+		case "TimeTime":
 			typ = "google.protobuf.Timestamp"
 			isBaseType = false
 		case "int":
@@ -172,6 +193,11 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 		}
 		if typ != "" {
 			addFsStr += fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, i+1)
+			if typ == "Fight" {
+				log.Error("in test", log.Any("t", f.GetType().String()), log.Any("pkg", f.GetType().Package()), log.Any("named", f.GetType().GetNamed()))
+			}
+		} else {
+			log.Debug("buildProtoContent skip type", log.Any("named", f.GetType().GetNamed()), log.Any("str", f.GetType().String()))
 		}
 	}
 	toStr := "message " + msgName + " {\n" + addFsStr + "}"
