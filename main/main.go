@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -129,6 +131,35 @@ type BuildCfg struct {
 	OutputProtoIndent             string   `arg:"name: out-proto-indent; usage: output proto file indent($4,$tab)"`
 	OutputCopierFile              string   `arg:"name: out-copier-file; usage: output copier file"`
 	OutputMergeTmplFile           []string `arg:"name: out-merge-tmpl-file; usage: output tmpl file with merge target file"`
+}
+
+func firstLower(s string) string {
+	if s == "" {
+		return ""
+	}
+	return strings.ToLower(s[:1]) + s[1:]
+}
+
+func isDir(s string) bool {
+	if fileInfo, err := os.Stat(s); err == nil && fileInfo.IsDir() {
+		return true
+	}
+	return false
+}
+
+func (c *BuildCfg) AfterLoad() {
+	if c.OutputFile != "" {
+		if isDir(c.OutputFile) && len(c.EntityNames) > 0 {
+			c.OutputFile = filepath.Join(c.OutputFile, fmt.Sprint(firstLower(c.EntityNames[0]), "Opt.go"))
+		}
+	}
+	for i := range c.OutputRepositoryAdapterFile {
+		if c.OutputRepositoryAdapterFile[i] != "" {
+			if isDir(c.OutputRepositoryAdapterFile[i]) && len(c.EntityNames) > 0 {
+				c.OutputRepositoryAdapterFile[i] = filepath.Join(c.OutputRepositoryAdapterFile[i], fmt.Sprint(firstLower(c.EntityNames[0]), "Opt.go"))
+			}
+		}
+	}
 }
 
 func (c *BuildCfg) GetOutputProtoIndent() string {
