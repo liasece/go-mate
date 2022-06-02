@@ -80,11 +80,15 @@ func buildRunner(cfg *BuildCfg) {
 				info, _ = writer.ReadProtoInfo(cfg.OutputProtoFile)
 			}
 			if info != nil {
+				optPkg := cfg.EntityPkg
+				if cfg.EntityOptPkg != "" {
+					optPkg = cfg.EntityOptPkg
+				}
 				var names [][2]string = [][2]string{
-					{cfg.EntityPkg + "." + entity, info.Package + "." + entity},
-					{info.Package + "." + entity, cfg.EntityPkg + "." + entity},
-					{info.Package + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName(), cfg.EntityPkg + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName()},
-					{info.Package + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName(), cfg.EntityPkg + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName()},
+					{cfg.EntityPkg + "." + entity, info.Package + cfg.OutputCopierProtoPkgSuffix + "." + entity},
+					{info.Package + cfg.OutputCopierProtoPkgSuffix + "." + entity, cfg.EntityPkg + "." + entity},
+					{info.Package + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName()},
+					{info.Package + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName()},
 				}
 				writer.FillCopierLine(cfg.OutputCopierFile, names)
 			}
@@ -117,6 +121,7 @@ type BuildCfg struct {
 	EntityFile         string   `arg:"name: file; short: f; usage: the file path of target entity; required;"`
 	EntityNames        []string `arg:"name: name; short: n; usage: the name list of target entity; required"`
 	EntityPkg          string   `arg:"name: entity-pkg; usage: the entity package path of target entity"`
+	EntityOptPkg       string   `arg:"name: entity-opt-pkg; usage: the entity opt package path of target entity"`
 	RepositoryTmplPath []string `arg:"name: repository-tmpl-path; usage: the repository gen from tmpl"`
 	MergeTmplFile      []string `arg:"name: merge-tmpl-file; usage: output tmpl file with merge target file"`
 
@@ -131,6 +136,7 @@ type BuildCfg struct {
 	OutputProtoFile               string   `arg:"name: out-proto-file; usage: output proto file"`
 	OutputProtoIndent             string   `arg:"name: out-proto-indent; usage: output proto file indent($4,$tab)"`
 	OutputCopierFile              string   `arg:"name: out-copier-file; usage: output copier file"`
+	OutputCopierProtoPkgSuffix    string   `arg:"name: out-copier-proto-pkg-suffix; usage: output copier proto pkg suffix"`
 	OutputMergeTmplFile           []string `arg:"name: out-merge-tmpl-file; usage: output tmpl file with merge target file"`
 }
 

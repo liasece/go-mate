@@ -18,10 +18,11 @@ func splitProtoBlock(content string) (blocks []string, body []string) {
 	in := false
 	res := make([]string, 0)
 	resBody := make([]string, 0)
-	for _, l := range lines {
+	for i := 0; i < len(lines); i++ {
+		l := lines[i]
 		isHead := false
 		if !in {
-			nameReg := regexp.MustCompile(`^\s*.*?\s*{`)
+			nameReg := regexp.MustCompile(`^\s*[a-zA-Z_ \t]*?\s*{`)
 			parts := nameReg.FindStringSubmatch(l)
 			if len(parts) != 0 {
 				in = true
@@ -30,15 +31,29 @@ func splitProtoBlock(content string) (blocks []string, body []string) {
 				nameReg := regexp.MustCompile(`^\s*rpc\s+.*?\s*\(`)
 				parts := nameReg.FindStringSubmatch(l)
 				if len(parts) != 0 {
-					res = append(res, l+"\n")
-					resBody = append(resBody, l+"\n")
+					// get rpc line block
+					block := l + "\n"
+					{
+						// if mul line
+						if parts := regexp.MustCompile(`;\s*$`).FindStringSubmatch(l); len(parts) == 0 {
+							for ; i < len(lines); i++ {
+								l := lines[i]
+								block += l + "\n"
+								if parts := regexp.MustCompile(`}\s*;?\s*$`).FindStringSubmatch(l); len(parts) != 0 {
+									break
+								}
+							}
+						}
+					}
+					res = append(res, block)
+					resBody = append(resBody, block)
 				}
 			}
 		}
 		if in {
 			tmpOut += l + "\n"
 
-			nameReg := regexp.MustCompile(`^\s*}`)
+			nameReg := regexp.MustCompile(`^}`)
 			parts := nameReg.FindStringSubmatch(l)
 			if len(parts) != 0 {
 				in = false
@@ -50,6 +65,12 @@ func splitProtoBlock(content string) (blocks []string, body []string) {
 				tmpBody += l + "\n"
 			}
 		}
+	}
+	if tmpOut != "" {
+		res = append(res, tmpOut)
+	}
+	if tmpBody != "" {
+		resBody = append(resBody, tmpBody)
 	}
 	return res, resBody
 }
@@ -101,7 +122,7 @@ func mergeProtoFromFile(protoFile string, newContent string) error {
 func mergeProto(originContent string, newContent string) string {
 	newBlocks, newBody := splitProtoBlock(newContent)
 	originBlocks, originBody := splitProtoBlock(originContent)
-	// log.Info("mergeProto", log.Any("newContent", newContent), log.Any("originContent", originContent), log.Any("newBlocks", newBlocks), log.Any("newBody", newBody), log.Any("originBody", originBody))
+	// log.Info("mergeProto", log.Any("newContent", newContent), log.Any("originContent", originContent), log.Any("newBlocks", newBlocks), log.Any("newBody", newBody), log.Any("originBlocks", originBlocks), log.Any("originBody", originBody))
 	res := originContent
 	for i, b := range newBlocks {
 		newHead := getProtoBlockHead(b)
