@@ -12,9 +12,10 @@ import (
 )
 
 type RepositoryWriter struct {
-	entity     gocoder.Type
-	entityName string
-	entityPkg  string
+	entity      gocoder.Type
+	entityName  string
+	entityPkg   string
+	serviceName string
 
 	Filter  gocoder.Struct
 	Updater gocoder.Struct
@@ -32,11 +33,12 @@ func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
 	}
 }
 
-func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, outFilterSuffix string, outUpdaterSuffix string, outTypeSuffix string) *RepositoryWriter {
+func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, serviceName string, outFilterSuffix string, outUpdaterSuffix string, outTypeSuffix string) *RepositoryWriter {
 	return &RepositoryWriter{
 		entity:           t,
 		entityName:       name,
 		entityPkg:        pkg,
+		serviceName:      serviceName,
 		OutTypeSuffix:    outTypeSuffix,
 		OutFilterSuffix:  outFilterSuffix,
 		OutUpdaterSuffix: outUpdaterSuffix,
@@ -150,6 +152,18 @@ type RepositoryEnv struct {
 
 func (e *RepositoryEnv) EntityName() string {
 	return e.w.entityName
+}
+
+func (e *RepositoryEnv) ServiceName() string {
+	return e.w.serviceName
+}
+
+func (e *RepositoryEnv) ServiceNameTitle() string {
+	s := e.ServiceName()
+	if s == "" {
+		return ""
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 func (e *RepositoryEnv) GetTagOn(filterReg string, targetTag string) string {

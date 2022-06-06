@@ -161,18 +161,14 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 			}
 		}
 		isPtr := false
-		if strings.HasPrefix(typ, "*") {
-			typ = typ[1:]
+		if strings.Contains(typ, "*") {
+			typ = strings.ReplaceAll(typ, "*", "")
 			isPtr = true
 		}
 		isSlice := false
-		if strings.HasPrefix(typ, "[]") {
-			typ = typ[2:]
+		if strings.Contains(typ, "[]") {
+			typ = strings.ReplaceAll(typ, "[]", "")
 			isSlice = true
-		}
-		if strings.HasPrefix(typ, "*") {
-			typ = typ[1:]
-			isPtr = true
 		}
 		switch typ {
 		case "TimeTime":

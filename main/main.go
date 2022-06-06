@@ -33,7 +33,7 @@ func buildRunner(cfg *BuildCfg) {
 		if entity == "" {
 			continue
 		}
-		t, err := cde.LoadTypeFromSource(cfg.EntityFile, entity)
+		t, err := cde.LoadTypeFromSource(cfg.EntityFile, entity, gocoder.NewToCodeOpt().PkgPath(cfg.EntityPkg))
 		if err != nil {
 			log.Error("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", cfg.EntityFile), log.Any("entity", entity))
 			continue
@@ -46,11 +46,12 @@ func buildRunner(cfg *BuildCfg) {
 		{
 			filedNames := make([]string, 0)
 			for i := 0; i < t.NumField(); i++ {
-				filedNames = append(filedNames, t.Field(i).GetName())
+				typ := t.Field(i).GetType()
+				filedNames = append(filedNames, t.Field(i).GetName()+"("+typ.ShowString()+")")
 			}
 			log.Info("buildRunner filedNames", log.Any("entity", entity), log.Any("filedNames", filedNames))
 		}
-		enGameEntry := repo.NewRepositoryWriterByType(t, entity, cfg.EntityPkg, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputTypeSuffix)
+		enGameEntry := repo.NewRepositoryWriterByType(t, entity, cfg.EntityPkg, cfg.ServiceName, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputTypeSuffix)
 		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode())
 		repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
 
@@ -80,15 +81,17 @@ func buildRunner(cfg *BuildCfg) {
 				info, _ = writer.ReadProtoInfo(cfg.OutputProtoFile)
 			}
 			if info != nil {
-				optPkg := cfg.EntityPkg
+				optPkg := pkgInReference(cfg.EntityPkg)
 				if cfg.EntityOptPkg != "" {
-					optPkg = cfg.EntityOptPkg
+					optPkg = pkgInReference(cfg.EntityOptPkg)
 				}
+				entityPkg := pkgInReference(cfg.EntityPkg)
+				infoPkg := pkgInReference(info.Package)
 				var names [][2]string = [][2]string{
-					{cfg.EntityPkg + "." + entity, info.Package + cfg.OutputCopierProtoPkgSuffix + "." + entity},
-					{info.Package + cfg.OutputCopierProtoPkgSuffix + "." + entity, cfg.EntityPkg + "." + entity},
-					{info.Package + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName()},
-					{info.Package + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName()},
+					{entityPkg + "." + entity, infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + entity},
+					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + entity, entityPkg + "." + entity},
+					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName()},
+					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName()},
 				}
 				writer.FillCopierLine(cfg.OutputCopierFile, names)
 			}
@@ -117,10 +120,16 @@ func buildRunner(cfg *BuildCfg) {
 	}
 }
 
+func pkgInReference(str string) string {
+	ss := strings.Split(str, "/")
+	return ss[len(ss)-1]
+}
+
 type BuildCfg struct {
 	EntityFile         string   `arg:"name: file; short: f; usage: the file path of target entity; required;"`
 	EntityNames        []string `arg:"name: name; short: n; usage: the name list of target entity; required"`
 	EntityPkg          string   `arg:"name: entity-pkg; usage: the entity package path of target entity"`
+	ServiceName        string   `arg:"name: service-name; usage: the entity belong service name of target entity"`
 	EntityOptPkg       string   `arg:"name: entity-opt-pkg; usage: the entity opt package path of target entity"`
 	RepositoryTmplPath []string `arg:"name: repository-tmpl-path; usage: the repository gen from tmpl"`
 	MergeTmplFile      []string `arg:"name: merge-tmpl-file; usage: output tmpl file with merge target file"`
