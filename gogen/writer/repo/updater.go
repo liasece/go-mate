@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/liasece/go-mate/utils"
-	"github.com/liasece/log"
 
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
@@ -50,10 +49,10 @@ func getFieldUpdaterFields(f gocoder.Field) []*FieldUpdaterField {
 		ft = ft.Elem()
 	}
 	filterFt := cde.Type(ft)
-	if f.GetType().Kind() == reflect.Struct && ft.GetRowStr() != "" {
-		log.Error("reflect.Struct down to str", log.Any("name", ft.Name()), log.Any("ft", ft.String()), log.Any("rowStr", ft.GetRowStr()))
-		filterFt = cde.TypeD(ft.Package(), ft.Package()+"."+ft.Name())
-	}
+	// if f.GetType().Kind() == reflect.Struct && ft.GetRowStr() != "" {
+	// 	log.Error("reflect.Struct down to str", log.Any("name", ft.Name()), log.Any("pkg", ft.Package()), log.Any("ft", ft.String()), log.Any("rowStr", ft.GetRowStr()))
+	// 	filterFt = cde.TypeD(ft.Package(), ft.Package()+"."+ft.Name())
+	// }
 	if ft.Kind() != reflect.Interface {
 		filterFt = filterFt.TackPtr()
 	}

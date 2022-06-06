@@ -122,6 +122,13 @@ func snakeString(s string) string {
 	return strings.ToLower(string(data[:]))
 }
 
+func toTitle(str string) string {
+	if str == "" {
+		return ""
+	}
+	return strings.ToUpper(str[:1]) + str[1:]
+}
+
 func buildProtoContent(originContent string, t gocoder.Type, indent string) string {
 	msgName := t.GetNamed()
 	if msgName == "" {
@@ -132,12 +139,11 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		// log.Error("in buildProtoContent filed", log.Any("i", i), log.Any("f", f))
-		typ := f.GetType().GetNamed()
+		// typ := f.GetType().GetNamed()
+		typ := f.GetType().String()
 		isBaseType := true
-		if typ == "" {
-			typ = f.GetType().String()
-		}
-		if strings.Count(typ, ".") == 0 && f.GetType().Package() != "" {
+		tailPkg := f.GetType().AllSub()[0].PackageInReference()
+		if strings.Count(typ, ".") == 0 && tailPkg != "" && tailPkg != "entity" {
 			prefix := ""
 			if strings.HasPrefix(typ, "*") {
 				prefix = "*"
@@ -147,8 +153,8 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 				prefix = "[]"
 				typ = strings.ReplaceAll(typ, "[]", "")
 			}
-			ps := strings.Split(f.GetType().Package(), "/")
-			typ = prefix + ps[len(ps)-1] + "." + typ
+			typ = prefix + tailPkg + "." + typ
+			// log.Error("in buildProtoContent filed", log.Any("typ", typ), log.Any("msgName", msgName))
 		}
 		{
 			ss := strings.Split(typ, ".")
@@ -158,6 +164,7 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 				}
 				typ = strings.Join(ss, "")
 				isBaseType = false
+				// log.Warn("in buildProtoContent filed", log.Any("typ", typ), log.Any("msgName", msgName))
 			}
 		}
 		isPtr := false
