@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/liasece/gocoder"
@@ -129,13 +131,50 @@ func toTitle(str string) string {
 	return strings.ToUpper(str[:1]) + str[1:]
 }
 
+func getProdFiledNumInOriginMsg(origin string, fieldNameRaw string) int {
+	fieldReg := regexp.MustCompile(`.*?([a-z_]+)\s*=\s*(\d+).*?`)
+	parts := fieldReg.FindAllStringSubmatch(origin, -1)
+	fieldName := strings.ReplaceAll(fieldNameRaw, "_", "")
+	for _, fieldLine := range parts {
+		if strings.ReplaceAll(fieldLine[1], "_", "") == fieldName {
+			i, err := strconv.Atoi(fieldLine[2])
+			if err != nil {
+				log.Error("getProdFiledNumInOriginMsg Atoi error", log.ErrorField(err), log.Any("line", fieldLine))
+			}
+			return i
+		}
+	}
+	return 0
+}
+
+func getMaxProdFiledNumInOriginMsg(origin string) int {
+	fieldReg := regexp.MustCompile(`.*?([a-z_]+)\s*=\s*(\d+).*?`)
+	parts := fieldReg.FindAllStringSubmatch(origin, -1)
+	res := 0
+	for _, fieldLine := range parts {
+		i, err := strconv.Atoi(fieldLine[2])
+		if err != nil {
+			log.Error("getProdFiledNumInOriginMsg Atoi error", log.ErrorField(err), log.Any("line", fieldLine))
+		} else {
+			if i > res {
+				res = i
+			}
+		}
+	}
+	return res
+}
+
 func buildProtoContent(originContent string, t gocoder.Type, indent string) string {
 	msgName := t.GetNamed()
 	if msgName == "" {
 		msgName = t.String()
 	}
 	matchOrigin := getProtoFromStr(originContent, msgName)
-	addFsStr := ""
+	fieldStr := make(map[int]string)
+	maxOriginFieldNum := 0
+	if matchOrigin != "" {
+		maxOriginFieldNum = getMaxProdFiledNumInOriginMsg(matchOrigin)
+	}
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		// log.Error("in buildProtoContent filed", log.Any("i", i), log.Any("f", f))
@@ -195,12 +234,29 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 			opt = "repeated "
 		}
 		if typ != "" {
-			addFsStr += fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, i+1)
-			if typ == "Fight" {
-				log.Error("in test", log.Any("t", f.GetType().String()), log.Any("pkg", f.GetType().Package()), log.Any("named", f.GetType().GetNamed()))
+			if originIndex := getProdFiledNumInOriginMsg(matchOrigin, name); originIndex > 0 {
+				// log.Warn("in getProdFiledNumInOriginMsg", log.Any("typ", typ), log.Any("msgName", msgName))
+				fieldStr[originIndex] = fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, originIndex)
+			} else {
+				maxOriginFieldNum += 1
+				fieldStr[maxOriginFieldNum] = fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, maxOriginFieldNum)
 			}
+			// if typ == "Fight" {
+			// 	log.Error("in test", log.Any("t", f.GetType().String()), log.Any("pkg", f.GetType().Package()), log.Any("named", f.GetType().GetNamed()))
+			// }
 		} else {
 			log.Debug("buildProtoContent skip type", log.Any("named", f.GetType().GetNamed()), log.Any("str", f.GetType().String()))
+		}
+	}
+	addFsStr := ""
+	{
+		is := make([]int, 0)
+		for i := range fieldStr {
+			is = append(is, i)
+		}
+		sort.Ints(is)
+		for _, i := range is {
+			addFsStr += fieldStr[i]
 		}
 	}
 	toStr := "message " + msgName + " {\n" + addFsStr + "}"

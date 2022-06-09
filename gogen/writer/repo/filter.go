@@ -126,9 +126,14 @@ func getFieldFilterMethodToBSON(st gocoder.Struct, fs []*FieldFilterField) gocod
 			if len(f.Ands) > 0 {
 				ands := []primitive.M{}
 				for _, f := range f.Ands {
-					ands = append(ands, f.ToBSON())
+					b := f.ToBSON()
+					if len(b) > 0 {
+						ands = append(ands, b)
+					}
 				}
-				res["$and"] = ands
+				if len(ands) > 0 {
+					res["$and"] = ands
+				}
 			}`, nil),
 	)
 	setC.C(
@@ -136,9 +141,14 @@ func getFieldFilterMethodToBSON(st gocoder.Struct, fs []*FieldFilterField) gocod
 			if len(f.Ors) > 0 {
 				ors := []primitive.M{}
 				for _, f := range f.Ors {
-					ors = append(ors, f.ToBSON())
+					b := f.ToBSON()
+					if len(b) > 0 {
+						ors = append(ors, b)
+					}
 				}
-				res["$or"] = ors
+				if len(ors) > 0 {
+					res["$or"] = ors
+				}
 			}`, nil),
 	)
 	f.C(
