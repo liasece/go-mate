@@ -51,8 +51,8 @@ func buildRunner(cfg *BuildCfg) {
 			}
 			log.Info("buildRunner filedNames", log.Any("entity", entity), log.Any("filedNames", filedNames))
 		}
-		enGameEntry := repo.NewRepositoryWriterByType(t, entity, cfg.EntityPkg, cfg.ServiceName, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputTypeSuffix)
-		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode())
+		enGameEntry := repo.NewRepositoryWriterByType(t, entity, cfg.EntityPkg, cfg.ServiceName, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputSorterSuffix, cfg.OutputTypeSuffix)
+		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode())
 		repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
 
 		if cfg.OutputProtoFile != "" {
@@ -61,6 +61,8 @@ func buildRunner(cfg *BuildCfg) {
 			writer.StructToProto(cfg.OutputProtoFile, filterStr.GetType(), cfg.GetOutputProtoIndent())
 			updaterStr, _ := enGameEntry.GetUpdaterTypeStructCode()
 			writer.StructToProto(cfg.OutputProtoFile, updaterStr.GetType(), cfg.GetOutputProtoIndent())
+			sorterStr, _ := enGameEntry.GetSorterTypeStructCode()
+			writer.StructToProto(cfg.OutputProtoFile, sorterStr.GetType(), cfg.GetOutputProtoIndent())
 		}
 
 		for i := range cfg.OutputMergeTmplFile {
@@ -92,6 +94,7 @@ func buildRunner(cfg *BuildCfg) {
 					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + entity, entityPkg + "." + entity},
 					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName()},
 					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName()},
+					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetSorterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetSorterTypeStructCodeStruct().GetName()},
 				}
 				writer.FillCopierLine(cfg.OutputCopierFile, names)
 			}
@@ -141,6 +144,7 @@ type BuildCfg struct {
 	OutputRepositoryAdapterFile   []string `arg:"name: out-rep-adp-file; usage: output repository adapter file"`
 	OutputFilterSuffix            string   `arg:"name: out-filter-suffix; usage: output filter type name suffix"`
 	OutputUpdaterSuffix           string   `arg:"name: out-updater-suffix; usage: output updater type name suffix"`
+	OutputSorterSuffix            string   `arg:"name: out-sorter-suffix; usage: output sorter type name suffix"`
 	OutputTypeSuffix              string   `arg:"name: out-type-suffix; usage: output type name suffix"`
 	OutputProtoFile               string   `arg:"name: out-proto-file; usage: output proto file"`
 	OutputProtoIndent             string   `arg:"name: out-proto-indent; usage: output proto file indent($4,$tab)"`

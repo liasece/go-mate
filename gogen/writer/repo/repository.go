@@ -19,10 +19,12 @@ type RepositoryWriter struct {
 
 	Filter  gocoder.Struct
 	Updater gocoder.Struct
+	Sorter  gocoder.Struct
 
 	OutTypeSuffix    string
 	OutFilterSuffix  string
 	OutUpdaterSuffix string
+	OutSorterSuffix  string
 }
 
 func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
@@ -33,7 +35,7 @@ func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
 	}
 }
 
-func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, serviceName string, outFilterSuffix string, outUpdaterSuffix string, outTypeSuffix string) *RepositoryWriter {
+func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, serviceName string, outFilterSuffix string, outUpdaterSuffix string, outSorterSuffix string, outTypeSuffix string) *RepositoryWriter {
 	return &RepositoryWriter{
 		entity:           t,
 		entityName:       name,
@@ -42,6 +44,7 @@ func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, serviceN
 		OutTypeSuffix:    outTypeSuffix,
 		OutFilterSuffix:  outFilterSuffix,
 		OutUpdaterSuffix: outUpdaterSuffix,
+		OutSorterSuffix:  outSorterSuffix,
 	}
 }
 
@@ -58,6 +61,14 @@ func (w *RepositoryWriter) GetUpdaterTypeStructCodeStruct() gocoder.Struct {
 		return w.Updater
 	}
 	res, _ := w.GetUpdaterTypeStructCode()
+	return res
+}
+
+func (w *RepositoryWriter) GetSorterTypeStructCodeStruct() gocoder.Struct {
+	if w.Sorter != nil {
+		return w.Sorter
+	}
+	res, _ := w.GetSorterTypeStructCode()
 	return res
 }
 
@@ -99,6 +110,25 @@ func (w *RepositoryWriter) GetUpdaterTypeCode() gocoder.Code {
 	strT, mfs := w.GetUpdaterTypeStructCode()
 	c.C(strT)
 	c.C(getFieldUpdaterMethodToBSON(strT, mfs))
+
+	return c
+}
+
+func (w *RepositoryWriter) GetSorterTypeStructCode() (gocoder.Struct, []*FieldSorterField) {
+	mfs := make([]*FieldSorterField, 0)
+	for i := 0; i < w.entity.NumField(); i++ {
+		mfs = append(mfs, getFieldSorterFields(w.entity.Field(i))...)
+	}
+
+	strT := cde.Struct(fmt.Sprintf("%sSorter%s%s", w.entityName, w.OutSorterSuffix, w.OutTypeSuffix), fieldSorterFieldsToGocoder(mfs)...)
+	return strT, mfs
+}
+
+func (w *RepositoryWriter) GetSorterTypeCode() gocoder.Code {
+	c := gocoder.NewCode()
+	strT, mfs := w.GetSorterTypeStructCode()
+	c.C(strT)
+	c.C(getFieldSorterMethodToBSON(strT, mfs))
 
 	return c
 }
@@ -191,6 +221,9 @@ func (e *RepositoryEnv) GetTagOn(filterReg string, targetTag string) string {
 		}
 		if !find {
 			continue
+		}
+		if targetTag == "" {
+			return e.w.entity.Field(i).GetName()
 		}
 		return t.Get(targetTag)
 	}
