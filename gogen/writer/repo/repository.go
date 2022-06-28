@@ -230,6 +230,14 @@ func (e *RepositoryEnv) GetTagOn(filterReg string, targetTag string) string {
 	return ""
 }
 
+func (e *RepositoryEnv) SplitN(origin string, sep string, n int) string {
+	ss := strings.Split(origin, sep)
+	if n < 0 || n >= len(ss) {
+		return ""
+	}
+	return ss[n]
+}
+
 func (e *RepositoryEnv) GetTypeByTagOn(filterReg string) string {
 	filterSS := strings.Split(filterReg, ":")
 	filterTag := filterSS[0]
