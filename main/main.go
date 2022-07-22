@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/liasece/go-mate/gogen/writer"
-	"github.com/liasece/go-mate/gogen/writer/repo"
+	"github.com/liasece/go-mate/src/gogen/writer"
+	"github.com/liasece/go-mate/src/gogen/writer/repo"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
 	"github.com/liasece/log"
