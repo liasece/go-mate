@@ -1,0 +1,22 @@
+entity:
+  - name: AssetUserFlagMark
+    pkg: solarland/backendv2/cluster/asset/internal/domain/entity
+    fields:
+      - name: id
+        type: string
+        tag:
+          gomate: id
+      - name: userID
+        type: string
+        foreignKey: $User
+      - name: assetProductID
+        type: string
+        foreignKey: $AssetProduct
+      - name: createAt
+        type: time
+      - name: updateAt
+        type: time
+      - name: flag
+        type: string
+        doc: 旗标，默认有：
+          ShareWithMe：别人分享给我的
