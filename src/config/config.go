@@ -47,9 +47,50 @@ type Comment struct {
 }
 
 type Config struct {
-	Comment `json:",inline" yaml:",inline"`
-	Base    `json:"base" yaml:"base"`
-	Entity  []*Entity `json:"entity" yaml:"entity"`
+	Comment               `json:",inline" yaml:",inline"`
+	Base                  `json:"base" yaml:"base"`
+	Entity                []*Entity                `json:"entity,omitempty" yaml:"entity,omitempty"`
+	EntityPrefab          map[string]*EntityPrefab `json:"entityPrefab,omitempty" yaml:"entityPrefab,omitempty"`
+	BuildEntityWithPrefab map[string][]string      `json:"buildEntityWithPrefab,omitempty" yaml:"buildEntityWithPrefab,omitempty"`
+}
+
+type EntityPrefab struct {
+	Comment    `json:",inline" yaml:",inline"`
+	Name       string         `json:"name" yaml:"name"`
+	Pkg        string         `json:"pkg,omitempty" yaml:"pkg,omitempty"`
+	Fields     []*EntityField `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Service    string         `json:"service,omitempty" yaml:"service,omitempty"`
+	GrpcSubPkg string         `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
+}
+
+func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
+	if entity.Comment.Doc == "" && p.Comment.Doc != "" {
+		entity.Comment.Doc = p.Comment.Doc
+	}
+	if entity.Name == "" && p.Name != "" {
+		entity.Name = p.Name
+	}
+	if entity.Pkg == "" && p.Pkg != "" {
+		entity.Pkg = p.Pkg
+	}
+	for _, f := range p.Fields {
+		find := false
+		for _, v := range entity.Fields {
+			if v.Name == f.Name {
+				find = true
+				break
+			}
+		}
+		if !find {
+			entity.Fields = append(entity.Fields, f)
+		}
+	}
+	if entity.Service == "" && p.Service != "" {
+		entity.Service = p.Service
+	}
+	if entity.GrpcSubPkg == "" && p.GrpcSubPkg != "" {
+		entity.GrpcSubPkg = p.GrpcSubPkg
+	}
 }
 
 type Entity struct {
@@ -60,6 +101,7 @@ type Entity struct {
 	Service     string         `json:"service,omitempty" yaml:"service,omitempty"`
 	GrpcSubPkg  string         `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
 	ServiceBase `json:",inline" yaml:",inline"`
+	Prefab      string `json:"prefab,omitempty" yaml:"prefab,omitempty"`
 }
 
 type EntityFieldType string
@@ -119,6 +161,27 @@ func (c *ServiceBase) AfterLoad() {
 }
 
 func (c *Config) AfterLoad() {
+	// build prefab
+	for prefabName, entityNameList := range c.BuildEntityWithPrefab {
+		for _, entityName := range entityNameList {
+			find := false
+			for _, v := range c.Entity {
+				if v.Name == entityName {
+					find = true
+					break
+				}
+			}
+			if !find {
+				c.Entity = append(c.Entity, &Entity{
+					Name:   entityName,
+					Prefab: prefabName,
+				})
+			} else {
+				log.L(nil).Fatal("Config AfterLoad build prefab target entity already exists", log.Any("entityName", entityName))
+			}
+		}
+	}
+
 	for k, service := range c.Service {
 		service.Name = k
 		for _, tmpl := range service.Tmpl {
@@ -127,6 +190,13 @@ func (c *Config) AfterLoad() {
 		service.ServiceBase.AfterLoad()
 	}
 	for _, entity := range c.Entity {
+		if entity.Prefab != "" {
+			if prefab, ok := c.EntityPrefab[entity.Prefab]; ok {
+				prefab.ApplyToEntity(entity)
+			} else {
+				log.L(nil).Fatal("Config AfterLoad entity prefab not found", log.Any("entity", entity))
+			}
+		}
 		if entity.Service != "" {
 			if service, ok := c.Service[entity.Service]; ok {
 				entity.ServiceBase = service.ServiceBase
@@ -152,50 +222,9 @@ func LoadConfig(path string) (*Config, error) {
 }
 
 func decodeFromYaml(content string, cfg *Config) error {
-	var data interface{}
 	err := yaml.Unmarshal([]byte(content), cfg)
 	if err != nil {
 		return err
 	}
-	return decodeFromInterface(data, cfg)
-}
-
-func decodeFromInterface(content interface{}, cfg *Config) error {
-	switch content := content.(type) {
-	case map[string]interface{}:
-		return decodeFromMap(content, cfg)
-	}
-	return nil
-}
-
-func decodeFromMap(content map[string]interface{}, cfg *Config) error {
-	for k, v := range content {
-		switch k {
-		case "entity":
-			switch v := v.(type) {
-			case []interface{}:
-				to := make([]*Entity, 0)
-				if err := decodeEntitySlice(v, &to); err != nil {
-					return err
-				}
-				cfg.Entity = to
-			}
-		}
-	}
-	return nil
-}
-
-func decodeEntitySlice(content []interface{}, to *[]*Entity) error {
-	for _, v := range content {
-		entity := &Entity{}
-		if err := decodeEntity(v.(map[string]interface{}), entity); err != nil {
-			return err
-		}
-		*to = append(*to, entity)
-	}
-	return nil
-}
-
-func decodeEntity(content map[string]interface{}, to *Entity) error {
 	return nil
 }
