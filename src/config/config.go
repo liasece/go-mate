@@ -17,10 +17,11 @@ const (
 )
 
 type TmplItem struct {
-	From  string       `json:"from" yaml:"from"`
-	To    string       `json:"to" yaml:"to"`
-	Type  TmplItemType `json:"type,omitempty" yaml:"type,omitempty"`
-	Merge bool         `json:"merge,omitempty" yaml:"merge,omitempty"`
+	From       string       `json:"from" yaml:"from"`
+	To         string       `json:"to" yaml:"to"`
+	Type       TmplItemType `json:"type,omitempty" yaml:"type,omitempty"`
+	Merge      bool         `json:"merge,omitempty" yaml:"merge,omitempty"`
+	OnlyCreate bool         `json:"onlyCreate,omitempty" yaml:"onlyCreate,omitempty"`
 }
 
 type ServiceBase struct {
@@ -137,6 +138,8 @@ func (c *TmplItem) AfterLoad() {
 			c.Type = TmplItemTypeGo
 		} else if strings.HasSuffix(c.To, ".proto") {
 			c.Type = TmplItemTypeProto
+		} else {
+			log.L(nil).Fatal("TmplItem AfterLoad unknown tmpl type", log.Any("tmpl", c))
 		}
 	}
 }

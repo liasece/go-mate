@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"os"
 	"path/filepath"
 
 	"github.com/liasece/go-mate/src/config"
@@ -39,8 +41,8 @@ func generateEntity(entityCfg *config.Entity) {
 	if entityCfg.Pkg == "" {
 		entityCfg.Pkg = calGoFilePkgName(entityCfg.EntityPath)
 	}
-	log.Info("buildRunner begin", log.Any("entityFile", entityCfg.EntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name))
-	// log.Info("buildRunner begin", log.Any("entityFile", entityCfg.EntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name), log.Any("entityCfg", entityCfg))
+	log.Debug("generateEntity begin", log.Any("entityFile", entityCfg.EntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name))
+	// log.Info("generateEntity begin", log.Any("entityFile", entityCfg.EntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name), log.Any("entityCfg", entityCfg))
 
 	optCode := gocoder.NewCode()
 	repositoryInterfaceCode := gocoder.NewCode()
@@ -51,7 +53,7 @@ func generateEntity(entityCfg *config.Entity) {
 		return
 	}
 	if t == nil {
-		log.Error("buildRunner LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg))
+		log.Error("generateEntity LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg))
 		return
 	}
 	t.SetNamed(entityCfg.Name)
@@ -61,7 +63,8 @@ func generateEntity(entityCfg *config.Entity) {
 			typ := t.Field(i).GetType()
 			filedNames = append(filedNames, t.Field(i).GetName()+"("+typ.ShowString()+")")
 		}
-		log.Info("buildRunner filedNames", log.Any("entityCfg.Name", entityCfg.Name), log.Any("filedNames", filedNames))
+		log.Info("generateEntity filedNames", log.Any("entityFile", entityCfg.EntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name),
+			log.Any("entityCfg.Name", entityCfg.Name), log.Any("filedNames", filedNames))
 	}
 	enGameEntry := repo.NewRepositoryWriterByType(t, entityCfg.Name, entityCfg.Pkg, entityCfg.Service, "", "", "", "")
 	enGameEntry.EntityCfg = entityCfg
@@ -79,17 +82,36 @@ func generateEntity(entityCfg *config.Entity) {
 	}
 
 	for _, tmpl := range entityCfg.Tmpl {
-		toFile, err := gocoder.TemplateRaw(tmpl.To, enGameEntry.NewTmplRepositoryEnv(), nil)
+		toFile, err := gocoder.TemplateRaw(tmpl.To, enGameEntry.NewEntityTmplContext(), nil)
+		if tmpl.OnlyCreate {
+			notExists := false
+			if _, err := os.Stat(toFile); errors.Is(err, os.ErrNotExist) {
+				notExists = true
+			} else if err != nil {
+				log.L(nil).Fatal("generateEntity tmpl check OnlyCreate os.Stat error", log.ErrorField(err))
+				continue
+			}
+			if !notExists {
+				continue
+			}
+		}
 		if err != nil {
-			log.Error("buildRunner TemplateRaw error", log.ErrorField(err))
+			log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
 			return
 		}
 		c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(tmpl.From)
 		if err != nil {
-			log.Error("buildRunner Tmpl GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err), log.Any("tmpl.From", tmpl.From))
+			log.Error("generateEntity Tmpl GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err), log.Any("tmpl.From", tmpl.From))
 		} else {
 			if tmpl.Merge {
-				writer.MergeProtoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				switch tmpl.Type {
+				case config.TmplItemTypeProto:
+					writer.MergeProtoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				case config.TmplItemTypeGo:
+					writer.MergeGoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				default:
+					log.Error("generateEntity Template merge type not support", log.Any("tmpl", tmpl))
+				}
 			} else {
 				gocoder.WriteToFile(toFile, c, gocoder.NewToCodeOpt().PkgName(""))
 			}

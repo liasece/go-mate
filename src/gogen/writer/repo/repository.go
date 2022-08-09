@@ -2,8 +2,6 @@ package repo
 
 import (
 	"fmt"
-	"reflect"
-	"strings"
 
 	"github.com/liasece/go-mate/src/config"
 	"github.com/liasece/gocoder"
@@ -179,132 +177,16 @@ func (w *RepositoryWriter) GetEntityRepositoryCode(filter gocoder.Struct, update
 	return c
 }
 
-type RepositoryEnv struct {
-	w *RepositoryWriter
-}
-
-func (e *RepositoryEnv) EntityName() string {
-	return e.w.entityName
-}
-
-func (e *RepositoryEnv) ServiceName() string {
-	return e.w.serviceName
-}
-
-func (e *RepositoryEnv) ServiceNameTitle() string {
-	s := e.ServiceName()
-	if s == "" {
-		return ""
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
-}
-
-func (e *RepositoryEnv) GetTagOn(filterReg string, targetTag string) string {
-	filterSS := strings.Split(filterReg, ":")
-	filterTag := filterSS[0]
-	filterValue := ""
-	if len(filterSS) > 1 {
-		filterValue = filterSS[1]
-	}
-	for i := 0; i < e.w.entity.NumField(); i++ {
-		t := reflect.StructTag(e.w.entity.Field(i).GetTag())
-		find := false
-		if value := t.Get(filterTag); value != "" {
-			if filterValue == "" {
-				find = true
-			} else {
-				values := strings.Split(value, ",")
-				for _, v := range values {
-					if v == filterValue {
-						find = true
-						break
-					}
-				}
-			}
-		}
-		if !find {
-			continue
-		}
-		if targetTag == "" {
-			return e.w.entity.Field(i).GetName()
-		}
-		return t.Get(targetTag)
-	}
-	return ""
-}
-
-func (e *RepositoryEnv) SplitN(origin string, sep string, n int) string {
-	ss := strings.Split(origin, sep)
-	if n < 0 || n >= len(ss) {
-		return ""
-	}
-	return ss[n]
-}
-
-func (e *RepositoryEnv) GetTypeByTagOn(filterReg string) string {
-	filterSS := strings.Split(filterReg, ":")
-	filterTag := filterSS[0]
-	filterValue := ""
-	if len(filterSS) > 1 {
-		filterValue = filterSS[1]
-	}
-	for i := 0; i < e.w.entity.NumField(); i++ {
-		t := reflect.StructTag(e.w.entity.Field(i).GetTag())
-		find := false
-		if value := t.Get(filterTag); value != "" {
-			if filterValue == "" {
-				find = true
-			} else {
-				values := strings.Split(value, ",")
-				for _, v := range values {
-					if v == filterValue {
-						find = true
-						break
-					}
-				}
-			}
-		}
-		if !find {
-			continue
-		}
-		return e.w.entity.Field(i).GetType().String()
-	}
-	return ""
-}
-
-func (e *RepositoryEnv) GetType(filedName string) string {
-	for i := 0; i < e.w.entity.NumField(); i++ {
-		if e.w.entity.Field(i).GetName() == filedName {
-			return e.w.entity.Field(i).GetType().String()
-		}
-	}
-	return ""
-}
-
-func (e *RepositoryEnv) ToLowerCamelCase(str string) string {
-	if str == "" {
-		return str
-	}
-	return strings.ToLower(str[:1]) + str[1:]
-}
-
-func (e *RepositoryEnv) EntityGrpcSubPkg() string {
-	if e.w.EntityCfg == nil {
-		return ""
-	}
-	return e.w.EntityCfg.GrpcSubPkg
-}
-
-func (w *RepositoryWriter) NewTmplRepositoryEnv() *RepositoryEnv {
-	return &RepositoryEnv{
-		w,
+func (w *RepositoryWriter) NewEntityTmplContext() *EntityTmplContext {
+	return &EntityTmplContext{
+		w: w,
 	}
 }
 
 func (w *RepositoryWriter) GetEntityRepositoryCodeFromTmpl(tmplPath string) (gocoder.Code, error) {
 	c := gocoder.NewCode()
-	code, err := gocoder.TemplateFromFile(tmplPath, &RepositoryEnv{
-		w,
+	code, err := gocoder.TemplateFromFile(tmplPath, &EntityTmplContext{
+		w: w,
 	}, nil)
 	if err != nil {
 		return nil, err
