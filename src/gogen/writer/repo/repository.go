@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/liasece/go-mate/src/config"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
 	"github.com/liasece/gocoder/cdt"
@@ -25,6 +26,8 @@ type RepositoryWriter struct {
 	OutFilterSuffix  string
 	OutUpdaterSuffix string
 	OutSorterSuffix  string
+
+	EntityCfg *config.Entity
 }
 
 func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
@@ -276,6 +279,26 @@ func (e *RepositoryEnv) GetType(filedName string) string {
 		}
 	}
 	return ""
+}
+
+func (e *RepositoryEnv) ToLowerCamelCase(str string) string {
+	if str == "" {
+		return str
+	}
+	return strings.ToLower(str[:1]) + str[1:]
+}
+
+func (e *RepositoryEnv) EntityGrpcSubPkg() string {
+	if e.w.EntityCfg == nil {
+		return ""
+	}
+	return e.w.EntityCfg.GrpcSubPkg
+}
+
+func (w *RepositoryWriter) NewTmplRepositoryEnv() *RepositoryEnv {
+	return &RepositoryEnv{
+		w,
+	}
 }
 
 func (w *RepositoryWriter) GetEntityRepositoryCodeFromTmpl(tmplPath string) (gocoder.Code, error) {
