@@ -28,6 +28,34 @@ func (e *EntityTmplContext) ServiceNameTitle() string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
+func (e *EntityTmplContext) EntityStruct() *EntityStructTmplContext {
+	return &EntityStructTmplContext{
+		w:      e.w,
+		Struct: e.w.GetEntityStruct(),
+	}
+}
+
+func (e *EntityTmplContext) Sorter() *EntityStructTmplContext {
+	return &EntityStructTmplContext{
+		w:      e.w,
+		Struct: e.w.Sorter,
+	}
+}
+
+func (e *EntityTmplContext) Filter() *EntityStructTmplContext {
+	return &EntityStructTmplContext{
+		w:      e.w,
+		Struct: e.w.Filter,
+	}
+}
+
+func (e *EntityTmplContext) Updater() *EntityStructTmplContext {
+	return &EntityStructTmplContext{
+		w:      e.w,
+		Struct: e.w.Updater,
+	}
+}
+
 func (e *EntityTmplContext) GetTagOn(filterReg string, targetTag string) string {
 	fieldNum := e.findFieldNumByTagOn(filterReg)
 	if fieldNum < 0 {

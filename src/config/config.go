@@ -12,8 +12,9 @@ import (
 type TmplItemType string
 
 const (
-	TmplItemTypeGo    TmplItemType = "go"
-	TmplItemTypeProto TmplItemType = "proto"
+	TmplItemTypeGo      TmplItemType = "go"
+	TmplItemTypeProto   TmplItemType = "proto"
+	TmplItemTypeGraphQL TmplItemType = "graphql"
 )
 
 type TmplItem struct {
@@ -25,13 +26,12 @@ type TmplItem struct {
 }
 
 type ServiceBase struct {
-	EntityPath                 string      `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
-	ProtoTypeFile              string      `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
-	ProtoTypeFileIndent        string      `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
-	CopierFile                 string      `json:"copierFile,omitempty" yaml:"copierFile,omitempty"`
-	Tmpl                       []*TmplItem `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
-	EntityOptPkg               string      `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
-	OutputCopierProtoPkgSuffix string      `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
+	EntityPath                 string `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
+	ProtoTypeFile              string `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
+	ProtoTypeFileIndent        string `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
+	CopierFile                 string `json:"copierFile,omitempty" yaml:"copierFile,omitempty"`
+	EntityOptPkg               string `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
+	OutputCopierProtoPkgSuffix string `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
 }
 
 type Service struct {
@@ -62,6 +62,50 @@ type EntityPrefab struct {
 	Fields     []*EntityField `json:"fields,omitempty" yaml:"fields,omitempty"`
 	Service    string         `json:"service,omitempty" yaml:"service,omitempty"`
 	GrpcSubPkg string         `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
+	Prefab     []string       `json:"prefab,omitempty" yaml:"prefab,omitempty"`
+	Tmpl       []*TmplItem    `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
+}
+
+func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
+	if prefab.Comment.Doc == "" && p.Comment.Doc != "" {
+		prefab.Comment.Doc = p.Comment.Doc
+	}
+	if prefab.Name == "" && p.Name != "" {
+		prefab.Name = p.Name
+	}
+	if prefab.Pkg == "" && p.Pkg != "" {
+		prefab.Pkg = p.Pkg
+	}
+	for _, f := range p.Fields {
+		find := false
+		for _, v := range prefab.Fields {
+			if v.Name == f.Name {
+				find = true
+				break
+			}
+		}
+		if !find {
+			prefab.Fields = append(prefab.Fields, f)
+		}
+	}
+	if prefab.Service == "" && p.Service != "" {
+		prefab.Service = p.Service
+	}
+	if prefab.GrpcSubPkg == "" && p.GrpcSubPkg != "" {
+		prefab.GrpcSubPkg = p.GrpcSubPkg
+	}
+	for _, f := range p.Tmpl {
+		find := false
+		for _, v := range prefab.Tmpl {
+			if v.To == f.To {
+				find = true
+				break
+			}
+		}
+		if !find {
+			prefab.Tmpl = append(prefab.Tmpl, f)
+		}
+	}
 }
 
 func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
@@ -92,6 +136,18 @@ func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
 	if entity.GrpcSubPkg == "" && p.GrpcSubPkg != "" {
 		entity.GrpcSubPkg = p.GrpcSubPkg
 	}
+	for _, f := range p.Tmpl {
+		find := false
+		for _, v := range entity.Tmpl {
+			if v.To == f.To {
+				find = true
+				break
+			}
+		}
+		if !find {
+			entity.Tmpl = append(entity.Tmpl, f)
+		}
+	}
 }
 
 type Entity struct {
@@ -102,7 +158,8 @@ type Entity struct {
 	Service     string         `json:"service,omitempty" yaml:"service,omitempty"`
 	GrpcSubPkg  string         `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
 	ServiceBase `json:",inline" yaml:",inline"`
-	Prefab      string `json:"prefab,omitempty" yaml:"prefab,omitempty"`
+	Prefab      []string    `json:"prefab,omitempty" yaml:"prefab,omitempty"`
+	Tmpl        []*TmplItem `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
 }
 
 type EntityFieldType string
@@ -138,6 +195,8 @@ func (c *TmplItem) AfterLoad() {
 			c.Type = TmplItemTypeGo
 		} else if strings.HasSuffix(c.To, ".proto") {
 			c.Type = TmplItemTypeProto
+		} else if strings.HasSuffix(c.To, ".graphql") {
+			c.Type = TmplItemTypeGraphQL
 		} else {
 			log.L(nil).Fatal("TmplItem AfterLoad unknown tmpl type", log.Any("tmpl", c))
 		}
@@ -165,6 +224,15 @@ func (c *ServiceBase) AfterLoad() {
 
 func (c *Config) AfterLoad() {
 	// build prefab
+	for _, prefab := range c.EntityPrefab {
+		for _, innerPrefab := range prefab.Prefab {
+			c.EntityPrefab[innerPrefab].ApplyToPrefab(prefab)
+		}
+		for _, tmpl := range prefab.Tmpl {
+			tmpl.AfterLoad()
+		}
+	}
+
 	for prefabName, entityNameList := range c.BuildEntityWithPrefab {
 		for _, entityName := range entityNameList {
 			find := false
@@ -177,7 +245,7 @@ func (c *Config) AfterLoad() {
 			if !find {
 				c.Entity = append(c.Entity, &Entity{
 					Name:   entityName,
-					Prefab: prefabName,
+					Prefab: []string{prefabName},
 				})
 			} else {
 				log.L(nil).Fatal("Config AfterLoad build prefab target entity already exists", log.Any("entityName", entityName))
@@ -187,14 +255,11 @@ func (c *Config) AfterLoad() {
 
 	for k, service := range c.Service {
 		service.Name = k
-		for _, tmpl := range service.Tmpl {
-			tmpl.AfterLoad()
-		}
 		service.ServiceBase.AfterLoad()
 	}
 	for _, entity := range c.Entity {
-		if entity.Prefab != "" {
-			if prefab, ok := c.EntityPrefab[entity.Prefab]; ok {
+		for _, prefab := range entity.Prefab {
+			if prefab, ok := c.EntityPrefab[prefab]; ok {
 				prefab.ApplyToEntity(entity)
 			} else {
 				log.L(nil).Fatal("Config AfterLoad entity prefab not found", log.Any("entity", entity))

@@ -86,6 +86,16 @@ func (w *RepositoryWriter) GetFilterTypeStructCode() (gocoder.Struct, []*FieldFi
 	return strT, mfs
 }
 
+func (w *RepositoryWriter) GetEntityStruct() gocoder.Struct {
+	mfs := make([]gocoder.Field, 0)
+	for i := 0; i < w.entity.NumField(); i++ {
+		mfs = append(mfs, w.entity.Field(i))
+	}
+	strT := cde.Struct(fmt.Sprintf("%s"))
+	strT.AddFields(mfs)
+	return strT
+}
+
 func (w *RepositoryWriter) GetFilterTypeCode() gocoder.Code {
 	c := gocoder.NewCode()
 	strT, mfs := w.GetFilterTypeStructCode()

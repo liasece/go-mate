@@ -74,10 +74,13 @@ func generateEntity(entityCfg *config.Entity) {
 	if entityCfg.ProtoTypeFile != "" {
 		writer.StructToProto(entityCfg.ProtoTypeFile, t, entityCfg.ProtoTypeFileIndent)
 		filterStr, _ := enGameEntry.GetFilterTypeStructCode()
+		enGameEntry.Filter = filterStr
 		writer.StructToProto(entityCfg.ProtoTypeFile, filterStr.GetType(), entityCfg.ProtoTypeFileIndent)
 		updaterStr, _ := enGameEntry.GetUpdaterTypeStructCode()
+		enGameEntry.Updater = updaterStr
 		writer.StructToProto(entityCfg.ProtoTypeFile, updaterStr.GetType(), entityCfg.ProtoTypeFileIndent)
 		sorterStr, _ := enGameEntry.GetSorterTypeStructCode()
+		enGameEntry.Sorter = sorterStr
 		writer.StructToProto(entityCfg.ProtoTypeFile, sorterStr.GetType(), entityCfg.ProtoTypeFileIndent)
 	}
 
@@ -109,6 +112,8 @@ func generateEntity(entityCfg *config.Entity) {
 					writer.MergeProtoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
 				case config.TmplItemTypeGo:
 					writer.MergeGoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				case config.TmplItemTypeGraphQL:
+					writer.MergeGraphQLFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
 				default:
 					log.Error("generateEntity Template merge type not support", log.Any("tmpl", tmpl))
 				}

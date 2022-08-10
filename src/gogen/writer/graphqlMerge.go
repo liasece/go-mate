@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func splitGoBlock(content string) (blocks []string, body []string) {
+func splitGraphQLBlock(content string) (blocks []string, body []string) {
 	scanner := bufio.NewScanner(strings.NewReader(content))
 	lines := make([]string, 0)
 	for scanner.Scan() {
@@ -59,7 +59,7 @@ func splitGoBlock(content string) (blocks []string, body []string) {
 	return res, resBody
 }
 
-func getGoBlockHead(blockContent string) string {
+func getGraphQLBlockHead(blockContent string) string {
 	nameReg := regexp.MustCompile(`(.*?[\{\(])\n`)
 	parts := nameReg.FindStringSubmatch(blockContent)
 	if len(parts) > 0 {
@@ -68,9 +68,9 @@ func getGoBlockHead(blockContent string) string {
 	return blockContent
 }
 
-func getGoBlockByHead(blocks []string, head string) (string, int) {
+func getGraphQLBlockByHead(blocks []string, head string) (string, int) {
 	regRule := `\s*` + strings.ReplaceAll(regexp.QuoteMeta(head), " ", `\s+`)
-	// log.Info("getGoBlockByHead begin: "+regRule, log.Any("head", head), log.Any("regRule", regRule))
+	// log.Info("getGraphQLBlockByHead begin: "+regRule, log.Any("head", head), log.Any("regRule", regRule))
 	headReg := regexp.MustCompile(regRule)
 	for i, b := range blocks {
 		parts := headReg.FindStringSubmatch(b)
@@ -81,11 +81,11 @@ func getGoBlockByHead(blocks []string, head string) (string, int) {
 	return "", -1
 }
 
-func MergeGoFromFile(protoFile string, newContent string) error {
-	return mergeGoFromFile(protoFile, newContent)
+func MergeGraphQLFromFile(protoFile string, newContent string) error {
+	return mergeGraphQLFromFile(protoFile, newContent)
 }
 
-func mergeGoFromFile(protoFile string, newContent string) error {
+func mergeGraphQLFromFile(protoFile string, newContent string) error {
 	originFileContent := ""
 	{
 		// read from file
@@ -94,14 +94,14 @@ func mergeGoFromFile(protoFile string, newContent string) error {
 			originFileContent = string(content)
 		}
 	}
-	toContent := mergeGo(originFileContent, newContent)
+	toContent := mergeGraphQL(originFileContent, newContent)
 	if toContent != originFileContent {
 		// write to file
 		err := ioutil.WriteFile(protoFile, []byte(toContent), 0644)
 		if err != nil {
 			return err
 		}
-		// log.Error("mergeGoFromFile finish, changed", log.Any("protoFile", protoFile))
+		// log.Error("mergeGraphQLFromFile finish, changed", log.Any("protoFile", protoFile))
 		// if !strings.HasPrefix(toContent, "//go:build wireinject") {
 		// 	log.Error(toContent)
 		// 	os.Exit(1)
@@ -110,18 +110,18 @@ func mergeGoFromFile(protoFile string, newContent string) error {
 	return nil
 }
 
-func mergeGo(originContent string, newContent string) string {
-	newBlocks, newBody := splitGoBlock(newContent)
-	originBlocks, originBody := splitGoBlock(originContent)
-	// log.Error("mergeGo", log.Any("newContent", newContent), log.Any("originContent", originContent), log.Any("newBlocks", newBlocks), log.Any("newBody", newBody), log.Any("originBlocks", originBlocks), log.Any("originBody", originBody))
+func mergeGraphQL(originContent string, newContent string) string {
+	newBlocks, newBody := splitGraphQLBlock(newContent)
+	originBlocks, originBody := splitGraphQLBlock(originContent)
+	// log.Error("mergeGraphQL", log.Any("newContent", newContent), log.Any("originContent", originContent), log.Any("newBlocks", newBlocks), log.Any("newBody", newBody), log.Any("originBlocks", originBlocks), log.Any("originBody", originBody))
 	res := originContent
 	for i, b := range newBlocks {
 		if b == "\n" {
 			continue
 		}
-		newHead := getGoBlockHead(b)
-		origin, index := getGoBlockByHead(originBlocks, newHead)
-		// log.Info("mergeGo", log.Any("b", b), log.Any("newHead", newHead), log.Any("origin", origin), log.Any("index", index))
+		newHead := getGraphQLBlockHead(b)
+		origin, index := getGraphQLBlockByHead(originBlocks, newHead)
+		// log.Info("mergeGraphQL", log.Any("b", b), log.Any("newHead", newHead), log.Any("origin", origin), log.Any("index", index))
 		if origin == "" {
 			// add
 			res = res + b
@@ -129,13 +129,13 @@ func mergeGo(originContent string, newContent string) string {
 			// replace
 			if strings.Count(newBody[i], "\n") > 1 {
 				oldContent := originBody[index]
-				newContent := mergeGo(originBody[index], newBody[i])
+				newContent := mergeGraphQL(originBody[index], newBody[i])
 				res = strings.Replace(res, oldContent, newContent, 1)
 			} else {
 				res = strings.Replace(res, origin, b, 1)
 			}
 		}
 	}
-	// log.Error("mergeGo finish: " + res)
+	// log.Error("mergeGraphQL finish: " + res)
 	return res
 }
