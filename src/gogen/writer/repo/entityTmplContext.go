@@ -56,6 +56,24 @@ func (e *EntityTmplContext) Updater() *EntityStructTmplContext {
 	}
 }
 
+func (e *EntityTmplContext) Env(k1 string, k2 string) string {
+	if e.w.EntityCfg != nil {
+		if _, ok := e.w.EntityCfg.Env[k1]; ok {
+			if v, ok := e.w.EntityCfg.Env[k1][k2]; ok {
+				return v
+			}
+		}
+	}
+	return ""
+}
+
+func (e *EntityTmplContext) EnvOr(k1 string, k2 string, or string) string {
+	if v := e.Env(k1, k2); v != "" {
+		return v
+	}
+	return or
+}
+
 func (e *EntityTmplContext) GetTagOn(filterReg string, targetTag string) string {
 	fieldNum := e.findFieldNumByTagOn(filterReg)
 	if fieldNum < 0 {

@@ -26,12 +26,13 @@ type TmplItem struct {
 }
 
 type ServiceBase struct {
-	EntityPath                 string `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
-	ProtoTypeFile              string `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
-	ProtoTypeFileIndent        string `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
-	CopierFile                 string `json:"copierFile,omitempty" yaml:"copierFile,omitempty"`
-	EntityOptPkg               string `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
-	OutputCopierProtoPkgSuffix string `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
+	EntityPath                 string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
+	ProtoTypeFile              string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
+	ProtoTypeFileIndent        string                       `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
+	CopierFile                 string                       `json:"copierFile,omitempty" yaml:"copierFile,omitempty"`
+	EntityOptPkg               string                       `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
+	OutputCopierProtoPkgSuffix string                       `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
+	Env                        map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 }
 
 type Service struct {
@@ -50,20 +51,22 @@ type Comment struct {
 type Config struct {
 	Comment               `json:",inline" yaml:",inline"`
 	Base                  `json:"base" yaml:"base"`
-	Entity                []*Entity                `json:"entity,omitempty" yaml:"entity,omitempty"`
-	EntityPrefab          map[string]*EntityPrefab `json:"entityPrefab,omitempty" yaml:"entityPrefab,omitempty"`
-	BuildEntityWithPrefab map[string][]string      `json:"buildEntityWithPrefab,omitempty" yaml:"buildEntityWithPrefab,omitempty"`
+	Entity                []*Entity                    `json:"entity,omitempty" yaml:"entity,omitempty"`
+	EntityPrefab          map[string]*EntityPrefab     `json:"entityPrefab,omitempty" yaml:"entityPrefab,omitempty"`
+	BuildEntityWithPrefab map[string][]string          `json:"buildEntityWithPrefab,omitempty" yaml:"buildEntityWithPrefab,omitempty"`
+	Env                   map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 }
 
 type EntityPrefab struct {
 	Comment    `json:",inline" yaml:",inline"`
-	Name       string         `json:"name" yaml:"name"`
-	Pkg        string         `json:"pkg,omitempty" yaml:"pkg,omitempty"`
-	Fields     []*EntityField `json:"fields,omitempty" yaml:"fields,omitempty"`
-	Service    string         `json:"service,omitempty" yaml:"service,omitempty"`
-	GrpcSubPkg string         `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
-	Prefab     []string       `json:"prefab,omitempty" yaml:"prefab,omitempty"`
-	Tmpl       []*TmplItem    `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
+	Name       string                       `json:"name" yaml:"name"`
+	Pkg        string                       `json:"pkg,omitempty" yaml:"pkg,omitempty"`
+	Fields     []*EntityField               `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Service    string                       `json:"service,omitempty" yaml:"service,omitempty"`
+	GrpcSubPkg string                       `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
+	Prefab     []string                     `json:"prefab,omitempty" yaml:"prefab,omitempty"`
+	Tmpl       []*TmplItem                  `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
+	Env        map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 }
 
 func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
@@ -148,6 +151,7 @@ func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
 			entity.Tmpl = append(entity.Tmpl, f)
 		}
 	}
+	entity.Env = mergeEnv(entity.Env, p.Env)
 }
 
 type Entity struct {
@@ -158,8 +162,9 @@ type Entity struct {
 	Service     string         `json:"service,omitempty" yaml:"service,omitempty"`
 	GrpcSubPkg  string         `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
 	ServiceBase `json:",inline" yaml:",inline"`
-	Prefab      []string    `json:"prefab,omitempty" yaml:"prefab,omitempty"`
-	Tmpl        []*TmplItem `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
+	Prefab      []string                     `json:"prefab,omitempty" yaml:"prefab,omitempty"`
+	Tmpl        []*TmplItem                  `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
+	Env         map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 }
 
 type EntityFieldType string
@@ -231,6 +236,7 @@ func (c *Config) AfterLoad() {
 		for _, tmpl := range prefab.Tmpl {
 			tmpl.AfterLoad()
 		}
+		prefab.Env = mergeEnv(prefab.Env, c.Env)
 	}
 
 	for prefabName, entityNameList := range c.BuildEntityWithPrefab {
@@ -256,6 +262,7 @@ func (c *Config) AfterLoad() {
 	for k, service := range c.Service {
 		service.Name = k
 		service.ServiceBase.AfterLoad()
+		service.Env = mergeEnv(service.Env, c.Env)
 	}
 	for _, entity := range c.Entity {
 		for _, prefab := range entity.Prefab {
@@ -268,6 +275,7 @@ func (c *Config) AfterLoad() {
 		if entity.Service != "" {
 			if service, ok := c.Service[entity.Service]; ok {
 				entity.ServiceBase = service.ServiceBase
+				entity.Env = mergeEnv(entity.Env, service.Env)
 			} else {
 				log.L(nil).Fatal("Config AfterLoad service not found", log.Any("entity", entity))
 			}
@@ -295,4 +303,27 @@ func decodeFromYaml(content string, cfg *Config) error {
 		return err
 	}
 	return nil
+}
+
+func mergeEnv(from map[string]map[string]string, to map[string]map[string]string) map[string]map[string]string {
+	res := make(map[string]map[string]string)
+	for k, v := range to {
+		res[k] = map[string]string{}
+		for k2, v2 := range v {
+			res[k][k2] = v2
+		}
+	}
+	for k, v := range from {
+		if _, ok := res[k]; ok {
+			for k2, v2 := range v {
+				res[k][k2] = v2
+			}
+		} else {
+			res[k] = map[string]string{}
+			for k2, v2 := range v {
+				res[k][k2] = v2
+			}
+		}
+	}
+	return res
 }
