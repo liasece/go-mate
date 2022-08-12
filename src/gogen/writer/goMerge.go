@@ -5,6 +5,9 @@ import (
 	"io/ioutil"
 	"regexp"
 	"strings"
+
+	"github.com/pkg/errors"
+	"golang.org/x/tools/imports"
 )
 
 func splitGoBlock(content string) (blocks []string, body []string) {
@@ -69,7 +72,8 @@ func getGoBlockHead(blockContent string) string {
 }
 
 func getGoBlockByHead(blocks []string, head string) (string, int) {
-	regRule := `\s*` + strings.ReplaceAll(regexp.QuoteMeta(head), " ", `\s+`)
+	emptyReg := regexp.MustCompile(`\s+`)
+	regRule := `\s*` + emptyReg.ReplaceAllString(regexp.QuoteMeta(head), `\s+`)
 	// log.Info("getGoBlockByHead begin: "+regRule, log.Any("head", head), log.Any("regRule", regRule))
 	headReg := regexp.MustCompile(regRule)
 	for i, b := range blocks {
@@ -96,10 +100,13 @@ func mergeGoFromFile(protoFile string, newContent string) error {
 	}
 	toContent := mergeGo(originFileContent, newContent)
 	if toContent != originFileContent {
-		// write to file
-		err := ioutil.WriteFile(protoFile, []byte(toContent), 0644)
+		bytes, err := imports.Process(protoFile, []byte(toContent), &imports.Options{FormatOnly: true, Comments: true, TabIndent: true, TabWidth: 8})
 		if err != nil {
 			return err
+		}
+		err = ioutil.WriteFile(protoFile, bytes, 0644)
+		if err != nil {
+			return errors.Wrapf(err, "failed to write %s", protoFile)
 		}
 		// log.Error("mergeGoFromFile finish, changed", log.Any("protoFile", protoFile))
 		// if !strings.HasPrefix(toContent, "//go:build wireinject") {
@@ -115,27 +122,30 @@ func mergeGo(originContent string, newContent string) string {
 	originBlocks, originBody := splitGoBlock(originContent)
 	// log.Error("mergeGo", log.Any("newContent", newContent), log.Any("originContent", originContent), log.Any("newBlocks", newBlocks), log.Any("newBody", newBody), log.Any("originBlocks", originBlocks), log.Any("originBody", originBody))
 	res := originContent
-	for i, b := range newBlocks {
-		if b == "\n" {
+	for i, newBlock := range newBlocks {
+		if newBlock == "\n" {
 			continue
 		}
-		newHead := getGoBlockHead(b)
-		origin, index := getGoBlockByHead(originBlocks, newHead)
-		// log.Info("mergeGo", log.Any("b", b), log.Any("newHead", newHead), log.Any("origin", origin), log.Any("index", index))
+		newBlockHead := getGoBlockHead(newBlock)
+		origin, index := getGoBlockByHead(originBlocks, newBlockHead)
+		// log.Info("mergeGo", log.Any("b", newBlock), log.Any("newHead", newBlockHead), log.Any("origin", origin), log.Any("index", index))
 		if origin == "" {
 			// add
-			res = res + b
+			res = res + newBlock
 		} else {
 			// replace
-			if strings.Count(newBody[i], "\n") > 1 {
+			if strings.Count(newBlock, "\n") > 1 {
 				oldContent := originBody[index]
 				newContent := mergeGo(originBody[index], newBody[i])
 				res = strings.Replace(res, oldContent, newContent, 1)
 			} else {
-				res = strings.Replace(res, origin, b, 1)
+				res = strings.Replace(res, origin, newBlock, 1)
 			}
 		}
 	}
 	// log.Error("mergeGo finish: " + res)
+	// if strings.Contains(res, "Collection") {
+	// 	os.Exit(1)
+	// }
 	return res
 }
