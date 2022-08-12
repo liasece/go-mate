@@ -138,10 +138,17 @@ func generateEntity(entityCfg *config.Entity) {
 		}
 	}
 
-	if entityPath != "" {
-		if entityCfg.Pkg == "" {
-			entityCfg.Pkg = calGoFilePkgName(entityPath)
+	{
+		optFile, err := gocoder.TemplateRaw(entityCfg.OptFilePath, enGameEntry.NewEntityTmplContext(), nil)
+		if err != nil {
+			log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
+			return
 		}
-		gocoder.WriteToFile(entityPath, optCode, gocoder.NewToCodeOpt().PkgName(entityCfg.Pkg))
+		if optFile != "" {
+			if entityCfg.Pkg == "" {
+				entityCfg.Pkg = calGoFilePkgName(optFile)
+			}
+			gocoder.WriteToFile(optFile, optCode, gocoder.NewToCodeOpt().PkgName(entityCfg.Pkg))
+		}
 	}
 }

@@ -68,6 +68,7 @@ type EntityPrefab struct {
 	Env           map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	EntityPath    string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
 	ProtoTypeFile string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
+	OptFilePath   string                       `json:"optFilePath,omitempty" yaml:"optFilePath,omitempty"`
 }
 
 type Entity struct {
@@ -85,6 +86,7 @@ type Entity struct {
 	ProtoTypeFile              string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
 	EntityOptPkg               string                       `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
 	OutputCopierProtoPkgSuffix string                       `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
+	OptFilePath                string                       `json:"optFilePath,omitempty" yaml:"optFilePath,omitempty"`
 }
 
 type EntityFieldType string
@@ -276,6 +278,9 @@ func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
 	if prefab.ProtoTypeFile == "" && p.ProtoTypeFile != "" {
 		prefab.ProtoTypeFile = p.ProtoTypeFile
 	}
+	if prefab.OptFilePath == "" && p.OptFilePath != "" {
+		prefab.OptFilePath = p.OptFilePath
+	}
 }
 
 func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
@@ -324,6 +329,9 @@ func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
 	}
 	if entity.ProtoTypeFile == "" && p.ProtoTypeFile != "" {
 		entity.ProtoTypeFile = p.ProtoTypeFile
+	}
+	if entity.OptFilePath == "" && p.OptFilePath != "" {
+		entity.OptFilePath = p.OptFilePath
 	}
 }
 
