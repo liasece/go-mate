@@ -29,7 +29,6 @@ type ServiceBase struct {
 	EntityPath                 string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
 	ProtoTypeFile              string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
 	ProtoTypeFileIndent        string                       `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
-	CopierFile                 string                       `json:"copierFile,omitempty" yaml:"copierFile,omitempty"`
 	EntityOptPkg               string                       `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
 	OutputCopierProtoPkgSuffix string                       `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
 	Env                        map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
@@ -58,113 +57,34 @@ type Config struct {
 }
 
 type EntityPrefab struct {
-	Comment    `json:",inline" yaml:",inline"`
-	Name       string                       `json:"name" yaml:"name"`
-	Pkg        string                       `json:"pkg,omitempty" yaml:"pkg,omitempty"`
-	Fields     []*EntityField               `json:"fields,omitempty" yaml:"fields,omitempty"`
-	Service    string                       `json:"service,omitempty" yaml:"service,omitempty"`
-	GrpcSubPkg string                       `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
-	Prefab     []string                     `json:"prefab,omitempty" yaml:"prefab,omitempty"`
-	Tmpl       []*TmplItem                  `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
-	Env        map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
-}
-
-func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
-	if prefab.Comment.Doc == "" && p.Comment.Doc != "" {
-		prefab.Comment.Doc = p.Comment.Doc
-	}
-	if prefab.Name == "" && p.Name != "" {
-		prefab.Name = p.Name
-	}
-	if prefab.Pkg == "" && p.Pkg != "" {
-		prefab.Pkg = p.Pkg
-	}
-	for _, f := range p.Fields {
-		find := false
-		for _, v := range prefab.Fields {
-			if v.Name == f.Name {
-				find = true
-				break
-			}
-		}
-		if !find {
-			prefab.Fields = append(prefab.Fields, f)
-		}
-	}
-	if prefab.Service == "" && p.Service != "" {
-		prefab.Service = p.Service
-	}
-	if prefab.GrpcSubPkg == "" && p.GrpcSubPkg != "" {
-		prefab.GrpcSubPkg = p.GrpcSubPkg
-	}
-	for _, f := range p.Tmpl {
-		find := false
-		for _, v := range prefab.Tmpl {
-			if v.To == f.To {
-				find = true
-				break
-			}
-		}
-		if !find {
-			prefab.Tmpl = append(prefab.Tmpl, f)
-		}
-	}
-}
-
-func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
-	if entity.Comment.Doc == "" && p.Comment.Doc != "" {
-		entity.Comment.Doc = p.Comment.Doc
-	}
-	if entity.Name == "" && p.Name != "" {
-		entity.Name = p.Name
-	}
-	if entity.Pkg == "" && p.Pkg != "" {
-		entity.Pkg = p.Pkg
-	}
-	for _, f := range p.Fields {
-		find := false
-		for _, v := range entity.Fields {
-			if v.Name == f.Name {
-				find = true
-				break
-			}
-		}
-		if !find {
-			entity.Fields = append(entity.Fields, f)
-		}
-	}
-	if entity.Service == "" && p.Service != "" {
-		entity.Service = p.Service
-	}
-	if entity.GrpcSubPkg == "" && p.GrpcSubPkg != "" {
-		entity.GrpcSubPkg = p.GrpcSubPkg
-	}
-	for _, f := range p.Tmpl {
-		find := false
-		for _, v := range entity.Tmpl {
-			if v.To == f.To {
-				find = true
-				break
-			}
-		}
-		if !find {
-			entity.Tmpl = append(entity.Tmpl, f)
-		}
-	}
-	entity.Env = mergeEnv(entity.Env, p.Env)
+	Comment       `json:",inline" yaml:",inline"`
+	Name          string                       `json:"name" yaml:"name"`
+	Pkg           string                       `json:"pkg,omitempty" yaml:"pkg,omitempty"`
+	Fields        []*EntityField               `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Service       string                       `json:"service,omitempty" yaml:"service,omitempty"`
+	GrpcSubPkg    string                       `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
+	Prefab        []string                     `json:"prefab,omitempty" yaml:"prefab,omitempty"`
+	Tmpl          []*TmplItem                  `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
+	Env           map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
+	EntityPath    string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
+	ProtoTypeFile string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
 }
 
 type Entity struct {
-	Comment     `json:",inline" yaml:",inline"`
-	Name        string         `json:"name" yaml:"name"`
-	Pkg         string         `json:"pkg,omitempty" yaml:"pkg,omitempty"`
-	Fields      []*EntityField `json:"fields,omitempty" yaml:"fields,omitempty"`
-	Service     string         `json:"service,omitempty" yaml:"service,omitempty"`
-	GrpcSubPkg  string         `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
-	ServiceBase `json:",inline" yaml:",inline"`
-	Prefab      []string                     `json:"prefab,omitempty" yaml:"prefab,omitempty"`
-	Tmpl        []*TmplItem                  `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
-	Env         map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
+	Comment                    `json:",inline" yaml:",inline"`
+	Name                       string                       `json:"name" yaml:"name"`
+	Pkg                        string                       `json:"pkg,omitempty" yaml:"pkg,omitempty"`
+	Fields                     []*EntityField               `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Service                    string                       `json:"service,omitempty" yaml:"service,omitempty"`
+	GrpcSubPkg                 string                       `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
+	Prefab                     []string                     `json:"prefab,omitempty" yaml:"prefab,omitempty"`
+	Tmpl                       []*TmplItem                  `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
+	Env                        map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
+	ProtoTypeFileIndent        string                       `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
+	EntityPath                 string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
+	ProtoTypeFile              string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
+	EntityOptPkg               string                       `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
+	OutputCopierProtoPkgSuffix string                       `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
 }
 
 type EntityFieldType string
@@ -230,13 +150,16 @@ func (c *ServiceBase) AfterLoad() {
 func (c *Config) AfterLoad() {
 	// build prefab
 	for _, prefab := range c.EntityPrefab {
+		prefab.Env = mergeEnv(prefab.Env, c.Env)
+	}
+
+	for _, prefab := range c.EntityPrefab {
 		for _, innerPrefab := range prefab.Prefab {
 			c.EntityPrefab[innerPrefab].ApplyToPrefab(prefab)
 		}
 		for _, tmpl := range prefab.Tmpl {
 			tmpl.AfterLoad()
 		}
-		prefab.Env = mergeEnv(prefab.Env, c.Env)
 	}
 
 	for prefabName, entityNameList := range c.BuildEntityWithPrefab {
@@ -274,12 +197,133 @@ func (c *Config) AfterLoad() {
 		}
 		if entity.Service != "" {
 			if service, ok := c.Service[entity.Service]; ok {
-				entity.ServiceBase = service.ServiceBase
-				entity.Env = mergeEnv(entity.Env, service.Env)
+				service.ApplyToEntity(entity)
 			} else {
 				log.L(nil).Fatal("Config AfterLoad service not found", log.Any("entity", entity))
 			}
 		}
+	}
+}
+
+func (s *Service) ApplyToEntity(entity *Entity) {
+	s.ServiceBase.ApplyToEntity(entity)
+	entity.Service = s.Name
+}
+
+func (s *ServiceBase) ApplyToEntity(entity *Entity) {
+	if entity.EntityPath == "" {
+		entity.EntityPath = s.EntityPath
+	}
+	if entity.ProtoTypeFile == "" {
+		entity.ProtoTypeFile = s.ProtoTypeFile
+	}
+	if entity.ProtoTypeFileIndent == "" {
+		entity.ProtoTypeFileIndent = s.ProtoTypeFileIndent
+	}
+	if entity.EntityOptPkg == "" {
+		entity.EntityOptPkg = s.EntityOptPkg
+	}
+	if entity.OutputCopierProtoPkgSuffix == "" {
+		entity.OutputCopierProtoPkgSuffix = s.OutputCopierProtoPkgSuffix
+	}
+	entity.Env = mergeEnv(entity.Env, s.Env)
+}
+
+func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
+	if prefab.Comment.Doc == "" && p.Comment.Doc != "" {
+		prefab.Comment.Doc = p.Comment.Doc
+	}
+	if prefab.Name == "" && p.Name != "" {
+		prefab.Name = p.Name
+	}
+	if prefab.Pkg == "" && p.Pkg != "" {
+		prefab.Pkg = p.Pkg
+	}
+	for _, f := range p.Fields {
+		find := false
+		for _, v := range prefab.Fields {
+			if v.Name == f.Name {
+				find = true
+				break
+			}
+		}
+		if !find {
+			prefab.Fields = append(prefab.Fields, f)
+		}
+	}
+	if prefab.Service == "" && p.Service != "" {
+		prefab.Service = p.Service
+	}
+	if prefab.GrpcSubPkg == "" && p.GrpcSubPkg != "" {
+		prefab.GrpcSubPkg = p.GrpcSubPkg
+	}
+	for _, f := range p.Tmpl {
+		find := false
+		for _, v := range prefab.Tmpl {
+			if v.To == f.To {
+				find = true
+				break
+			}
+		}
+		if !find {
+			prefab.Tmpl = append(prefab.Tmpl, f)
+		}
+	}
+	prefab.Env = mergeEnv(prefab.Env, p.Env)
+	if prefab.EntityPath == "" && p.EntityPath != "" {
+		prefab.EntityPath = p.EntityPath
+	}
+	if prefab.ProtoTypeFile == "" && p.ProtoTypeFile != "" {
+		prefab.ProtoTypeFile = p.ProtoTypeFile
+	}
+}
+
+func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
+	if entity.Comment.Doc == "" && p.Comment.Doc != "" {
+		entity.Comment.Doc = p.Comment.Doc
+	}
+	if entity.Name == "" && p.Name != "" {
+		entity.Name = p.Name
+	}
+	if entity.Pkg == "" && p.Pkg != "" {
+		entity.Pkg = p.Pkg
+	}
+	for _, f := range p.Fields {
+		find := false
+		for _, v := range entity.Fields {
+			if v.Name == f.Name {
+				find = true
+				break
+			}
+		}
+		if !find {
+			entity.Fields = append(entity.Fields, f)
+		}
+	}
+	if entity.Service == "" && p.Service != "" {
+		entity.Service = p.Service
+	}
+	if entity.GrpcSubPkg == "" && p.GrpcSubPkg != "" {
+		entity.GrpcSubPkg = p.GrpcSubPkg
+	}
+	for _, f := range p.Tmpl {
+		find := false
+		for _, v := range entity.Tmpl {
+			if v.To == f.To {
+				find = true
+				break
+			}
+		}
+		if !find {
+			entity.Tmpl = append(entity.Tmpl, f)
+		}
+	}
+	entity.Env = mergeEnv(entity.Env, p.Env)
+	if entity.EntityPath == "" && p.EntityPath != "" {
+		entity.EntityPath = p.EntityPath
+	}
+	if entity.ProtoTypeFile == "" && p.ProtoTypeFile != "" {
+		entity.ProtoTypeFile = p.ProtoTypeFile
 	}
 }
 

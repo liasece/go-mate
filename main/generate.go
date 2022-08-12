@@ -37,19 +37,27 @@ func generateEntity(entityCfg *config.Entity) {
 	_ = tmpPaths
 	tmpFiles := make([]string, 0)
 	_ = tmpFiles
-	path, _ := filepath.Split(entityCfg.EntityPath)
-	if entityCfg.Pkg == "" {
-		entityCfg.Pkg = calGoFilePkgName(entityCfg.EntityPath)
+	entityPath, err := gocoder.TemplateRaw(entityCfg.EntityPath, &config.ConfigTmplContext{
+		VEntityName:  entityCfg.Name,
+		VServiceName: entityCfg.Service,
+	}, nil)
+	if err != nil {
+		log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
+		return
 	}
-	log.Debug("generateEntity begin", log.Any("entityFile", entityCfg.EntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name))
-	// log.Info("generateEntity begin", log.Any("entityFile", entityCfg.EntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name), log.Any("entityCfg", entityCfg))
+	path, _ := filepath.Split(entityPath)
+	if entityCfg.Pkg == "" {
+		entityCfg.Pkg = calGoFilePkgName(entityPath)
+	}
+	log.Debug("generateEntity begin", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name))
+	// log.Info("generateEntity begin", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name), log.Any("entityCfg", entityCfg))
 
 	optCode := gocoder.NewCode()
 	repositoryInterfaceCode := gocoder.NewCode()
 
-	t, err := cde.LoadTypeFromSource(entityCfg.EntityPath, entityCfg.Name, gocoder.NewToCodeOpt().PkgPath(entityCfg.Pkg))
+	t, err := cde.LoadTypeFromSource(entityPath, entityCfg.Name, gocoder.NewToCodeOpt().PkgPath(entityCfg.Pkg))
 	if err != nil {
-		log.Error("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", entityCfg.EntityPath), log.Any("entityCfg.Name", entityCfg.Name))
+		log.Error("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", entityPath), log.Any("entityCfg.Name", entityCfg.Name))
 		return
 	}
 	if t == nil {
@@ -63,7 +71,7 @@ func generateEntity(entityCfg *config.Entity) {
 			typ := t.Field(i).GetType()
 			filedNames = append(filedNames, t.Field(i).GetName()+"("+typ.ShowString()+")")
 		}
-		log.Info("generateEntity filedNames", log.Any("entityFile", entityCfg.EntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name),
+		log.Info("generateEntity filedNames", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name),
 			log.Any("entityCfg.Name", entityCfg.Name), log.Any("filedNames", filedNames))
 	}
 	enGameEntry := repo.NewRepositoryWriterByType(t, entityCfg.Name, entityCfg.Pkg, entityCfg.Service, "", "", "", "")
@@ -71,21 +79,32 @@ func generateEntity(entityCfg *config.Entity) {
 	optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode())
 	repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
 
-	if entityCfg.ProtoTypeFile != "" {
-		writer.StructToProto(entityCfg.ProtoTypeFile, t, entityCfg.ProtoTypeFileIndent)
-		filterStr, _ := enGameEntry.GetFilterTypeStructCode()
-		enGameEntry.Filter = filterStr
-		writer.StructToProto(entityCfg.ProtoTypeFile, filterStr.GetType(), entityCfg.ProtoTypeFileIndent)
-		updaterStr, _ := enGameEntry.GetUpdaterTypeStructCode()
-		enGameEntry.Updater = updaterStr
-		writer.StructToProto(entityCfg.ProtoTypeFile, updaterStr.GetType(), entityCfg.ProtoTypeFileIndent)
-		sorterStr, _ := enGameEntry.GetSorterTypeStructCode()
-		enGameEntry.Sorter = sorterStr
-		writer.StructToProto(entityCfg.ProtoTypeFile, sorterStr.GetType(), entityCfg.ProtoTypeFileIndent)
+	{
+		protoTypeFile, err := gocoder.TemplateRaw(entityCfg.ProtoTypeFile, enGameEntry.NewEntityTmplContext(), nil)
+		if err != nil {
+			log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
+			return
+		}
+		if protoTypeFile != "" {
+			writer.StructToProto(protoTypeFile, t, entityCfg.ProtoTypeFileIndent)
+			filterStr, _ := enGameEntry.GetFilterTypeStructCode()
+			enGameEntry.Filter = filterStr
+			writer.StructToProto(protoTypeFile, filterStr.GetType(), entityCfg.ProtoTypeFileIndent)
+			updaterStr, _ := enGameEntry.GetUpdaterTypeStructCode()
+			enGameEntry.Updater = updaterStr
+			writer.StructToProto(protoTypeFile, updaterStr.GetType(), entityCfg.ProtoTypeFileIndent)
+			sorterStr, _ := enGameEntry.GetSorterTypeStructCode()
+			enGameEntry.Sorter = sorterStr
+			writer.StructToProto(protoTypeFile, sorterStr.GetType(), entityCfg.ProtoTypeFileIndent)
+		}
 	}
 
 	for _, tmpl := range entityCfg.Tmpl {
 		toFile, err := gocoder.TemplateRaw(tmpl.To, enGameEntry.NewEntityTmplContext(), nil)
+		if err != nil {
+			log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
+			return
+		}
 		if tmpl.OnlyCreate {
 			notExists := false
 			if _, err := os.Stat(toFile); errors.Is(err, os.ErrNotExist) {
@@ -97,10 +116,6 @@ func generateEntity(entityCfg *config.Entity) {
 			if !notExists {
 				continue
 			}
-		}
-		if err != nil {
-			log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
-			return
 		}
 		c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(tmpl.From)
 		if err != nil {
@@ -123,33 +138,10 @@ func generateEntity(entityCfg *config.Entity) {
 		}
 	}
 
-	if entityCfg.CopierFile != "" {
-		var info *writer.ProtoInfo
-		if entityCfg.ProtoTypeFile != "" {
-			info, _ = writer.ReadProtoInfo(entityCfg.ProtoTypeFile)
-		}
-		if info != nil {
-			optPkg := pkgInReference(entityCfg.Pkg)
-			if entityCfg.EntityOptPkg != "" {
-				optPkg = pkgInReference(entityCfg.EntityOptPkg)
-			}
-			entityPkg := pkgInReference(entityCfg.Pkg)
-			infoPkg := pkgInReference(info.Package)
-			var names [][2]string = [][2]string{
-				{entityPkg + "." + entityCfg.Name, infoPkg + entityCfg.OutputCopierProtoPkgSuffix + "." + entityCfg.Name},
-				{infoPkg + entityCfg.OutputCopierProtoPkgSuffix + "." + entityCfg.Name, entityPkg + "." + entityCfg.Name},
-				{infoPkg + entityCfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName()},
-				{infoPkg + entityCfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName()},
-				{infoPkg + entityCfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetSorterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetSorterTypeStructCodeStruct().GetName()},
-			}
-			writer.FillCopierLine(entityCfg.CopierFile, names)
-		}
-	}
-
-	if entityCfg.EntityPath != "" {
+	if entityPath != "" {
 		if entityCfg.Pkg == "" {
-			entityCfg.Pkg = calGoFilePkgName(entityCfg.EntityPath)
+			entityCfg.Pkg = calGoFilePkgName(entityPath)
 		}
-		gocoder.WriteToFile(entityCfg.EntityPath, optCode, gocoder.NewToCodeOpt().PkgName(entityCfg.Pkg))
+		gocoder.WriteToFile(entityPath, optCode, gocoder.NewToCodeOpt().PkgName(entityCfg.Pkg))
 	}
 }

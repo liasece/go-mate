@@ -76,7 +76,7 @@ func splitProtoBlock(content string) (blocks []string, body []string) {
 }
 
 func getProtoBlockHead(blockContent string) string {
-	nameReg := regexp.MustCompile(`\s*(\w+)\s+(\w+)\s*[\{\(]`)
+	nameReg := regexp.MustCompile(`\s*(\w+)\s+(\w+)\s*[\[\{\(]`)
 	parts := nameReg.FindStringSubmatch(blockContent)
 	if len(parts) == 3 {
 		return parts[1] + " " + parts[2]
@@ -85,7 +85,7 @@ func getProtoBlockHead(blockContent string) string {
 }
 
 func getProtoBlockByHead(blocks []string, head string) (string, int) {
-	headReg := regexp.MustCompile(`\s*` + strings.ReplaceAll(head, " ", `\s+`) + `\s*[{\()]`)
+	headReg := regexp.MustCompile(`\s*` + strings.ReplaceAll(head, " ", `\s+`) + `\s*[\[{\()]`)
 	for i, b := range blocks {
 		parts := headReg.FindStringSubmatch(b)
 		if len(parts) != 0 {
@@ -126,15 +126,28 @@ func mergeProto(originContent string, newContent string) string {
 	res := originContent
 	for i, b := range newBlocks {
 		newHead := getProtoBlockHead(b)
-		// log.Info("mergeProto", log.Any("newHead", newHead))
 		if origin, index := getProtoBlockByHead(originBlocks, newHead); origin == "" {
 			// add
 			res = res + b
 		} else {
 			// replace
-			if strings.HasPrefix(newHead, "service") {
+			if strings.HasPrefix(newHead, "service") || strings.HasPrefix(newHead, "message") {
 				res = strings.Replace(res, originBody[index], mergeProto(originBody[index], newBody[i]), 1)
 			} else {
+				{
+					// do'not replace field args
+					headReg := regexp.MustCompile(`.*?\[(.*?)\]^`)
+					parts := headReg.FindStringSubmatch(origin)
+					originArgs := ""
+					if len(parts) != 0 {
+						originArgs = parts[1]
+					}
+					if originArgs != "" {
+						if strings.HasSuffix(b, ";") {
+							b = b[:len(b)-1] + " [" + originArgs + "];"
+						}
+					}
+				}
 				res = strings.Replace(res, origin, b, 1)
 			}
 		}
