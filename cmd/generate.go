@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ type GenerateCfg struct {
 	ConfigFile string `arg:"name: config file; short: f; usage: the config file path of target entity; required;"`
 }
 
-func generate(genCfg *GenerateCfg) {
+func Generate(genCfg *GenerateCfg) {
 	cfg, err := config.LoadConfig(genCfg.ConfigFile)
 	if err != nil {
 		log.L(nil).Fatal("generate LoadConfig error", log.ErrorField(err), log.Any("genCfg", genCfg))

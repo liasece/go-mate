@@ -4,7 +4,7 @@ all: build
 
 .PHONY: build
 build:
-	go build -o bin/ github.com/liasece/go-mate/main
+	go build -o bin/main github.com/liasece/go-mate
 
 .PHONY: run
 run:

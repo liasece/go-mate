@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"go/parser"
@@ -47,7 +47,7 @@ func calGoFilePkgName(path string) string {
 	return f
 }
 
-func initFlag(c *cobra.Command, cfg interface{}) {
+func InitFlag(c *cobra.Command, cfg interface{}) {
 	// build arg flag
 	v := reflect.ValueOf(cfg)
 	t := v.Type().Elem()

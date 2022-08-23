@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"github.com/liasece/log"
 )
 
-func buildRunner(cfg *BuildCfg) {
+func BuildRunner(cfg *BuildCfg) {
 	tmpPaths := make([]string, 0)
 	_ = tmpPaths
 	tmpFiles := make([]string, 0)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/liasece/go-mate/cmd"
 	"github.com/spf13/cobra"
 )
 
@@ -9,31 +10,31 @@ func main() {
 
 	{
 		// buildRunner
-		cfg := &BuildCfg{}
+		cfg := &cmd.BuildCfg{}
 		var buildRunnerCmd = &cobra.Command{
 			Use:   "buildRunner",
 			Short: "build a go main.go to target entity folder",
 			Long:  "",
-			Run: func(cmd *cobra.Command, args []string) {
+			Run: func(c *cobra.Command, args []string) {
 				cfg.AfterLoad()
-				buildRunner(cfg)
+				cmd.BuildRunner(cfg)
 			},
 		}
-		initFlag(buildRunnerCmd, cfg)
+		cmd.InitFlag(buildRunnerCmd, cfg)
 		rootCmd.AddCommand(buildRunnerCmd)
 	}
 	{
 		// generate
-		cfg := &GenerateCfg{}
+		cfg := &cmd.GenerateCfg{}
 		var generateCmd = &cobra.Command{
 			Use:   "generate",
 			Short: "build a go main.go to target entity folder",
 			Long:  "",
-			Run: func(cmd *cobra.Command, args []string) {
-				generate(cfg)
+			Run: func(c *cobra.Command, args []string) {
+				cmd.Generate(cfg)
 			},
 		}
-		initFlag(generateCmd, cfg)
+		cmd.InitFlag(generateCmd, cfg)
 		rootCmd.AddCommand(generateCmd)
 	}
 	rootCmd.Execute()
