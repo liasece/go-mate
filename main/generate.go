@@ -47,37 +47,36 @@ func generateEntity(entityCfg *config.Entity) {
 	}
 	path, _ := filepath.Split(entityPath)
 	if entityCfg.Pkg == "" {
-		entityCfg.Pkg = calGoFilePkgName(entityPath)
+		if entityCfg.GetEnv("go", "mod") != "" {
+			entityCfg.Pkg = entityCfg.GetEnv("go", "mod") + "/" + entityPath
+		} else {
+			entityCfg.Pkg = calGoFilePkgName(entityPath)
+		}
 	}
 	log.Debug("generateEntity begin", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name))
 	// log.Info("generateEntity begin", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name), log.Any("entityCfg", entityCfg))
 
-	optCode := gocoder.NewCode()
-	repositoryInterfaceCode := gocoder.NewCode()
-
-	t, err := cde.LoadTypeFromSource(entityPath, entityCfg.Name, gocoder.NewToCodeOpt().PkgPath(entityCfg.Pkg))
+	entityType, err := cde.LoadTypeFromSource(entityPath, entityCfg.Name, gocoder.NewToCodeOpt().PkgPath(entityCfg.Pkg))
 	if err != nil {
 		log.Error("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", entityPath), log.Any("entityCfg.Name", entityCfg.Name))
 		return
 	}
-	if t == nil {
+	if entityType == nil {
 		log.Error("generateEntity LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg))
 		return
 	}
-	t.SetNamed(entityCfg.Name)
+	entityType.SetNamed(entityCfg.Name)
 	{
 		filedNames := make([]string, 0)
-		for i := 0; i < t.NumField(); i++ {
-			typ := t.Field(i).GetType()
-			filedNames = append(filedNames, t.Field(i).GetName()+"("+typ.ShowString()+")")
+		for i := 0; i < entityType.NumField(); i++ {
+			typ := entityType.Field(i).GetType()
+			filedNames = append(filedNames, entityType.Field(i).GetName()+"("+typ.ShowString()+")")
 		}
 		log.Info("generateEntity filedNames", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name),
 			log.Any("entityCfg.Name", entityCfg.Name), log.Any("filedNames", filedNames))
 	}
-	enGameEntry := repo.NewRepositoryWriterByType(t, entityCfg.Name, entityCfg.Pkg, entityCfg.Service, "", "", "", "")
+	enGameEntry := repo.NewRepositoryWriterByType(entityType, entityCfg.Name, entityCfg.Pkg, entityCfg.Service, "", "", "", "")
 	enGameEntry.EntityCfg = entityCfg
-	optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode())
-	repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
 
 	{
 		protoTypeFile, err := gocoder.TemplateRaw(entityCfg.ProtoTypeFile, enGameEntry.NewEntityTmplContext(), nil)
@@ -86,7 +85,7 @@ func generateEntity(entityCfg *config.Entity) {
 			return
 		}
 		if protoTypeFile != "" {
-			writer.StructToProto(protoTypeFile, t, entityCfg.ProtoTypeFileIndent)
+			writer.StructToProto(protoTypeFile, entityType, entityCfg.ProtoTypeFileIndent)
 			filterStr, _ := enGameEntry.GetFilterTypeStructCode()
 			enGameEntry.Filter = filterStr
 			writer.StructToProto(protoTypeFile, filterStr.GetType(), entityCfg.ProtoTypeFileIndent)
@@ -138,17 +137,21 @@ func generateEntity(entityCfg *config.Entity) {
 		}
 	}
 
-	{
+	if entityCfg.OptFilePath != "" {
+		optCode := gocoder.NewCode()
+		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode())
+
 		optFile, err := gocoder.TemplateRaw(entityCfg.OptFilePath, enGameEntry.NewEntityTmplContext(), nil)
 		if err != nil {
 			log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
 			return
 		}
 		if optFile != "" {
-			if entityCfg.Pkg == "" {
-				entityCfg.Pkg = calGoFilePkgName(optFile)
+			optPkg := calGoFilePkgName(optFile)
+			if optPkg == "" {
+				optPkg = entityCfg.Pkg
 			}
-			gocoder.WriteToFile(optFile, optCode, gocoder.NewToCodeOpt().PkgName(entityCfg.Pkg))
+			gocoder.WriteToFile(optFile, optCode, gocoder.NewToCodeOpt().PkgName(optPkg))
 		}
 	}
 }

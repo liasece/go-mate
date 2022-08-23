@@ -116,6 +116,19 @@ type EntityField struct {
 	Entity  *Entity         `json:"entity" yaml:"entity"`
 }
 
+// get entity config env
+func (c *Entity) GetEnv(k1, k2 string) string {
+	if c.Env == nil {
+		return ""
+	}
+	if v, ok := c.Env[k1]; ok {
+		if v2, ok := v[k2]; ok {
+			return v2
+		}
+	}
+	return ""
+}
+
 func (c *TmplItem) AfterLoad() {
 	if c.Type == "" {
 		if strings.HasSuffix(c.To, ".go") {
