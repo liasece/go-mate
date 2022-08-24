@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"context"
 	"reflect"
 	"strings"
 
@@ -138,4 +139,9 @@ func (e *EntityTmplContext) findFieldNumByTagOn(filterReg string) int {
 		return i
 	}
 	return -1
+}
+
+// get gorm indexes
+func (e *EntityTmplContext) GormIndexes() []*Index {
+	return GormIndexes(context.Background(), e.w.entity)
 }

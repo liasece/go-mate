@@ -118,7 +118,7 @@ func generateEntity(entityCfg *config.Entity) {
 		}
 		c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(tmpl.From)
 		if err != nil {
-			log.Error("generateEntity Tmpl GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err), log.Any("tmpl.From", tmpl.From))
+			log.Panic("generateEntity Tmpl GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err), log.Any("tmpl.From", tmpl.From))
 		} else {
 			if tmpl.Merge {
 				switch tmpl.Type {
