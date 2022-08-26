@@ -22,7 +22,7 @@ func splitProtoBlock(content string) (blocks []string, body []string) {
 		l := lines[i]
 		isHead := false
 		if !in {
-			nameReg := regexp.MustCompile(`^\s*[a-zA-Z_ \t]*?\s*{`)
+			nameReg := regexp.MustCompile(`^\s*[0-9a-zA-Z_ \t]*?\s*{`)
 			parts := nameReg.FindStringSubmatch(l)
 			if len(parts) != 0 {
 				in = true

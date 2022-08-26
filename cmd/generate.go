@@ -147,11 +147,14 @@ func generateEntity(entityCfg *config.Entity) {
 			return
 		}
 		if optFile != "" {
-			optPkg := calGoFilePkgName(optFile)
+			optFileDirPath := filepath.Dir(optFile)
+			optPkg := entityCfg.GetEnv("go", "mod") + "/" + optFileDirPath
 			if optPkg == "" {
 				optPkg = entityCfg.Pkg
 			}
-			gocoder.WriteToFile(optFile, optCode, gocoder.NewToCodeOpt().PkgName(optPkg))
+			optPkgName := filepath.Base(optPkg)
+			// log.L(nil).Error("entityCfg.OptFilePath gen", log.Any("optPkg", optPkg))
+			gocoder.WriteToFile(optFile, optCode, gocoder.NewToCodeOpt().PkgName(optPkgName).PkgPath(optPkg))
 		}
 	}
 }

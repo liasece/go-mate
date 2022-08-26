@@ -132,7 +132,7 @@ func toTitle(str string) string {
 }
 
 func getProdFiledNumInOriginMsg(origin string, fieldNameRaw string) int {
-	fieldReg := regexp.MustCompile(`.*?([a-z_]+)\s*=\s*(\d+).*?`)
+	fieldReg := regexp.MustCompile(`.*?([0-9a-z_]+)\s*=\s*(\d+).*?`)
 	parts := fieldReg.FindAllStringSubmatch(origin, -1)
 	fieldName := strings.ReplaceAll(fieldNameRaw, "_", "")
 	for _, fieldLine := range parts {
@@ -148,7 +148,7 @@ func getProdFiledNumInOriginMsg(origin string, fieldNameRaw string) int {
 }
 
 func getMaxProdFiledNumInOriginMsg(origin string) int {
-	fieldReg := regexp.MustCompile(`.*?([a-z_]+)\s*=\s*(\d+).*?`)
+	fieldReg := regexp.MustCompile(`.*?([0-9a-z_]+)\s*=\s*(\d+).*?`)
 	parts := fieldReg.FindAllStringSubmatch(origin, -1)
 	res := 0
 	for _, fieldLine := range parts {
