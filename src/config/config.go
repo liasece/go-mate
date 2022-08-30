@@ -40,7 +40,7 @@ type Service struct {
 }
 
 type Base struct {
-	Service map[string]*Service `json:"service" yaml:"service"`
+	Service []*Service `json:"service" yaml:"service"`
 }
 
 type Comment struct {
@@ -51,7 +51,7 @@ type Config struct {
 	Comment               `json:",inline" yaml:",inline"`
 	Base                  `json:"base" yaml:"base"`
 	Entity                []*Entity                    `json:"entity,omitempty" yaml:"entity,omitempty"`
-	EntityPrefab          map[string]*EntityPrefab     `json:"entityPrefab,omitempty" yaml:"entityPrefab,omitempty"`
+	EntityPrefab          []*EntityPrefab              `json:"entityPrefab,omitempty" yaml:"entityPrefab,omitempty"`
 	BuildEntityWithPrefab map[string][]string          `json:"buildEntityWithPrefab,omitempty" yaml:"buildEntityWithPrefab,omitempty"`
 	Env                   map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 }
@@ -170,7 +170,18 @@ func (c *Config) AfterLoad() {
 
 	for _, prefab := range c.EntityPrefab {
 		for _, innerPrefab := range prefab.Prefab {
-			c.EntityPrefab[innerPrefab].ApplyToPrefab(prefab)
+			var findEntityPrefab *EntityPrefab
+			for _, v := range c.EntityPrefab {
+				if v.Name == innerPrefab {
+					findEntityPrefab = v
+					break
+				}
+			}
+			if findEntityPrefab != nil {
+				findEntityPrefab.ApplyToPrefab(prefab)
+			} else {
+				log.L(nil).Fatal("Config AfterLoad entity prefab not found", log.Any("innerPrefab", innerPrefab))
+			}
 		}
 		for _, tmpl := range prefab.Tmpl {
 			tmpl.AfterLoad()
@@ -197,22 +208,35 @@ func (c *Config) AfterLoad() {
 		}
 	}
 
-	for k, service := range c.Service {
-		service.Name = k
+	for _, service := range c.Service {
 		service.ServiceBase.AfterLoad()
 		service.Env = mergeEnv(service.Env, c.Env)
 	}
 	for _, entity := range c.Entity {
 		for _, prefab := range entity.Prefab {
-			if prefab, ok := c.EntityPrefab[prefab]; ok {
-				prefab.ApplyToEntity(entity)
+			var findEntityPrefab *EntityPrefab
+			for _, v := range c.EntityPrefab {
+				if v.Name == prefab {
+					findEntityPrefab = v
+					break
+				}
+			}
+			if findEntityPrefab != nil {
+				findEntityPrefab.ApplyToEntity(entity)
 			} else {
 				log.L(nil).Fatal("Config AfterLoad entity prefab not found", log.Any("entity", entity))
 			}
 		}
 		if entity.Service != "" {
-			if service, ok := c.Service[entity.Service]; ok {
-				service.ApplyToEntity(entity)
+			var findService *Service
+			for _, v := range c.Service {
+				if v.Name == entity.Service {
+					findService = v
+					break
+				}
+			}
+			if findService != nil {
+				findService.ApplyToEntity(entity)
 			} else {
 				log.L(nil).Fatal("Config AfterLoad service not found", log.Any("entity", entity))
 			}
@@ -247,9 +271,6 @@ func (s *ServiceBase) ApplyToEntity(entity *Entity) {
 func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
 	if prefab.Comment.Doc == "" && p.Comment.Doc != "" {
 		prefab.Comment.Doc = p.Comment.Doc
-	}
-	if prefab.Name == "" && p.Name != "" {
-		prefab.Name = p.Name
 	}
 	if prefab.Pkg == "" && p.Pkg != "" {
 		prefab.Pkg = p.Pkg
@@ -299,9 +320,6 @@ func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
 func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
 	if entity.Comment.Doc == "" && p.Comment.Doc != "" {
 		entity.Comment.Doc = p.Comment.Doc
-	}
-	if entity.Name == "" && p.Name != "" {
-		entity.Name = p.Name
 	}
 	if entity.Pkg == "" && p.Pkg != "" {
 		entity.Pkg = p.Pkg

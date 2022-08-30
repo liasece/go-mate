@@ -24,8 +24,10 @@ func Generate(genCfg *GenerateCfg) {
 		log.L(nil).Fatal("generate LoadConfig error", log.ErrorField(err), log.Any("genCfg", genCfg))
 	}
 	log.L(nil).Debug("generate LoadConfig finish", log.Any("genCfg", genCfg), log.Any("cfg", cfg))
-	j, _ := json.MarshalIndent(cfg, "", "\t")
-	log.L(nil).Debug("generate config:\n" + string(j))
+	{
+		j, _ := json.MarshalIndent(cfg.Entity, "", "\t")
+		log.L(nil).Debug("entity generate config:\n" + string(j))
+	}
 
 	for _, entity := range cfg.Entity {
 		generateEntity(entity)
@@ -53,7 +55,7 @@ func generateEntity(entityCfg *config.Entity) {
 			entityCfg.Pkg = calGoFilePkgName(entityPath)
 		}
 	}
-	log.Debug("generateEntity begin", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name))
+	// log.Debug("generateEntity begin", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name))
 	// log.Info("generateEntity begin", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name), log.Any("entityCfg", entityCfg))
 
 	entityType, err := cde.LoadTypeFromSource(entityPath, entityCfg.Name, gocoder.NewToCodeOpt().PkgPath(entityCfg.Pkg))
