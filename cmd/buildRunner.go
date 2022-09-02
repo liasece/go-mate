@@ -50,8 +50,8 @@ func BuildRunner(cfg *BuildCfg) {
 			}
 			log.Info("buildRunner filedNames", log.Any("entity", entity), log.Any("filedNames", filedNames))
 		}
-		enGameEntry := repo.NewRepositoryWriterByType(t, entity, cfg.EntityPkg, cfg.ServiceName, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputSorterSuffix, cfg.OutputTypeSuffix)
-		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode())
+		enGameEntry := repo.NewRepositoryWriterByType(t, entity, cfg.EntityPkg, cfg.ServiceName, cfg.OutputFilterSuffix, cfg.OutputUpdaterSuffix, cfg.OutputSorterSuffix, "", cfg.OutputTypeSuffix)
+		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode(), enGameEntry.GetSelectorTypeCode())
 		repositoryInterfaceCode.C(enGameEntry.GetEntityRepositoryInterfaceCode())
 
 		if cfg.OutputProtoFile != "" {
@@ -62,6 +62,8 @@ func BuildRunner(cfg *BuildCfg) {
 			writer.StructToProto(cfg.OutputProtoFile, updaterStr.GetType(), cfg.GetOutputProtoIndent())
 			sorterStr, _ := enGameEntry.GetSorterTypeStructCode()
 			writer.StructToProto(cfg.OutputProtoFile, sorterStr.GetType(), cfg.GetOutputProtoIndent())
+			selectorStr, _ := enGameEntry.GetSelectorTypeStructCode()
+			writer.StructToProto(cfg.OutputProtoFile, selectorStr.GetType(), cfg.GetOutputProtoIndent())
 		}
 
 		for i := range cfg.OutputMergeTmplFile {
@@ -93,6 +95,7 @@ func BuildRunner(cfg *BuildCfg) {
 					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + entity, entityPkg + "." + entity},
 					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetFilterTypeStructCodeStruct().GetName()},
 					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetUpdaterTypeStructCodeStruct().GetName()},
+					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetSorterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetSorterTypeStructCodeStruct().GetName()},
 					{infoPkg + cfg.OutputCopierProtoPkgSuffix + "." + enGameEntry.GetSorterTypeStructCodeStruct().GetName(), optPkg + "." + enGameEntry.GetSorterTypeStructCodeStruct().GetName()},
 				}
 				writer.FillCopierLine(cfg.OutputCopierFile, names)

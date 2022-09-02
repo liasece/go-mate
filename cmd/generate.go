@@ -77,7 +77,7 @@ func generateEntity(entityCfg *config.Entity) {
 		log.Info("generateEntity filedNames", log.Any("entityFile", entityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("path", path), log.Any("entityNames", entityCfg.Name),
 			log.Any("entityCfg.Name", entityCfg.Name), log.Any("filedNames", filedNames))
 	}
-	enGameEntry := repo.NewRepositoryWriterByType(entityType, entityCfg.Name, entityCfg.Pkg, entityCfg.Service, "", "", "", "")
+	enGameEntry := repo.NewRepositoryWriterByType(entityType, entityCfg.Name, entityCfg.Pkg, entityCfg.Service, "", "", "", "", "")
 	enGameEntry.EntityCfg = entityCfg
 
 	{
@@ -97,6 +97,9 @@ func generateEntity(entityCfg *config.Entity) {
 			sorterStr, _ := enGameEntry.GetSorterTypeStructCode()
 			enGameEntry.Sorter = sorterStr
 			writer.StructToProto(protoTypeFile, sorterStr.GetType(), entityCfg.ProtoTypeFileIndent)
+			selectorStr, _ := enGameEntry.GetSelectorTypeStructCode()
+			enGameEntry.Selector = selectorStr
+			writer.StructToProto(protoTypeFile, selectorStr.GetType(), entityCfg.ProtoTypeFileIndent)
 		}
 	}
 
@@ -141,7 +144,7 @@ func generateEntity(entityCfg *config.Entity) {
 
 	if entityCfg.OptFilePath != "" {
 		optCode := gocoder.NewCode()
-		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode())
+		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode(), enGameEntry.GetSelectorTypeCode())
 
 		optFile, err := gocoder.TemplateRaw(entityCfg.OptFilePath, enGameEntry.NewEntityTmplContext(), nil)
 		if err != nil {

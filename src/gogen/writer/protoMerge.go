@@ -47,6 +47,15 @@ func splitProtoBlock(content string) (blocks []string, body []string) {
 					}
 					res = append(res, block)
 					resBody = append(resBody, block)
+				} else {
+					nameReg := regexp.MustCompile(`\w+\s*=\s*\d+.*?;.*?$`)
+					parts := nameReg.FindStringSubmatch(l)
+					if len(parts) != 0 {
+						// single line
+						block := l + "\n"
+						res = append(res, block)
+						resBody = append(resBody, block)
+					}
 				}
 			}
 		}
@@ -81,13 +90,23 @@ func getProtoBlockHead(blockContent string) string {
 	if len(parts) == 3 {
 		return parts[1] + " " + parts[2]
 	}
+	nameReg = regexp.MustCompile(`(\w+)\s*=\s*\d+.*?;.*?`)
+	parts = nameReg.FindStringSubmatch(blockContent)
+	if len(parts) == 2 {
+		return parts[1]
+	}
 	return ""
 }
 
 func getProtoBlockByHead(blocks []string, head string) (string, int) {
 	headReg := regexp.MustCompile(`\s*` + strings.ReplaceAll(head, " ", `\s+`) + `\s*[\[{\()]`)
+	nameReg := regexp.MustCompile(strings.ReplaceAll(head, " ", `\s+`) + `\s*=\s*\d+.*?;.*?`)
 	for i, b := range blocks {
 		parts := headReg.FindStringSubmatch(b)
+		if len(parts) != 0 {
+			return b, i
+		}
+		parts = nameReg.FindStringSubmatch(b)
 		if len(parts) != 0 {
 			return b, i
 		}
@@ -122,16 +141,20 @@ func mergeProtoFromFile(protoFile string, newContent string) error {
 func mergeProto(originContent string, newContent string) string {
 	newBlocks, newBody := splitProtoBlock(newContent)
 	originBlocks, originBody := splitProtoBlock(originContent)
-	// log.Info("mergeProto", log.Any("newContent", newContent), log.Any("originContent", originContent), log.Any("newBlocks", newBlocks), log.Any("newBody", newBody), log.Any("originBlocks", originBlocks), log.Any("originBody", originBody))
+	// log.Info("mergeProto", log.Any("newContent", newContent),
+	// log.Any("originContent", originContent),
+	// log.Any("newBlocks", newBlocks), log.Any("newBody", newBody), log.Any("originBlocks", originBlocks), log.Any("originBody", originBody))
 	res := originContent
-	for i, b := range newBlocks {
-		newHead := getProtoBlockHead(b)
-		if origin, index := getProtoBlockByHead(originBlocks, newHead); origin == "" {
+	for i, newBlock := range newBlocks {
+		newBlockHead := getProtoBlockHead(newBlock)
+		origin, index := getProtoBlockByHead(originBlocks, newBlockHead)
+		// log.Info("mergeProto in", log.Any("newBlock", newBlock), log.Any("newBlockHead", newBlockHead), log.Any("origin", origin), log.Any("index", index))
+		if origin == "" {
 			// add
-			res = res + b
+			res = res + newBlock
 		} else {
 			// replace
-			if strings.HasPrefix(newHead, "service") || strings.HasPrefix(newHead, "message") {
+			if strings.HasPrefix(newBlockHead, "service") || strings.HasPrefix(newBlockHead, "message") {
 				res = strings.Replace(res, originBody[index], mergeProto(originBody[index], newBody[i]), 1)
 			} else {
 				{
@@ -143,12 +166,12 @@ func mergeProto(originContent string, newContent string) string {
 						originArgs = parts[1]
 					}
 					if originArgs != "" {
-						if strings.HasSuffix(b, ";") {
-							b = b[:len(b)-1] + " [" + originArgs + "];"
+						if strings.HasSuffix(newBlock, ";") {
+							newBlock = newBlock[:len(newBlock)-1] + " [" + originArgs + "];"
 						}
 					}
 				}
-				res = strings.Replace(res, origin, b, 1)
+				res = strings.Replace(res, origin, newBlock, 1)
 			}
 		}
 	}

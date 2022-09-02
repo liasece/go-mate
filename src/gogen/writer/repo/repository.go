@@ -16,14 +16,16 @@ type RepositoryWriter struct {
 	entityPkg   string
 	serviceName string
 
-	Filter  gocoder.Struct
-	Updater gocoder.Struct
-	Sorter  gocoder.Struct
+	Filter   gocoder.Struct
+	Updater  gocoder.Struct
+	Sorter   gocoder.Struct
+	Selector gocoder.Struct
 
-	OutTypeSuffix    string
-	OutFilterSuffix  string
-	OutUpdaterSuffix string
-	OutSorterSuffix  string
+	OutTypeSuffix     string
+	OutFilterSuffix   string
+	OutUpdaterSuffix  string
+	OutSorterSuffix   string
+	OutSelectorSuffix string
 
 	EntityCfg *config.Entity
 }
@@ -36,16 +38,17 @@ func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
 	}
 }
 
-func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, serviceName string, outFilterSuffix string, outUpdaterSuffix string, outSorterSuffix string, outTypeSuffix string) *RepositoryWriter {
+func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, serviceName string, outFilterSuffix string, outUpdaterSuffix string, outSorterSuffix string, outSelectorSuffix string, outTypeSuffix string) *RepositoryWriter {
 	return &RepositoryWriter{
-		entity:           t,
-		entityName:       name,
-		entityPkg:        pkg,
-		serviceName:      serviceName,
-		OutTypeSuffix:    outTypeSuffix,
-		OutFilterSuffix:  outFilterSuffix,
-		OutUpdaterSuffix: outUpdaterSuffix,
-		OutSorterSuffix:  outSorterSuffix,
+		entity:            t,
+		entityName:        name,
+		entityPkg:         pkg,
+		serviceName:       serviceName,
+		OutTypeSuffix:     outTypeSuffix,
+		OutFilterSuffix:   outFilterSuffix,
+		OutUpdaterSuffix:  outUpdaterSuffix,
+		OutSorterSuffix:   outSorterSuffix,
+		OutSelectorSuffix: outSelectorSuffix,
 	}
 }
 
@@ -70,6 +73,14 @@ func (w *RepositoryWriter) GetSorterTypeStructCodeStruct() gocoder.Struct {
 		return w.Sorter
 	}
 	res, _ := w.GetSorterTypeStructCode()
+	return res
+}
+
+func (w *RepositoryWriter) GetSelectorTypeStructCodeStruct() gocoder.Struct {
+	if w.Selector != nil {
+		return w.Selector
+	}
+	res, _ := w.GetSelectorTypeStructCode()
 	return res
 }
 
@@ -135,11 +146,30 @@ func (w *RepositoryWriter) GetSorterTypeStructCode() (gocoder.Struct, []*FieldSo
 	return strT, mfs
 }
 
+func (w *RepositoryWriter) GetSelectorTypeStructCode() (gocoder.Struct, []*FieldSelectorField) {
+	mfs := make([]*FieldSelectorField, 0)
+	for i := 0; i < w.entity.NumField(); i++ {
+		mfs = append(mfs, getFieldSelectorFields(w.entity.Field(i))...)
+	}
+
+	strT := cde.Struct(fmt.Sprintf("%sSelector%s%s", w.entityName, w.OutSelectorSuffix, w.OutTypeSuffix), fieldSelectorFieldsToGocoder(mfs)...)
+	return strT, mfs
+}
+
 func (w *RepositoryWriter) GetSorterTypeCode() gocoder.Code {
 	c := gocoder.NewCode()
 	strT, mfs := w.GetSorterTypeStructCode()
 	c.C(strT)
 	c.C(getFieldSorterMethodToBSON(strT, mfs))
+
+	return c
+}
+
+func (w *RepositoryWriter) GetSelectorTypeCode() gocoder.Code {
+	c := gocoder.NewCode()
+	strT, mfs := w.GetSelectorTypeStructCode()
+	c.C(strT)
+	c.C(getFieldSelectorMethodToBSON(strT, mfs))
 
 	return c
 }

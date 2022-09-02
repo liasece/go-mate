@@ -43,6 +43,13 @@ func (e *EntityTmplContext) Sorter() *EntityStructTmplContext {
 	}
 }
 
+func (e *EntityTmplContext) Selector() *EntityStructTmplContext {
+	return &EntityStructTmplContext{
+		w:      e.w,
+		Struct: e.w.Selector,
+	}
+}
+
 func (e *EntityTmplContext) Filter() *EntityStructTmplContext {
 	return &EntityStructTmplContext{
 		w:      e.w,
