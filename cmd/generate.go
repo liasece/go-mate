@@ -97,9 +97,11 @@ func generateEntity(entityCfg *config.Entity) {
 			sorterStr, _ := enGameEntry.GetSorterTypeStructCode()
 			enGameEntry.Sorter = sorterStr
 			writer.StructToProto(protoTypeFile, sorterStr.GetType(), entityCfg.ProtoTypeFileIndent)
-			selectorStr, _ := enGameEntry.GetSelectorTypeStructCode()
-			enGameEntry.Selector = selectorStr
-			writer.StructToProto(protoTypeFile, selectorStr.GetType(), entityCfg.ProtoTypeFileIndent)
+			if entityCfg.NoSelector == nil || !*entityCfg.NoSelector {
+				selectorStr, _ := enGameEntry.GetSelectorTypeStructCode()
+				enGameEntry.Selector = selectorStr
+				writer.StructToProto(protoTypeFile, selectorStr.GetType(), entityCfg.ProtoTypeFileIndent)
+			}
 		}
 	}
 
@@ -144,7 +146,10 @@ func generateEntity(entityCfg *config.Entity) {
 
 	if entityCfg.OptFilePath != "" {
 		optCode := gocoder.NewCode()
-		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode(), enGameEntry.GetSelectorTypeCode())
+		optCode.C(enGameEntry.GetFilterTypeCode(), enGameEntry.GetUpdaterTypeCode(), enGameEntry.GetSorterTypeCode())
+		if entityCfg.NoSelector == nil || !*entityCfg.NoSelector {
+			optCode.C(enGameEntry.GetSelectorTypeCode())
+		}
 
 		optFile, err := gocoder.TemplateRaw(entityCfg.OptFilePath, enGameEntry.NewEntityTmplContext(), nil)
 		if err != nil {

@@ -17,10 +17,12 @@ func (e *EntityStructFieldTmplContext) Name() string {
 	return e.Field.GetName()
 }
 
-func (e *EntityStructFieldTmplContext) Type() string {
-	return e.Field.GetType().String()
+func (e *EntityStructFieldTmplContext) Tag() reflect.StructTag {
+	return reflect.StructTag(e.Field.GetTag())
 }
 
-func (e *EntityStructFieldTmplContext) TypeIsNumber() bool {
-	return e.Field.GetType().Kind() >= reflect.Int && e.Field.GetType().Kind() <= reflect.Float64
+func (e *EntityStructFieldTmplContext) Type() *TypeTmplContext {
+	return &TypeTmplContext{
+		Type: e.Field.GetType(),
+	}
 }
