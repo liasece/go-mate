@@ -11,10 +11,17 @@ type TmplUtilsFunc struct {
 
 func (TmplUtilsFunc) SplitN(origin string, sep string, n int) string {
 	ss := strings.Split(origin, sep)
-	if n < 0 || n >= len(ss) {
-		return ""
+	if n < 0 {
+		if -1*n > len(ss) {
+			return ""
+		}
+		return ss[len(ss)+n]
+	} else {
+		if n >= len(ss) {
+			return ""
+		}
+		return ss[n]
 	}
-	return ss[n]
 }
 
 func (t TmplUtilsFunc) ToLowerCamelCase(str string) string {

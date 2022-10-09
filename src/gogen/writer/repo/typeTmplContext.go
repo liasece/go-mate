@@ -2,6 +2,7 @@ package repo
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/liasece/go-mate/src/gogen/utils"
 	"github.com/liasece/gocoder"
@@ -13,9 +14,32 @@ type TypeTmplContext struct {
 }
 
 func (e *TypeTmplContext) Elem() *TypeTmplContext {
+	if next := e.Type.GetNext(); next != nil {
+		return &TypeTmplContext{
+			Type: next,
+		}
+	}
 	return &TypeTmplContext{
 		Type: e.Type.Elem(),
 	}
+}
+
+func (e *TypeTmplContext) FinalElem() *TypeTmplContext {
+	elem := e
+	for elem.KindIsPointer() || elem.KindIsSlice() || elem.KindIsArray() || elem.KindIsChan() || elem.KindIsMap() || elem.Type.GetNext() != nil {
+		elem = elem.Elem()
+	}
+	return elem
+}
+
+func (e *TypeTmplContext) ExternalTypeString() string {
+	str := e.Type.String()
+	finalElem := e.FinalElem()
+	finalElemPkg := finalElem.PackageInReference()
+	if finalElem.KindIsStruct() && finalElemPkg != "" {
+		str = strings.Replace(str, finalElem.String(), finalElemPkg+"."+finalElem.Name(), -1)
+	}
+	return str
 }
 
 func (e *TypeTmplContext) KindIsNumber() bool {
