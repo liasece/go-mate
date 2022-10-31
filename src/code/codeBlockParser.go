@@ -29,13 +29,16 @@ func (c *CodePairCount) IsZero() bool {
 }
 
 type CodeBlockType struct {
-	Name               string
-	MergeAble          bool
-	RegStr             string
-	RegOriginIndex     int
-	RegKeyIndex        int
-	RegSubContextIndex int
-	ParentNames        []string
+	Name                   string
+	MergeAble              bool
+	RegStr                 string
+	RegOriginIndex         int
+	RegKeyIndex            int
+	RegSubContentIndex     int
+	ParentNames            []string
+	SubsSeparator          string // like "," or ";"
+	SubWarpChar            string // like "()" "{}" "[]"
+	RegSubWarpContentIndex int
 }
 
 type CodeBlockParser struct {
@@ -90,8 +93,8 @@ func (c *CodeBlockParser) protoBlockFromString(parent *CodeBlock, content string
 			if v.RegKeyIndex >= 0 {
 				item.Key = parts[v.RegKeyIndex]
 			}
-			if v.RegSubContextIndex >= 0 {
-				item.SubOriginString = parts[v.RegSubContextIndex]
+			if v.RegSubContentIndex >= 0 {
+				item.SubOriginString = parts[v.RegSubContentIndex]
 				item.SubList = append(item.SubList, c.protoBlocksFromString(item, item.SubOriginString)...)
 			}
 			res = append(res, item)

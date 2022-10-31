@@ -227,10 +227,17 @@ func TestProtoBlock_Merge(t *testing.T) {
 		income *CodeBlock
 	}
 	incomeStr := `
-				message BatchGetAssetTokenConfigResponse {
-					repeated AssetTokenConfig asset_token_config = 1;
-					repeated AssetTokenConfig info_list = 1 [ds_rpc: true, lua_export: true];
-				}
+
+message UpdateGameDetailByGameIDRequest {
+	string game_id = 1 [ds_rpc: true, lua_export: true];
+}
+message UpdateGameDetailByGameIDResponse {
+	repeated AssetTokenConfig asset_token_config = 1 [ds_rpc: true, lua_export: true];
+}
+message BatchGetAssetTokenConfigResponse {
+	repeated AssetTokenConfig asset_token_config = 1;
+	repeated AssetTokenConfig info_list = 1 [ds_rpc: true, lua_export: true];
+}
 				`
 	tests := []struct {
 		name string
@@ -247,16 +254,17 @@ func TestProtoBlock_Merge(t *testing.T) {
 			want: c.Parse(`
 
 message UpdateGameDetailByGameIDRequest {
-	string game_id = 1;
+	string game_id = 1[ds_rpc: true, lua_export: true];
 	GameDetailUpdater updater = 2;
 	optional string op_user_id = 3;
 }
 message UpdateGameDetailByGameIDResponse {
+	repeated AssetTokenConfig asset_token_config = 1 [ds_rpc: true, lua_export: true];
 }
 
 message BatchGetAssetTokenConfigResponse {
 	repeated AssetTokenConfig info_list = 1 [json_name = "nodes", ds_rpc: true, lua_export: true];
-					repeated AssetTokenConfig asset_token_config = 1;
+	repeated AssetTokenConfig asset_token_config = 1;
 }
 
 

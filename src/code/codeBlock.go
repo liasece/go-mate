@@ -2,6 +2,7 @@ package code
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -27,17 +28,48 @@ func (b *CodeBlock) Find(typ CodeBlockType, key string) *CodeBlock {
 }
 
 func (b *CodeBlock) addSub(income *CodeBlock) {
-	if len(b.SubList) == 0 {
-		panic("addSub to empty block: " + income.Key)
+	newSubOriginString := fmt.Sprintf("%s%s", b.SubOriginString, income.OriginString)
+	if income.Type.SubsSeparator != "" && len(b.SubList) > 0 {
+		if !strings.HasSuffix(strings.TrimSpace(b.SubOriginString), income.Type.SubsSeparator) {
+			newSubOriginString = fmt.Sprintf("%s%s %s", b.SubOriginString, income.Type.SubsSeparator, income.OriginString)
+		}
 	}
 	income.Parent = b
 	b.SubList = append(b.SubList, income)
-	newSubOriginString := fmt.Sprintf("%s%s", b.SubOriginString, income.OriginString)
-	switch income.Type.Name {
-	case ProtoBlockTypeOptionItem.Name:
-		if !strings.HasSuffix(strings.TrimSpace(b.SubOriginString), ",") {
-			newSubOriginString = fmt.Sprintf("%s, %s", b.SubOriginString, income.OriginString)
+	if b.SubOriginString == "" {
+		myOldOriginString := b.OriginString
+		// insert first sub origin string
+		if b.Type.SubWarpChar == "" || b.Type.RegSubWarpContentIndex <= 0 {
+			panic("addSub to empty block: " + income.Key + "(" + b.Type.Name + ")")
 		}
+		b.SubOriginString = newSubOriginString
+		insertPos := -1
+		{
+			// find insert pos
+			contentReg := regexp.MustCompile(b.Type.RegStr)
+			indexes := contentReg.FindStringSubmatchIndex(b.OriginString)
+			matchIndex := b.Type.RegSubWarpContentIndex
+			if indexes[matchIndex*2] >= 0 {
+				insertPos = indexes[matchIndex*2]
+			} else {
+				for matchIndex > 0 {
+					matchIndex--
+					if indexes[matchIndex*2] >= 0 {
+						insertPos = indexes[matchIndex*2+1]
+						break
+					}
+				}
+			}
+		}
+		if insertPos < 0 {
+			panic("addSub to empty block: " + income.Key)
+		}
+		b.OriginString = fmt.Sprintf("%s%s%s%s%s", b.OriginString[:insertPos], b.Type.SubWarpChar[:1], b.SubOriginString, b.Type.SubWarpChar[1:], b.OriginString[insertPos:])
+
+		if b.Parent != nil {
+			newSubOriginString = strings.Replace(b.Parent.SubOriginString, myOldOriginString, b.OriginString, 1)
+		}
+		b = b.Parent
 	}
 	for b != nil {
 		myOldSubOriginString := b.SubOriginString
