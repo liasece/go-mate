@@ -14,8 +14,32 @@ type CodePairCount struct {
 
 func (c *CodePairCount) Add(line string) {
 	for _, v := range c.KeyWord {
-		c.Count[v] += strings.Count(line, v[:1])
-		c.Count[v] -= strings.Count(line, v[1:])
+		head := ""
+		tail := ""
+		if len(v) == 2 {
+			head = v[:1]
+			tail = v[1:]
+		} else {
+			list := strings.Split(v, " ")
+			if len(list) == 2 {
+				head = list[0]
+				tail = list[1]
+			} else {
+				panic("CodePairCount.Add: invalid keyword: " + v)
+			}
+		}
+		if head == tail {
+			if strings.Contains(line, head) {
+				if c.Count[v] > 0 {
+					c.Count[v]--
+				} else {
+					c.Count[v]++
+				}
+			}
+		} else {
+			c.Count[v] += strings.Count(line, v[:1])
+			c.Count[v] -= strings.Count(line, v[1:])
+		}
 	}
 }
 
@@ -42,9 +66,10 @@ type CodeBlockType struct {
 }
 
 type CodeBlockParser struct {
-	Types          []CodeBlockType
-	PairKeys       []string
-	LineCommentKey string
+	Types             []CodeBlockType
+	PairKeys          []string
+	LineCommentKey    string
+	PendingLinePrefix string
 }
 
 func (c *CodeBlockParser) Parse(content string) *CodeBlock {
@@ -52,6 +77,7 @@ func (c *CodeBlockParser) Parse(content string) *CodeBlock {
 		Parent:          nil,
 		OriginString:    content,
 		SubOriginString: content,
+		Type:            CodeBlockType{"", true, "", 0, 0, 0, nil, "", "", 0},
 	}
 	res.SubList = c.protoBlocksFromString(res, res.SubOriginString)
 	return res
@@ -134,8 +160,18 @@ func (c *CodeBlockParser) protoBlocksFromString(parent *CodeBlock, content strin
 			currentBlockContent += "\n"
 		}
 		if pairCount.IsZero() {
-			res = append(res, c.protoBlockFromString(parent, currentBlockContent)...)
-			currentBlockContent = ""
+			pending := false
+			if c.PendingLinePrefix != "" {
+				if len(lines) > i+1 {
+					if strings.HasPrefix(strings.Trim(lines[i+1], " \t"), c.PendingLinePrefix) {
+						pending = true
+					}
+				}
+			}
+			if !pending {
+				res = append(res, c.protoBlockFromString(parent, currentBlockContent)...)
+				currentBlockContent = ""
+			}
 		}
 	}
 	if currentBlockContent != "" {

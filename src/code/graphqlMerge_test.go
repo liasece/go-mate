@@ -32,6 +32,10 @@ type GameEntry implements Node {
   game: Game @goField(forceResolver: true)
 }
 
+input GameEntryUpdater {
+  justDelete: Boolean
+}
+
 extend type Query {
   gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
   gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
@@ -42,7 +46,7 @@ extend type Query {
 `
 
 func TestGraphqlBlockFromString(t *testing.T) {
-	c := NewGraphqlBufCodeBlockParser()
+	c := NewGraphqlCodeBlockParser()
 	type args struct {
 		p       *CodeBlock
 		content string
@@ -60,95 +64,117 @@ func TestGraphqlBlockFromString(t *testing.T) {
 			want: &CodeBlock{
 				OriginString:    graphqlContent1,
 				SubOriginString: graphqlContent1,
+				Type:            CodeBlockType{MergeAble: true},
 				SubList: []*CodeBlock{
 					{
 						Key:             "GameEntry",
 						Type:            GraphqlBlockTypeType,
-						OriginString:    "type GameEntry implements Node {\n  id: ID!\n  name: String!\n  channelID: String!\n  createAt: Timestamp!\n  updateAt: Timestamp!\n  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n  visibilityType: Int!\n  ownerID: String!\n  groupID: String!\n  oldGameID: String!\n  oldGameVersion: String!\n  detailID: String!\n  indexWeight: Int!\n\n  detail: GameDetail @goField(forceResolver: true)\n  game: Game @goField(forceResolver: true)\n}\n",
-						SubOriginString: "\n  id: ID!\n  name: String!\n  channelID: String!\n  createAt: Timestamp!\n  updateAt: Timestamp!\n  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n  visibilityType: Int!\n  ownerID: String!\n  groupID: String!\n  oldGameID: String!\n  oldGameVersion: String!\n  detailID: String!\n  indexWeight: Int!\n\n  detail: GameDetail @goField(forceResolver: true)\n  game: Game @goField(forceResolver: true)\n",
+						OriginString:    "type GameEntry implements Node {\n  id: ID!\n  name: String!\n  channelID: String!\n  createAt: Timestamp!\n  updateAt: Timestamp!\n  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n  visibilityType: Int!\n  ownerID: String!\n  groupID: String!\n  oldGameID: String!\n  oldGameVersion: String!\n  detailID: String!\n  indexWeight: Int!\n\n  detail: GameDetail @goField(forceResolver: true)\n  game: Game @goField(forceResolver: true)\n}",
+						SubOriginString: "id: ID!\n  name: String!\n  channelID: String!\n  createAt: Timestamp!\n  updateAt: Timestamp!\n  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n  visibilityType: Int!\n  ownerID: String!\n  groupID: String!\n  oldGameID: String!\n  oldGameVersion: String!\n  detailID: String!\n  indexWeight: Int!\n\n  detail: GameDetail @goField(forceResolver: true)\n  game: Game @goField(forceResolver: true)",
 						SubList: []*CodeBlock{
 							{
 								Key:             "id",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  id: ID!\n",
+								OriginString:    "id: ID!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "name",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  name: String!\n",
+								OriginString:    "name: String!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "channelID",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  channelID: String!\n",
+								OriginString:    "channelID: String!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "createAt",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  createAt: Timestamp!\n",
+								OriginString:    "createAt: Timestamp!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "updateAt",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  updateAt: Timestamp!\n",
+								OriginString:    "updateAt: Timestamp!",
 								SubOriginString: "",
+							},
+							{
+								Key:             "可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n",
+								Type:            GraphqlBlockExplain,
+								OriginString:    "  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n",
+								SubOriginString: "",
+								SubList:         nil,
 							},
 							{
 								Key:             "visibilityType",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  visibilityType: Int!\n",
+								OriginString:    "visibilityType: Int!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "ownerID",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  ownerID: String!\n",
+								OriginString:    "ownerID: String!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "groupID",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  groupID: String!\n",
+								OriginString:    "groupID: String!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "oldGameID",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  oldGameID: String!\n",
+								OriginString:    "oldGameID: String!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "oldGameVersion",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  oldGameVersion: String!\n",
+								OriginString:    "oldGameVersion: String!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "detailID",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  detailID: String!\n",
+								OriginString:    "detailID: String!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "indexWeight",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  indexWeight: Int!\n",
+								OriginString:    "indexWeight: Int!",
 								SubOriginString: "",
 							},
 							{
 								Key:             "detail",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  detail: GameDetail @goField(forceResolver: true)\n",
+								OriginString:    "detail: GameDetail @goField(forceResolver: true)",
 								SubOriginString: "",
 							},
 							{
 								Key:             "game",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  game: Game @goField(forceResolver: true)\n",
+								OriginString:    "game: Game @goField(forceResolver: true)",
+								SubOriginString: "",
+							},
+						},
+					},
+					{
+						Key:             "GameEntryUpdater",
+						Type:            GraphqlBlockTypeInput,
+						OriginString:    "input GameEntryUpdater {\n  justDelete: Boolean\n}\n",
+						SubOriginString: "justDelete: Boolean",
+						SubList: []*CodeBlock{
+							{
+								Key:             "justDelete",
+								Type:            GraphqlBlockTypeInputField,
+								OriginString:    "justDelete: Boolean",
 								SubOriginString: "",
 							},
 						},
@@ -156,18 +182,18 @@ func TestGraphqlBlockFromString(t *testing.T) {
 					{
 						Key:             "Query",
 						Type:            GraphqlBlockTypeType,
-						OriginString:    "extend type Query {\n  gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n}\n",
-						SubOriginString: "\n  gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n",
+						OriginString:    "extend type Query {\n  gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n}",
+						SubOriginString: "gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })",
 						SubList: []*CodeBlock{
 							{
 								Key:             "gameEntry",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n",
+								OriginString:    "gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })",
 								SubOriginString: "id: ID!",
 								SubList: []*CodeBlock{
 									{
 										Key:             "id",
-										Type:            GraphqlBlockTypeTypeField,
+										Type:            GraphqlBlockTypeTypeFieldArg,
 										OriginString:    "id: ID!",
 										SubOriginString: "",
 									},
@@ -176,7 +202,7 @@ func TestGraphqlBlockFromString(t *testing.T) {
 							{
 								Key:             "gameEntries",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n",
+								OriginString:    "gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })",
 								SubOriginString: "filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!",
 								SubList: []*CodeBlock{
 									{
@@ -188,19 +214,19 @@ func TestGraphqlBlockFromString(t *testing.T) {
 									{
 										Key:             "sorts",
 										Type:            GraphqlBlockTypeTypeFieldArg,
-										OriginString:    " sorts: [GameEntrySorter!]",
+										OriginString:    "sorts: [GameEntrySorter!]",
 										SubOriginString: "",
 									},
 									{
 										Key:             "offset",
 										Type:            GraphqlBlockTypeTypeFieldArg,
-										OriginString:    " offset: Int!",
+										OriginString:    "offset: Int!",
 										SubOriginString: "",
 									},
 									{
 										Key:             "limit",
 										Type:            GraphqlBlockTypeTypeFieldArg,
-										OriginString:    " limit: Int!",
+										OriginString:    "limit: Int!",
 										SubOriginString: "",
 									},
 								},
@@ -208,7 +234,7 @@ func TestGraphqlBlockFromString(t *testing.T) {
 							{
 								Key:             "searchGameEntry",
 								Type:            GraphqlBlockTypeTypeField,
-								OriginString:    "  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n",
+								OriginString:    "searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })",
 								SubOriginString: "filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!",
 								SubList: []*CodeBlock{
 									{
@@ -220,19 +246,19 @@ func TestGraphqlBlockFromString(t *testing.T) {
 									{
 										Key:             "sorts",
 										Type:            GraphqlBlockTypeTypeFieldArg,
-										OriginString:    " sorts: [GameEntrySorter!]",
+										OriginString:    "sorts: [GameEntrySorter!]",
 										SubOriginString: "",
 									},
 									{
 										Key:             "offset",
 										Type:            GraphqlBlockTypeTypeFieldArg,
-										OriginString:    " offset: Int!",
+										OriginString:    "offset: Int!",
 										SubOriginString: "",
 									},
 									{
 										Key:             "limit",
 										Type:            GraphqlBlockTypeTypeFieldArg,
-										OriginString:    " limit: Int!",
+										OriginString:    "limit: Int!",
 										SubOriginString: "",
 									},
 								},
@@ -259,15 +285,22 @@ func TestGraphqlBlockFromString(t *testing.T) {
 }
 
 func TestGraphqlBlock_Merge(t *testing.T) {
-	c := NewGraphqlBufCodeBlockParser()
+	c := NewGraphqlCodeBlockParser()
 	type args struct {
 		income *CodeBlock
 	}
 	incomeStr := `
+type GameEntryNew {
+  test: Int!
+}
+
+type GameEntry {
+  test: Int!
+}
 
 extend type Query {
   gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
-  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
+  gameEntries(
     filter: GameEntryFilter!
     sorts: [GameEntrySorter!]
     skip: Int!
@@ -278,8 +311,7 @@ extend type Query {
   searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
   gameEntry(id: ID!): GameEntry!
-}
-`
+}`
 	tests := []struct {
 		name string
 		b    *CodeBlock
@@ -314,16 +346,23 @@ type GameEntry implements Node {
 
   detail: GameDetail @goField(forceResolver: true)
   game: Game @goField(forceResolver: true)
+test: Int!
+}
+
+input GameEntryUpdater {
+  justDelete: Boolean
 }
 
 extend type Query {
   gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
-  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!, test: Int!): GameEntryConnection!
+  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!, skip: Int!, test: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
   searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`),
+type GameEntryNew {
+  test: Int!
+}`),
 		},
 	}
 	for _, tt := range tests {
@@ -332,10 +371,15 @@ extend type Query {
 			if err != nil {
 				t.Errorf("json.MarshalIndent error: %v", err)
 			}
-			fmt.Println("Old:\n```" + string(jsOld) + "```")
+			incomeJs, err := json.MarshalIndent(tt.args.income, "", "\t")
+			if err != nil {
+				t.Errorf("json.MarshalIndent error: %v", err)
+			}
 			got := tt.b.Merge(tt.args.income)
 
 			if !assert.Equal(t, tt.want, got) {
+				fmt.Println("Old:\n```" + string(jsOld) + "```")
+				fmt.Println("Income:\n```" + string(incomeJs) + "```")
 				js, err := json.MarshalIndent(got, "", "\t")
 				if err != nil {
 					t.Errorf("json.MarshalIndent error: %v", err)

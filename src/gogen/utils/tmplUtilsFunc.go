@@ -39,6 +39,14 @@ func (TmplUtilsFunc) ToCamelCase(str string) string {
 	return strings.ToUpper(str[:1]) + str[1:]
 }
 
+func (TmplUtilsFunc) HasPrefix(s, prefix string) bool {
+	return strings.HasPrefix(s, prefix)
+}
+
+func (TmplUtilsFunc) HasSuffix(s, suffix string) bool {
+	return strings.HasSuffix(s, suffix)
+}
+
 // english word to plural
 func (t TmplUtilsFunc) Plural(word string) string {
 	if word == "" {

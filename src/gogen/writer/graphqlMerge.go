@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"regexp"
 	"strings"
+
+	"github.com/liasece/go-mate/src/code"
 )
 
 func splitGraphQLBlock(content string) (blocks []string, body []string) {
@@ -111,31 +113,7 @@ func mergeGraphQLFromFile(protoFile string, newContent string) error {
 }
 
 func mergeGraphQL(originContent string, newContent string) string {
-	newBlocks, newBody := splitGraphQLBlock(newContent)
-	originBlocks, originBody := splitGraphQLBlock(originContent)
-	// log.Error("mergeGraphQL", log.Any("newContent", newContent), log.Any("originContent", originContent), log.Any("newBlocks", newBlocks), log.Any("newBody", newBody), log.Any("originBlocks", originBlocks), log.Any("originBody", originBody))
-	res := originContent
-	for i, b := range newBlocks {
-		if b == "\n" {
-			continue
-		}
-		newHead := getGraphQLBlockHead(b)
-		origin, index := getGraphQLBlockByHead(originBlocks, newHead)
-		// log.Info("mergeGraphQL", log.Any("b", b), log.Any("newHead", newHead), log.Any("origin", origin), log.Any("index", index))
-		if origin == "" {
-			// add
-			res = res + b
-		} else {
-			// replace
-			if strings.Count(newBody[i], "\n") > 1 {
-				oldContent := originBody[index]
-				newContent := mergeGraphQL(originBody[index], newBody[i])
-				res = strings.Replace(res, oldContent, newContent, 1)
-			} else {
-				res = strings.Replace(res, origin, b, 1)
-			}
-		}
-	}
-	// log.Error("mergeGraphQL finish: " + res)
-	return res
+	c := code.NewGraphqlCodeBlockParser()
+	res := c.Parse(originContent).Merge(c.Parse(newContent))
+	return res.OriginString
 }
