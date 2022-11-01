@@ -61,13 +61,10 @@ func (b *CodeBlock) addSub(income *CodeBlock) {
 	}
 	income.Parent = b
 	b.SubList = append(b.SubList, income)
-	if b.SubOriginString == "" {
+	if b.SubOriginString == "" && b.Type.SubWarpChar != "" && b.Type.RegSubWarpContentIndex > 0 {
 		// new subs
 		myOldOriginString := b.OriginString
 		// insert first sub origin string
-		if b.Type.SubWarpChar == "" || b.Type.RegSubWarpContentIndex <= 0 {
-			panic("addSub to empty block: " + income.Key + "(" + b.Type.Name + ")")
-		}
 		b.SubOriginString = strings.Trim(newSubOriginString, " \t\r\n")
 		insertPos := -1
 		newBlock := false
