@@ -29,11 +29,11 @@ func (c *CodePairCount) Add(line string) {
 			}
 		}
 		if head == tail {
-			if strings.Contains(line, head) {
+			if count := strings.Count(line, head); count > 0 {
 				if c.Count[v] > 0 {
-					c.Count[v]--
+					c.Count[v] -= count % 2
 				} else {
-					c.Count[v]++
+					c.Count[v] += count % 2
 				}
 			}
 		} else {
