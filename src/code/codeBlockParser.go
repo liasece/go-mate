@@ -63,6 +63,7 @@ type CodeBlockType struct {
 	SubsSeparator          string // like "," or ";"
 	SubWarpChar            string // like "()" "{}" "[]"
 	RegSubWarpContentIndex int
+	KeyCaseIgnored         bool // ABc == abc
 }
 
 type CodeBlockParser struct {
@@ -77,7 +78,7 @@ func (c *CodeBlockParser) Parse(content string) *CodeBlock {
 		Parent:          nil,
 		OriginString:    content,
 		SubOriginString: content,
-		Type:            CodeBlockType{"", true, "", 0, 0, 0, nil, "", "", 0},
+		Type:            CodeBlockType{"", true, "", 0, 0, 0, nil, "", "", 0, false},
 	}
 	res.SubList = c.protoBlocksFromString(res, res.SubOriginString)
 	return res

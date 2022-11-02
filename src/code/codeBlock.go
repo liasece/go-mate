@@ -16,11 +16,20 @@ type CodeBlock struct {
 }
 
 func (b *CodeBlock) Find(typ CodeBlockType, key string) *CodeBlock {
-	if b.Type.Name == typ.Name && b.Key == key {
+	bKey := b.Key
+	if b.Type.KeyCaseIgnored || typ.KeyCaseIgnored {
+		key = strings.ToLower(key)
+		bKey = strings.ToLower(bKey)
+	}
+	if b.Type.Name == typ.Name && bKey == key {
 		return b
 	}
 	for _, v := range b.SubList {
-		if v.Type.Name == typ.Name && v.Key == key {
+		vKey := v.Key
+		if v.Type.KeyCaseIgnored || typ.KeyCaseIgnored {
+			vKey = strings.ToLower(vKey)
+		}
+		if v.Type.Name == typ.Name && vKey == key {
 			return v
 		}
 	}
@@ -126,7 +135,7 @@ func (b *CodeBlock) Merge(income *CodeBlock) *CodeBlock {
 		b.addSub(income)
 	} else {
 		// fmt.Println("Merge exists:" + income.Key + "(" + exists.Type.Name + ")" + " (MergeAble: " + fmt.Sprint(exists.Type.MergeAble) + ")")
-		if exists.Type.MergeAble {
+		if exists.Type.MergeAble && income.Type.MergeAble {
 			for _, v := range income.SubList {
 				exists.Merge(v)
 			}

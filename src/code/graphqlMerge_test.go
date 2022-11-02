@@ -296,10 +296,10 @@ type GameEntryNew {
 
 type GameEntry {
   test: Int!
+  Game: Game @goField(forceResolver: false)
 }
 
 extend type Query {
-  gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
   gameEntries(
     filter: GameEntryFilter!
     sorts: [GameEntrySorter!]
@@ -310,7 +310,7 @@ extend type Query {
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
   searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
-  gameEntry(id: ID!): GameEntry!
+  gameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }`
 	tests := []struct {
 		name string
@@ -355,7 +355,7 @@ input GameEntryUpdater {
 
 extend type Query {
   gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
-  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!, skip: Int!, test: Int!): GameEntryConnection!
+  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
   searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
@@ -363,6 +363,43 @@ extend type Query {
 type GameEntryNew {
   test: Int!
 }`),
+		},
+		{
+			name: "merge",
+			b: c.Parse(`
+extend type Query {
+  gameDetailByID(id: ID!): GameDetail! @HasPermission(auth: { any: [GAME_DETAIL] })
+  """
+  游戏详情
+  """
+  gameDetail(gameID: String!, version: String!): DisplayGameAuditInfo!
+    @HasPermission(auth: { prefixAny: [GAME, PLAYER, ASSET, OFFICIAL] })
+    @sunset
+  gameDetails(filter: GameDetailFilter!, sorts: [GameDetailSorter!], offset: Int!, limit: Int!): GameDetailConnection!
+    @HasPermission(auth: { any: [GAME_DETAIL] })
+}
+`),
+			args: args{
+				income: c.Parse(`
+extend type Query {
+gameDetails(filter: GameDetailFilter!, sorts: [GameDetailSorter!], offset: Int!, limit: Int!): GameDetailConnection!
+gameDetail(id: ID!): GameDetail!
+}
+`),
+			},
+			want: c.Parse(`
+extend type Query {
+  gameDetailByID(id: ID!): GameDetail! @HasPermission(auth: { any: [GAME_DETAIL] })
+  """
+  游戏详情
+  """
+  gameDetail(gameID: String!, version: String!): DisplayGameAuditInfo!
+    @HasPermission(auth: { prefixAny: [GAME, PLAYER, ASSET, OFFICIAL] })
+    @sunset
+  gameDetails(filter: GameDetailFilter!, sorts: [GameDetailSorter!], offset: Int!, limit: Int!): GameDetailConnection!
+    @HasPermission(auth: { any: [GAME_DETAIL] })
+}
+`),
 		},
 	}
 	for _, tt := range tests {
