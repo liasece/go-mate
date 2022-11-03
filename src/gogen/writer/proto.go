@@ -222,6 +222,10 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 			isBaseType = false
 		case "int":
 			typ = "int64"
+		case "float32":
+			typ = "float"
+		case "float64":
+			typ = "double"
 		}
 		name := snakeString(f.GetName())
 		opt := ""
