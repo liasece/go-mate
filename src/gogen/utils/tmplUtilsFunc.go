@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -144,6 +145,10 @@ func (t TmplUtilsFunc) SplitCamelCase(src string) (entries []string) {
 }
 
 func (t TmplUtilsFunc) GraphqlStyle(fieldName string, typeName string) string {
+	return t.GraphqlStyleW(fieldName, typeName, "")
+}
+
+func (t TmplUtilsFunc) GraphqlStyleW(fieldName string, typeName string, writeType string) string {
 	nameWords := t.SplitCamelCase(fieldName)
 	isID := false
 	for _, word := range nameWords {
@@ -179,7 +184,15 @@ func (t TmplUtilsFunc) GraphqlStyle(fieldName string, typeName string) string {
 	case "bool":
 		res = "Boolean"
 	default:
-		return ""
+		if writeType != "" && typeName == writeType {
+			contentReg := regexp.MustCompile(`^[A-Z][\w]*$`)
+			if contentReg.MatchString(typeName) {
+				isPtr = false
+			}
+			res = typeName
+		} else {
+			return ""
+		}
 	}
 	if !isPtr {
 		res = res + "!"
