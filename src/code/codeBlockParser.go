@@ -78,7 +78,7 @@ func (c *CodeBlockParser) Parse(content string) *CodeBlock {
 		Parent:          nil,
 		OriginString:    content,
 		SubOriginString: content,
-		Type:            CodeBlockType{"", true, "", 0, 0, 0, nil, "", "", 0, false},
+		Type:            CodeBlockType{"", true, "", 0, 0, 0, nil, "\n", "", 0, false},
 	}
 	res.SubList = c.protoBlocksFromString(res, res.SubOriginString)
 	return res

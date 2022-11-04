@@ -202,3 +202,26 @@ func (t TmplUtilsFunc) GraphqlStyleW(fieldName string, typeName string, writeTyp
 	}
 	return res
 }
+
+func (t TmplUtilsFunc) ReplaceWord(str string, old string, new string) string {
+	nameWords := t.SplitCamelCase(str)
+	for i, word := range nameWords {
+		if word == old {
+			nameWords[i] = new
+		}
+	}
+	return strings.Join(nameWords, "")
+}
+
+func (t TmplUtilsFunc) ReplaceWord2(str string, old string, new string, old2 string, new2 string) string {
+	nameWords := t.SplitCamelCase(str)
+	for i, word := range nameWords {
+		if word == old {
+			nameWords[i] = new
+		}
+		if word == old2 {
+			nameWords[i] = new2
+		}
+	}
+	return strings.Join(nameWords, "")
+}

@@ -26,3 +26,7 @@ func (e *EntityStructFieldTmplContext) Type() *TypeTmplContext {
 		Type: e.Field.GetType(),
 	}
 }
+
+func (e *EntityStructFieldTmplContext) IsMatchTag(tagReg string) bool {
+	return utils.TagMatch(tagReg, string(e.Tag()))
+}

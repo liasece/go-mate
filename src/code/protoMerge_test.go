@@ -56,7 +56,7 @@ func TestProtoBlockFromString(t *testing.T) {
 			want: &CodeBlock{
 				OriginString:    protoContent1,
 				SubOriginString: protoContent1,
-				Type:            CodeBlockType{MergeAble: true},
+				Type:            CodeBlockType{MergeAble: true, SubsSeparator: "\n"},
 				SubList: []*CodeBlock{
 					{
 						Key:             "UpdateGameDetailByGameIDRequest",
@@ -260,12 +260,12 @@ message UpdateGameDetailByGameIDRequest {
 	optional string op_user_id = 3;
 }
 message UpdateGameDetailByGameIDResponse {
-repeated AssetTokenConfig asset_token_config = 1 [ds_rpc: true, lua_export: true];
+	repeated AssetTokenConfig asset_token_config = 1 [ds_rpc: true, lua_export: true];
 }
 
 message BatchGetAssetTokenConfigResponse {
 	repeated AssetTokenConfig info_list = 1 [json_name = "nodes", ds_rpc: true, lua_export: true];
-repeated AssetTokenConfig asset_token_config = 1;
+	repeated AssetTokenConfig asset_token_config = 1;
 }
 
 

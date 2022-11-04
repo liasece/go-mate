@@ -57,16 +57,54 @@ func (b *CodeBlock) getSubJoinString(income *CodeBlock) string {
 	return ""
 }
 
+func (b *CodeBlock) getSubTabStr(originTail string) string {
+	str := ""
+	if len(b.SubList) > 0 {
+		contentReg := regexp.MustCompile(`(?s)(` + originTail + `)?(\s*)` + regexp.QuoteMeta(b.SubList[0].OriginString))
+		partsList := contentReg.FindAllStringSubmatch(b.OriginString, -1)
+		if len(partsList) > 0 {
+			parts := partsList[0]
+			if len(parts) > 1 {
+				str += parts[2]
+			}
+		}
+	} else if b.Parent != nil {
+		for _, v := range b.Parent.SubList {
+			if v == b {
+				continue
+			}
+			if len(v.SubList) > 0 {
+				contentReg := regexp.MustCompile(`(?s)(` + originTail + `)?(\s*)` + regexp.QuoteMeta(v.SubList[0].OriginString))
+				partsList := contentReg.FindAllStringSubmatch(v.OriginString, -1)
+				if len(partsList) > 0 {
+					parts := partsList[0]
+					if len(parts) > 1 {
+						str += parts[2]
+						break
+					}
+				}
+			}
+		}
+	}
+	str = strings.Replace(str, originTail, "", 1)
+	if b.Parent != nil {
+		str = b.Parent.getSubTabStr(originTail) + str
+	}
+	return str
+}
+
 func (b *CodeBlock) addSub(income *CodeBlock) {
 	joinString := b.getSubJoinString(income)
 	tailString := ""
+	tabStr := ""
 	if joinString == "\n" {
 		tailString = "\n"
+		tabStr = b.getSubTabStr(joinString)
 	}
 	// fmt.Println("addSub: " + b.Key + " joinString: ```" + joinString + "```\ntailString: ```" + tailString + "```")
 	newSubOriginString := income.OriginString
 	if b.SubOriginString != "" {
-		newSubOriginString = fmt.Sprintf("%s%s%s", b.SubOriginString, joinString, income.OriginString)
+		newSubOriginString = fmt.Sprintf("%s%s%s%s", b.SubOriginString, joinString, tabStr, income.OriginString)
 	}
 	income.Parent = b
 	b.SubList = append(b.SubList, income)
@@ -99,9 +137,9 @@ func (b *CodeBlock) addSub(income *CodeBlock) {
 			panic("addSub to empty block: " + income.Key)
 		}
 		if newBlock {
-			b.OriginString = fmt.Sprintf("%s%s%s%s%s%s", b.OriginString[:insertPos], b.Type.SubWarpChar[:1], b.SubOriginString, tailString, b.Type.SubWarpChar[1:], b.OriginString[insertPos:])
+			b.OriginString = fmt.Sprintf("%s%s%s%s%s%s%s", b.OriginString[:insertPos], b.Type.SubWarpChar[:1], tabStr, b.SubOriginString, tailString, b.Type.SubWarpChar[1:], b.OriginString[insertPos:])
 		} else {
-			b.OriginString = fmt.Sprintf("%s%s%s%s", b.OriginString[:insertPos], b.SubOriginString, tailString, b.OriginString[insertPos:])
+			b.OriginString = fmt.Sprintf("%s%s%s%s%s", b.OriginString[:insertPos], tabStr, b.SubOriginString, tailString, b.OriginString[insertPos:])
 		}
 
 		if b.Parent != nil {

@@ -64,7 +64,7 @@ func TestGraphqlBlockFromString(t *testing.T) {
 			want: &CodeBlock{
 				OriginString:    graphqlContent1,
 				SubOriginString: graphqlContent1,
-				Type:            CodeBlockType{MergeAble: true},
+				Type:            CodeBlockType{MergeAble: true, SubsSeparator: "\n"},
 				SubList: []*CodeBlock{
 					{
 						Key:             "GameEntry",
@@ -346,7 +346,7 @@ type GameEntry implements Node {
 
   detail: GameDetail @goField(forceResolver: true)
   game: Game @goField(forceResolver: true)
-test: Int!
+  test: Int!
 }
 
 input GameEntryUpdater {
@@ -360,6 +360,7 @@ extend type Query {
   searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
+
 type GameEntryNew {
   test: Int!
 }`),
