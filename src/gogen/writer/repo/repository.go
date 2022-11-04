@@ -223,11 +223,9 @@ func (w *RepositoryWriter) NewEntityTmplContext() *EntityTmplContext {
 	}
 }
 
-func (w *RepositoryWriter) GetEntityRepositoryCodeFromTmpl(tmplPath string) (gocoder.Code, error) {
+func (w *RepositoryWriter) GetEntityRepositoryCodeFromTmpl(tmplPath string, ctx *EntityTmplContext) (gocoder.Code, error) {
 	c := gocoder.NewCode()
-	code, err := gocoder.TemplateFromFile(tmplPath, &EntityTmplContext{
-		w: w,
-	}, nil)
+	code, err := gocoder.TemplateFromFile(tmplPath, ctx, nil)
 	if err != nil {
 		return nil, err
 	}

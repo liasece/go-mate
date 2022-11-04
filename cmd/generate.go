@@ -123,7 +123,11 @@ func generateEntity(entityCfg *config.Entity) {
 				continue
 			}
 		}
-		c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(tmpl.From)
+		tmplCtx := repo.NewEntityTmplContext(enGameEntry)
+		c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(tmpl.From, tmplCtx)
+		if tmplCtx.GetTerminate() {
+			continue
+		}
 		if err != nil {
 			log.Panic("generateEntity Tmpl GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err), log.Any("tmpl.From", tmpl.From))
 		} else {

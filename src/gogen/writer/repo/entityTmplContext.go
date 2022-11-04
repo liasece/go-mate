@@ -10,7 +10,14 @@ import (
 
 type EntityTmplContext struct {
 	utils.TmplUtilsFunc
-	w *RepositoryWriter
+	w         *RepositoryWriter
+	terminate bool
+}
+
+func NewEntityTmplContext(w *RepositoryWriter) *EntityTmplContext {
+	return &EntityTmplContext{
+		w: w,
+	}
 }
 
 func (e *EntityTmplContext) EntityName() string {
@@ -80,6 +87,15 @@ func (e *EntityTmplContext) EnvOr(k1 string, k2 string, or string) string {
 		return v
 	}
 	return or
+}
+
+func (e *EntityTmplContext) Terminate() bool {
+	e.terminate = true
+	return e.terminate
+}
+
+func (e *EntityTmplContext) GetTerminate() bool {
+	return e.terminate
 }
 
 func (e *EntityTmplContext) GetTagOn(filterReg string, targetTag string) string {

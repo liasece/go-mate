@@ -41,3 +41,13 @@ func (e *EntityStructTmplContext) FieldsWithTag(tagReg string) []*EntityStructFi
 func (e *EntityStructTmplContext) HasFieldsWithTag(tagReg string) bool {
 	return len(e.FieldsWithTag(tagReg)) > 0
 }
+
+// tagReg like: `gomate:url` match: `gomate:"foo,url"`
+func (e *EntityStructTmplContext) HasFieldsWithTag2(tagReg string, tagReg2 string) bool {
+	return len(e.FieldsWithTag(tagReg)) > 0 || len(e.FieldsWithTag(tagReg2)) > 0
+}
+
+// tagReg like: `gomate:url` match: `gomate:"foo,url"`
+func (e *EntityStructTmplContext) HasFieldsWithTag3(tagReg string, tagReg2 string, tagReg3 string) bool {
+	return len(e.FieldsWithTag(tagReg)) > 0 || len(e.FieldsWithTag(tagReg2)) > 0 || len(e.FieldsWithTag(tagReg3)) > 0
+}
