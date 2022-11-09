@@ -23,12 +23,9 @@ func StructToProto(protoFile string, t gocoder.Type, indent string) error {
 		}
 	}
 	toContent := buildProtoContent(originFileContent, t, indent)
-	if toContent != originFileContent {
-		// write to file
-		err := ioutil.WriteFile(protoFile, []byte(toContent), 0644)
-		if err != nil {
-			return err
-		}
+	err := MergeProtoFromFile(protoFile, toContent)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -263,9 +260,5 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 			addFsStr += fieldStr[i]
 		}
 	}
-	toStr := "message " + msgName + " {\n" + addFsStr + "}"
-	if matchOrigin != "" {
-		return strings.Replace(originContent, matchOrigin, toStr, 1)
-	}
-	return originContent + "\n" + toStr + "\n"
+	return "message " + msgName + " {\n" + addFsStr + "}"
 }
