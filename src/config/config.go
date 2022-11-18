@@ -271,6 +271,18 @@ func (s *ServiceBase) ApplyToEntity(entity *Entity) {
 	entity.Env = mergeEnv(entity.Env, s.Env)
 }
 
+func mapEq(a, b map[string]string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for k, v := range a {
+		if bv, ok := b[k]; !ok || bv != v {
+			return false
+		}
+	}
+	return true
+}
+
 func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
 	if prefab.Comment.Doc == "" && p.Comment.Doc != "" {
 		prefab.Comment.Doc = p.Comment.Doc
@@ -299,7 +311,7 @@ func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
 	for _, f := range p.Tmpl {
 		find := false
 		for _, v := range prefab.Tmpl {
-			if v.To == f.To {
+			if v.To == f.To && v.From == f.From && mapEq(v.Opt, f.Opt) {
 				find = true
 				break
 			}
@@ -351,7 +363,7 @@ func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
 	for _, f := range p.Tmpl {
 		find := false
 		for _, v := range entity.Tmpl {
-			if v.To == f.To {
+			if v.To == f.To && v.From == f.From && mapEq(v.Opt, f.Opt) {
 				find = true
 				break
 			}
