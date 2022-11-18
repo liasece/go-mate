@@ -37,6 +37,10 @@ func (e *TmplContext) TmplOnlyCreate() bool {
 	return e.tmpl.OnlyCreate
 }
 
+func (e *TmplContext) TmplOptEq(key string, value string) bool {
+	return e.TmplOpt(key) == value
+}
+
 func (e *TmplContext) TmplOpt(key string) string {
 	if res, ok := e.tmpl.Opt[key]; ok {
 		return res
