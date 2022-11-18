@@ -36,25 +36,29 @@ func TagMatch(tagReg string, tag string) bool {
 func GetTagMatch(tagReg string, tag string) string {
 	filterSS := strings.Split(tagReg, ":")
 	tagName := strings.TrimSpace(filterSS[0])
-	filterValue := ""
-	if len(filterSS) > 1 {
-		filterValue = strings.TrimSpace(filterSS[1])
-	}
 	tagValue := reflect.StructTag(tag).Get(tagName)
 	if tagValue == "" {
 		return ""
 	}
-	if filterValue == "" {
+	if len(filterSS) < 2 {
 		return tagValue
 	}
 	values := strings.Split(tagValue, ",")
 	for _, v := range values {
 		subValues := strings.Split(v, ":")
-		if strings.TrimSpace(subValues[0]) == filterValue {
-			if len(subValues) > 1 {
-				return strings.TrimSpace(subValues[1])
-			} else {
-				return subValues[0]
+		if strings.TrimSpace(subValues[0]) == filterSS[1] {
+			if len(filterSS) < 3 {
+				if len(subValues) > 1 {
+					return strings.TrimSpace(subValues[1])
+				} else {
+					return subValues[0]
+				}
+			}
+			subValuesL2 := strings.Split(subValues[1], ",")
+			for _, v := range subValuesL2 {
+				if strings.TrimSpace(v) == filterSS[2] {
+					return v
+				}
 			}
 		}
 	}
