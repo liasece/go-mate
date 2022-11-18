@@ -60,6 +60,18 @@ func (w *RepositoryWriter) GetFilterTypeStructCodeStruct() gocoder.Struct {
 	return res
 }
 
+func (w *RepositoryWriter) Entity() gocoder.Type {
+	return w.entity
+}
+
+func (w *RepositoryWriter) EntityName() string {
+	return w.entityName
+}
+
+func (w *RepositoryWriter) ServiceName() string {
+	return w.serviceName
+}
+
 func (w *RepositoryWriter) GetUpdaterTypeStructCodeStruct() gocoder.Struct {
 	if w.Updater != nil {
 		return w.Updater
@@ -215,22 +227,6 @@ func (w *RepositoryWriter) GetEntityRepositoryCode(filter gocoder.Struct, update
 	c.C(w.getQueryCode(receiver, filter))
 
 	return c
-}
-
-func (w *RepositoryWriter) NewEntityTmplContext() *EntityTmplContext {
-	return &EntityTmplContext{
-		w: w,
-	}
-}
-
-func (w *RepositoryWriter) GetEntityRepositoryCodeFromTmpl(tmplPath string, ctx *EntityTmplContext) (gocoder.Code, error) {
-	c := gocoder.NewCode()
-	code, err := gocoder.TemplateFromFile(tmplPath, ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	c.C(code)
-	return c, nil
 }
 
 func (w *RepositoryWriter) GetEntityRepositoryStructCode() gocoder.Code {

@@ -1,6 +1,6 @@
-package config
+package context
 
-import "github.com/liasece/go-mate/src/gogen/utils"
+import "github.com/liasece/go-mate/src/utils"
 
 type ConfigTmplContext struct {
 	utils.TmplUtilsFunc

@@ -1,31 +1,43 @@
-package repo
+package context
 
 import (
 	"context"
 	"reflect"
 	"strings"
 
-	"github.com/liasece/go-mate/src/gogen/utils"
+	"github.com/liasece/go-mate/src/gogen/writer/repo"
+	"github.com/liasece/go-mate/src/utils"
+	"github.com/liasece/gocoder"
 )
+
+func GetEntityRepositoryCodeFromTmpl(w *repo.RepositoryWriter, tmplPath string, ctx *TmplContext) (gocoder.Code, error) {
+	c := gocoder.NewCode()
+	code, err := gocoder.TemplateFromFile(tmplPath, ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	c.C(code)
+	return c, nil
+}
 
 type EntityTmplContext struct {
 	utils.TmplUtilsFunc
-	w         *RepositoryWriter
+	w         *repo.RepositoryWriter
 	terminate bool
 }
 
-func NewEntityTmplContext(w *RepositoryWriter) *EntityTmplContext {
+func NewEntityTmplContext(w *repo.RepositoryWriter) *EntityTmplContext {
 	return &EntityTmplContext{
 		w: w,
 	}
 }
 
 func (e *EntityTmplContext) EntityName() string {
-	return e.w.entityName
+	return e.w.EntityName()
 }
 
 func (e *EntityTmplContext) ServiceName() string {
-	return e.w.serviceName
+	return e.w.ServiceName()
 }
 
 func (e *EntityTmplContext) ServiceNameTitle() string {
@@ -104,9 +116,9 @@ func (e *EntityTmplContext) GetTagOn(filterReg string, targetTag string) string 
 		return ""
 	}
 	if targetTag == "" {
-		return e.w.entity.Field(fieldNum).GetName()
+		return e.w.Entity().Field(fieldNum).GetName()
 	}
-	return reflect.StructTag(e.w.entity.Field(fieldNum).GetTag()).Get(targetTag)
+	return reflect.StructTag(e.w.Entity().Field(fieldNum).GetTag()).Get(targetTag)
 }
 
 func (e *EntityTmplContext) GetTypeByTagOn(filterReg string) string {
@@ -114,13 +126,13 @@ func (e *EntityTmplContext) GetTypeByTagOn(filterReg string) string {
 	if fieldNum < 0 {
 		return ""
 	}
-	return e.w.entity.Field(fieldNum).GetType().String()
+	return e.w.Entity().Field(fieldNum).GetType().String()
 }
 
 func (e *EntityTmplContext) GetType(filedName string) string {
-	for i := 0; i < e.w.entity.NumField(); i++ {
-		if e.w.entity.Field(i).GetName() == filedName {
-			return e.w.entity.Field(i).GetType().String()
+	for i := 0; i < e.w.Entity().NumField(); i++ {
+		if e.w.Entity().Field(i).GetName() == filedName {
+			return e.w.Entity().Field(i).GetType().String()
 		}
 	}
 	return ""
@@ -140,8 +152,8 @@ func (e *EntityTmplContext) findFieldNumByTagOn(filterReg string) int {
 	if len(filterSS) > 1 {
 		filterValue = filterSS[1]
 	}
-	for i := 0; i < e.w.entity.NumField(); i++ {
-		t := reflect.StructTag(e.w.entity.Field(i).GetTag())
+	for i := 0; i < e.w.Entity().NumField(); i++ {
+		t := reflect.StructTag(e.w.Entity().Field(i).GetTag())
 		find := false
 		if value := t.Get(filterTag); value != "" {
 			if filterValue == "" {
@@ -165,6 +177,6 @@ func (e *EntityTmplContext) findFieldNumByTagOn(filterReg string) int {
 }
 
 // get gorm indexes
-func (e *EntityTmplContext) GormIndexes() []*Index {
-	return GormIndexes(context.Background(), e.w.entity)
+func (e *EntityTmplContext) GormIndexes() []*utils.Index {
+	return utils.GormIndexes(context.Background(), e.w.Entity())
 }

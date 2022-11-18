@@ -18,11 +18,12 @@ const (
 )
 
 type TmplItem struct {
-	From       string       `json:"from" yaml:"from"`
-	To         string       `json:"to" yaml:"to"`
-	Type       TmplItemType `json:"type,omitempty" yaml:"type,omitempty"`
-	Merge      bool         `json:"merge,omitempty" yaml:"merge,omitempty"`
-	OnlyCreate bool         `json:"onlyCreate,omitempty" yaml:"onlyCreate,omitempty"`
+	From       string            `json:"from" yaml:"from"`
+	To         string            `json:"to" yaml:"to"`
+	Type       TmplItemType      `json:"type,omitempty" yaml:"type,omitempty"`
+	Merge      bool              `json:"merge,omitempty" yaml:"merge,omitempty"`
+	OnlyCreate bool              `json:"onlyCreate,omitempty" yaml:"onlyCreate,omitempty"`
+	Opt        map[string]string `json:"opt,omitempty" yaml:"opt,omitempty"`
 }
 
 type ServiceBase struct {

@@ -1,13 +1,14 @@
-package repo
+package context
 
 import (
-	"github.com/liasece/go-mate/src/gogen/utils"
+	"github.com/liasece/go-mate/src/gogen/writer/repo"
+	"github.com/liasece/go-mate/src/utils"
 	"github.com/liasece/gocoder"
 )
 
 type EntityStructTmplContext struct {
 	utils.TmplUtilsFunc
-	w      *RepositoryWriter
+	w      *repo.RepositoryWriter
 	Struct gocoder.Struct
 }
 

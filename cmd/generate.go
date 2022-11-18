@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/liasece/go-mate/src/config"
+	ccontext "github.com/liasece/go-mate/src/context"
 	"github.com/liasece/go-mate/src/gogen/writer"
 	"github.com/liasece/go-mate/src/gogen/writer/repo"
 	"github.com/liasece/gocoder"
@@ -39,7 +40,7 @@ func generateEntity(entityCfg *config.Entity) {
 	_ = tmpPaths
 	tmpFiles := make([]string, 0)
 	_ = tmpFiles
-	entityPath, err := gocoder.TemplateRaw(entityCfg.EntityPath, &config.ConfigTmplContext{
+	entityPath, err := gocoder.TemplateRaw(entityCfg.EntityPath, &ccontext.ConfigTmplContext{
 		VEntityName:  entityCfg.Name,
 		VServiceName: entityCfg.Service,
 	}, nil)
@@ -81,7 +82,7 @@ func generateEntity(entityCfg *config.Entity) {
 	enGameEntry.EntityCfg = entityCfg
 
 	{
-		protoTypeFile, err := gocoder.TemplateRaw(entityCfg.ProtoTypeFile, enGameEntry.NewEntityTmplContext(), nil)
+		protoTypeFile, err := gocoder.TemplateRaw(entityCfg.ProtoTypeFile, ccontext.NewEntityTmplContext(enGameEntry), nil)
 		if err != nil {
 			log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
 			return
@@ -106,7 +107,7 @@ func generateEntity(entityCfg *config.Entity) {
 	}
 
 	for _, tmpl := range entityCfg.Tmpl {
-		toFile, err := gocoder.TemplateRaw(tmpl.To, enGameEntry.NewEntityTmplContext(), nil)
+		toFile, err := gocoder.TemplateRaw(tmpl.To, ccontext.NewTmplContext(enGameEntry, tmpl), nil)
 		if err != nil {
 			log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
 			return
@@ -123,8 +124,8 @@ func generateEntity(entityCfg *config.Entity) {
 				continue
 			}
 		}
-		tmplCtx := repo.NewEntityTmplContext(enGameEntry)
-		c, err := enGameEntry.GetEntityRepositoryCodeFromTmpl(tmpl.From, tmplCtx)
+		tmplCtx := ccontext.NewTmplContext(enGameEntry, tmpl)
+		c, err := ccontext.GetEntityRepositoryCodeFromTmpl(enGameEntry, tmpl.From, tmplCtx)
 		if tmplCtx.GetTerminate() {
 			continue
 		}
@@ -155,7 +156,7 @@ func generateEntity(entityCfg *config.Entity) {
 			optCode.C(enGameEntry.GetSelectorTypeCode())
 		}
 
-		optFile, err := gocoder.TemplateRaw(entityCfg.OptFilePath, enGameEntry.NewEntityTmplContext(), nil)
+		optFile, err := gocoder.TemplateRaw(entityCfg.OptFilePath, ccontext.NewEntityTmplContext(enGameEntry), nil)
 		if err != nil {
 			log.Error("generateEntity TemplateRaw error", log.ErrorField(err))
 			return

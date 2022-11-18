@@ -1,10 +1,10 @@
-package repo
+package context
 
 import (
 	"reflect"
 	"strings"
 
-	"github.com/liasece/go-mate/src/gogen/utils"
+	"github.com/liasece/go-mate/src/utils"
 	"github.com/liasece/gocoder"
 )
 
