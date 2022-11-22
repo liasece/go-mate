@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/liasece/gocoder"
 	"github.com/liasece/log"
 	"gopkg.in/yaml.v2"
 )
@@ -55,6 +56,7 @@ type Config struct {
 	EntityPrefab          []*EntityPrefab              `json:"entityPrefab,omitempty" yaml:"entityPrefab,omitempty"`
 	BuildEntityWithPrefab map[string][]string          `json:"buildEntityWithPrefab,omitempty" yaml:"buildEntityWithPrefab,omitempty"`
 	Env                   map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
+	LogLevel              string                       `json:"logLevel,omitempty" yaml:"logLevel,omitempty"`
 }
 
 type EntityPrefab struct {
@@ -85,11 +87,14 @@ type Entity struct {
 	Env                        map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	ProtoTypeFileIndent        string                       `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
 	EntityPath                 string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
+	DecodedEntityPath          string                       `json:"-" yaml:"-"`
 	ProtoTypeFile              string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
 	EntityOptPkg               string                       `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
 	OutputCopierProtoPkgSuffix string                       `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
 	OptFilePath                string                       `json:"optFilePath,omitempty" yaml:"optFilePath,omitempty"`
 	NoSelector                 *bool                        `json:"noSelector,omitempty" yaml:"noSelector,omitempty"`
+
+	CodeType gocoder.Type `json:"-" yaml:"-"`
 }
 
 type EntityFieldType string

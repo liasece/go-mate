@@ -236,17 +236,14 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 		}
 		if typ != "" {
 			if originIndex := getProdFiledNumInOriginMsg(matchOrigin, name); originIndex > 0 {
-				// log.Warn("in getProdFiledNumInOriginMsg", log.Any("typ", typ), log.Any("msgName", msgName))
 				fieldStr[originIndex] = fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, originIndex)
 			} else {
 				maxOriginFieldNum += 1
 				fieldStr[maxOriginFieldNum] = fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, maxOriginFieldNum)
 			}
-			// if typ == "Fight" {
-			// 	log.Error("in test", log.Any("t", f.GetType().String()), log.Any("pkg", f.GetType().Package()), log.Any("named", f.GetType().GetNamed()))
-			// }
 		} else {
-			log.Debug("buildProtoContent skip type", log.Any("named", f.GetType().GetNamed()), log.Any("str", f.GetType().String()))
+			log.Debug("buildProtoContent skip type", log.Any("msgName", msgName), log.Any("name", name), log.Any("named", f.GetType().GetNamed()),
+				log.Any("str", f.GetType().String()), log.Reflect("f", f))
 		}
 	}
 	addFsStr := ""
