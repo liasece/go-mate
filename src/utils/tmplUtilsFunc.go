@@ -48,6 +48,14 @@ func (TmplUtilsFunc) HasSuffix(s, suffix string) bool {
 	return strings.HasSuffix(s, suffix)
 }
 
+func (TmplUtilsFunc) ToUpper(s string) string {
+	return strings.ToUpper(s)
+}
+
+func (TmplUtilsFunc) ToLower(s string) string {
+	return strings.ToLower(s)
+}
+
 // english word to plural
 func (t TmplUtilsFunc) Plural(word string) string {
 	if word == "" {
