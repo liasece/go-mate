@@ -3,14 +3,38 @@ package utils
 import (
 	"regexp"
 	"strings"
+	"text/template"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/liasece/gocoder"
 )
 
-type TmplUtilsFunc struct {
+var funcs = map[string]interface{}{
+	"SplitN":           SplitN,
+	"ToCamelCase":      ToCamelCase,
+	"HasPrefix":        HasPrefix,
+	"HasSuffix":        HasSuffix,
+	"ToUpper":          ToUpper,
+	"ToLower":          ToLower,
+	"ToLowerCamelCase": ToLowerCamelCase,
+	"Plural":           Plural,
+	"SplitCamelCase":   SplitCamelCase,
+	"GraphqlStyle":     GraphqlStyle,
+	"GraphqlStyleW":    GraphqlStyleW,
+	"ReplaceWord":      ReplaceWord,
+	"ReplaceWord2":     ReplaceWord2,
 }
 
-func (TmplUtilsFunc) SplitN(origin string, sep string, n int) string {
+func TemplateFromFile(tmplPath string, env interface{}, fn template.FuncMap) (gocoder.Codeable, error) {
+	return gocoder.TemplateFromFile(tmplPath, env, funcs)
+}
+
+func TemplateRaw(tmplContent string, env interface{}) (string, error) {
+	return gocoder.TemplateRaw(tmplContent, env, funcs)
+}
+
+func SplitN(origin string, sep string, n int) string {
 	ss := strings.Split(origin, sep)
 	if n < 0 {
 		if -1*n > len(ss) {
@@ -25,39 +49,39 @@ func (TmplUtilsFunc) SplitN(origin string, sep string, n int) string {
 	}
 }
 
-func (t TmplUtilsFunc) ToLowerCamelCase(str string) string {
+func ToLowerCamelCase(str string) string {
 	if str == "" {
 		return str
 	}
-	words := t.SplitCamelCase(str)
+	words := SplitCamelCase(str)
 	return strings.ToLower(words[0]) + strings.Join(words[1:], "")
 }
 
-func (TmplUtilsFunc) ToCamelCase(str string) string {
+func ToCamelCase(str string) string {
 	if str == "" {
 		return str
 	}
 	return strings.ToUpper(str[:1]) + str[1:]
 }
 
-func (TmplUtilsFunc) HasPrefix(s, prefix string) bool {
+func HasPrefix(s, prefix string) bool {
 	return strings.HasPrefix(s, prefix)
 }
 
-func (TmplUtilsFunc) HasSuffix(s, suffix string) bool {
+func HasSuffix(s, suffix string) bool {
 	return strings.HasSuffix(s, suffix)
 }
 
-func (TmplUtilsFunc) ToUpper(s string) string {
+func ToUpper(s string) string {
 	return strings.ToUpper(s)
 }
 
-func (TmplUtilsFunc) ToLower(s string) string {
+func ToLower(s string) string {
 	return strings.ToLower(s)
 }
 
 // english word to plural
-func (t TmplUtilsFunc) Plural(word string) string {
+func Plural(word string) string {
 	if word == "" {
 		return word
 	}
@@ -107,7 +131,7 @@ func (t TmplUtilsFunc) Plural(word string) string {
 //       if subsequent string is lower case:
 //         move last character of upper case string to beginning of
 //         lower case string
-func (t TmplUtilsFunc) SplitCamelCase(src string) (entries []string) {
+func SplitCamelCase(src string) (entries []string) {
 	// don't split invalid utf8
 	if !utf8.ValidString(src) {
 		return []string{src}
@@ -152,12 +176,12 @@ func (t TmplUtilsFunc) SplitCamelCase(src string) (entries []string) {
 	return
 }
 
-func (t TmplUtilsFunc) GraphqlStyle(fieldName string, typeName string) string {
-	return t.GraphqlStyleW(fieldName, typeName, "")
+func GraphqlStyle(fieldName string, typeName string) string {
+	return GraphqlStyleW(fieldName, typeName, "")
 }
 
-func (t TmplUtilsFunc) GraphqlStyleW(fieldName string, typeName string, writeType string) string {
-	nameWords := t.SplitCamelCase(fieldName)
+func GraphqlStyleW(fieldName string, typeName string, writeType string) string {
+	nameWords := SplitCamelCase(fieldName)
 	isID := false
 	for _, word := range nameWords {
 		if strings.ToLower(word) == "id" {
@@ -211,8 +235,8 @@ func (t TmplUtilsFunc) GraphqlStyleW(fieldName string, typeName string, writeTyp
 	return res
 }
 
-func (t TmplUtilsFunc) ReplaceWord(str string, old string, new string) string {
-	nameWords := t.SplitCamelCase(str)
+func ReplaceWord(str string, old string, new string) string {
+	nameWords := SplitCamelCase(str)
 	for i, word := range nameWords {
 		if word == old {
 			nameWords[i] = new
@@ -221,8 +245,8 @@ func (t TmplUtilsFunc) ReplaceWord(str string, old string, new string) string {
 	return strings.Join(nameWords, "")
 }
 
-func (t TmplUtilsFunc) ReplaceWord2(str string, old string, new string, old2 string, new2 string) string {
-	nameWords := t.SplitCamelCase(str)
+func ReplaceWord2(str string, old string, new string, old2 string, new2 string) string {
+	nameWords := SplitCamelCase(str)
 	for i, word := range nameWords {
 		if word == old {
 			nameWords[i] = new

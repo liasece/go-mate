@@ -13,7 +13,7 @@ import (
 	"github.com/liasece/log"
 )
 
-func StructToProto(protoFile string, t gocoder.Type, indent string) error {
+func StructToProto(protoFile string, indent string, ts ...gocoder.Type) error {
 	originFileContent := ""
 	{
 		// read from file
@@ -22,10 +22,20 @@ func StructToProto(protoFile string, t gocoder.Type, indent string) error {
 			originFileContent = string(content)
 		}
 	}
-	toContent := buildProtoContent(originFileContent, t, indent)
-	err := MergeProtoFromFile(protoFile, toContent)
-	if err != nil {
-		return err
+	toContent := originFileContent
+	for _, t := range ts {
+		newContent := buildProtoContent(toContent, t, indent)
+		err := MergeProtoFromFile(protoFile, toContent)
+		if err != nil {
+			return err
+		}
+	}
+	if toContent != originFileContent {
+		// write to file
+		err := ioutil.WriteFile(protoFile, []byte(toContent), 0644)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

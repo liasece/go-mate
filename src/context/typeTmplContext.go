@@ -4,12 +4,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/liasece/go-mate/src/utils"
 	"github.com/liasece/gocoder"
 )
 
 type TypeTmplContext struct {
-	utils.TmplUtilsFunc
 	gocoder.Type
 }
 

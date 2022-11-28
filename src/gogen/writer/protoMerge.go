@@ -30,6 +30,10 @@ func mergeProtoFromFile(protoFile string, newContent string) error {
 	return nil
 }
 
+func MergeProto(originContent string, newContent string) string {
+	return mergeProto(originContent, newContent)
+}
+
 func mergeProto(originContent string, newContent string) string {
 	c := code.NewProtoBufCodeBlockParser()
 	res := c.Parse(originContent).Merge(c.Parse(newContent))

@@ -11,17 +11,16 @@ import (
 )
 
 func GetEntityRepositoryCodeFromTmpl(w *repo.RepositoryWriter, tmplPath string, ctx *TmplContext) (gocoder.Code, error) {
-	c := gocoder.NewCode()
-	code, err := gocoder.TemplateFromFile(tmplPath, ctx, nil)
+	code, err := utils.TemplateFromFile(tmplPath, ctx, nil)
 	if err != nil {
 		return nil, err
 	}
+	c := gocoder.NewCode()
 	c.C(code)
 	return c, nil
 }
 
 type EntityTmplContext struct {
-	utils.TmplUtilsFunc
 	w         *repo.RepositoryWriter
 	terminate bool
 }

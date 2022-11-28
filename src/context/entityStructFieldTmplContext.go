@@ -9,7 +9,6 @@ import (
 )
 
 type EntityStructFieldTmplContext struct {
-	utils.TmplUtilsFunc
 	w     *repo.RepositoryWriter
 	Field gocoder.Field
 }

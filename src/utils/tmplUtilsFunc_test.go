@@ -11,7 +11,6 @@ func TestTmplUtilsFunc_SplitCamelCase(t *testing.T) {
 	}
 	tests := []struct {
 		name string
-		tr   TmplUtilsFunc
 		args args
 		want []string
 	}{
@@ -75,8 +74,7 @@ func TestTmplUtilsFunc_SplitCamelCase(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tr := TmplUtilsFunc{}
-			if got := tr.SplitCamelCase(tt.args.str); !reflect.DeepEqual(got, tt.want) {
+			if got := SplitCamelCase(tt.args.str); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("TmplUtilsFunc.SplitCamelCase() = %v, want %v", got, tt.want)
 			}
 		})

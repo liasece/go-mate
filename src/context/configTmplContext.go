@@ -1,9 +1,6 @@
 package context
 
-import "github.com/liasece/go-mate/src/utils"
-
 type ConfigTmplContext struct {
-	utils.TmplUtilsFunc
 	VEntityName  string
 	VServiceName string
 }
