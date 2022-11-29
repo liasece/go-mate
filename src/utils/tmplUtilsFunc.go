@@ -189,13 +189,19 @@ func GraphqlStyleW(fieldName string, typeName string, writeType string) string {
 			break
 		}
 	}
+	for strings.HasPrefix(typeName, "**") {
+		typeName = typeName[1:]
+	}
+	for strings.HasPrefix(typeName, "*[]") {
+		typeName = typeName[1:]
+	}
 	isSlice := false
 	if strings.HasPrefix(typeName, "[]") {
 		isSlice = true
 		typeName = typeName[2:]
 	}
 	isPtr := false
-	if strings.HasPrefix(typeName, "*") {
+	for strings.HasPrefix(typeName, "*") {
 		isPtr = true
 		typeName = typeName[1:]
 	}
