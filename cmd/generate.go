@@ -97,6 +97,7 @@ func generateEntity(entityCfg *config.Entity) {
 	enGameEntry.Filter, _ = enGameEntry.GetFilterTypeStructCode()
 	enGameEntry.Updater, _ = enGameEntry.GetUpdaterTypeStructCode()
 	enGameEntry.Sorter, _ = enGameEntry.GetSorterTypeStructCode()
+	enGameEntry.Selector, _ = enGameEntry.GetSelectorTypeStructCode()
 
 	{
 		generateEntityProtoType(entityCfg, enGameEntry)
@@ -147,16 +148,16 @@ func generateEntityProtoType(entityCfg *config.Entity, enGameEntry *repo.Reposit
 		defer func() {
 			log.Info(fmt.Sprintf("%s: generated %s (%.2fs)", entityCfg.Name, protoTypeFile, float64(time.Now().Sub(beginTime))/float64(time.Second)))
 		}()
-
-		writer.StructToProto(protoTypeFile, entityCfg.CodeType, entityCfg.ProtoTypeFileIndent)
-		writer.StructToProto(protoTypeFile, enGameEntry.Filter.GetType(), entityCfg.ProtoTypeFileIndent)
-		writer.StructToProto(protoTypeFile, enGameEntry.Updater.GetType(), entityCfg.ProtoTypeFileIndent)
-		writer.StructToProto(protoTypeFile, enGameEntry.Sorter.GetType(), entityCfg.ProtoTypeFileIndent)
-		if entityCfg.NoSelector == nil || !*entityCfg.NoSelector {
-			selectorStr, _ := enGameEntry.GetSelectorTypeStructCode()
-			enGameEntry.Selector = selectorStr
-			writer.StructToProto(protoTypeFile, selectorStr.GetType(), entityCfg.ProtoTypeFileIndent)
+		ts := []gocoder.Type{
+			entityCfg.CodeType,
+			enGameEntry.Filter.GetType(),
+			enGameEntry.Updater.GetType(),
+			enGameEntry.Sorter.GetType(),
 		}
+		if entityCfg.NoSelector == nil || !*entityCfg.NoSelector {
+			ts = append(ts, enGameEntry.Selector.GetType())
+		}
+		writer.StructToProto(protoTypeFile, entityCfg.ProtoTypeFileIndent, ts...)
 	}
 }
 

@@ -55,7 +55,7 @@ func (c *CodePairCount) IsZero() bool {
 type CodeBlockType struct {
 	Name                   string
 	MergeAble              bool
-	RegStr                 string
+	RegStr                 *regexp.Regexp
 	RegOriginIndex         int
 	RegKeyIndex            int
 	RegSubContentIndex     int
@@ -78,7 +78,7 @@ func (c *CodeBlockParser) Parse(content string) *CodeBlock {
 		Parent:          nil,
 		OriginString:    content,
 		SubOriginString: content,
-		Type:            CodeBlockType{"", true, "", 0, 0, 0, nil, "\n", "", 0, false},
+		Type:            CodeBlockType{"", true, nil, 0, 0, 0, nil, "\n", "", 0, false},
 	}
 	res.SubList = c.protoBlocksFromString(res, res.SubOriginString)
 	return res
@@ -87,7 +87,7 @@ func (c *CodeBlockParser) Parse(content string) *CodeBlock {
 func (c *CodeBlockParser) protoBlockFromString(parent *CodeBlock, content string) []*CodeBlock {
 	for _, v := range c.Types {
 		res := []*CodeBlock{}
-		if v.RegStr == "" {
+		if v.RegStr == nil {
 			continue
 		}
 		if len(v.ParentNames) > 0 {
@@ -106,7 +106,7 @@ func (c *CodeBlockParser) protoBlockFromString(parent *CodeBlock, content string
 			}
 		}
 		// syntax
-		contentReg := regexp.MustCompile(v.RegStr)
+		contentReg := v.RegStr
 		partsList := contentReg.FindAllStringSubmatch(content, -1)
 		// if len(partsList) > 0 {
 		// 	fmt.Println("protoBlockFromString:\n" + content + "\n" + fmt.Sprint(partsList))

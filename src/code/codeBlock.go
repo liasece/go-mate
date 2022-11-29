@@ -117,7 +117,7 @@ func (b *CodeBlock) addSub(income *CodeBlock) {
 		newBlock := false
 		{
 			// find insert pos
-			contentReg := regexp.MustCompile(b.Type.RegStr)
+			contentReg := b.Type.RegStr
 			indexes := contentReg.FindStringSubmatchIndex(b.OriginString)
 			matchIndex := b.Type.RegSubWarpContentIndex
 			if indexes[matchIndex*2+1] >= 0 {

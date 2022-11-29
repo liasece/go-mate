@@ -9,11 +9,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/liasece/go-mate/src/code"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/log"
 )
 
 func StructToProto(protoFile string, indent string, ts ...gocoder.Type) error {
+	if len(ts) == 0 {
+		return nil
+	}
 	originFileContent := ""
 	{
 		// read from file
@@ -22,14 +26,13 @@ func StructToProto(protoFile string, indent string, ts ...gocoder.Type) error {
 			originFileContent = string(content)
 		}
 	}
-	toContent := originFileContent
+	parser := code.NewProtoBufCodeBlockParser()
+	toCode := parser.Parse(originFileContent)
 	for _, t := range ts {
-		newContent := buildProtoContent(toContent, t, indent)
-		err := MergeProtoFromFile(protoFile, toContent)
-		if err != nil {
-			return err
-		}
+		newContent := buildProtoContent(toCode.OriginString, t, indent)
+		toCode.Merge(parser.Parse(newContent))
 	}
+	toContent := toCode.OriginString
 	if toContent != originFileContent {
 		// write to file
 		err := ioutil.WriteFile(protoFile, []byte(toContent), 0644)
