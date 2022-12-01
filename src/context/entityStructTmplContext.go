@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/liasece/go-mate/src/gogen/writer/repo"
 	"github.com/liasece/go-mate/src/utils"
@@ -37,6 +38,20 @@ func (e *EntityStructTmplContext) FieldsWithTag(tagReg string) []*EntityStructFi
 		})
 	}
 	return fields
+}
+
+func (e *EntityStructTmplContext) GetField(name string) *EntityStructFieldTmplContext {
+	name = strings.ToUpper(name)
+	for _, field := range e.Struct.GetFields() {
+		if strings.ToUpper(field.GetName()) != name {
+			continue
+		}
+		return &EntityStructFieldTmplContext{
+			w:     e.w,
+			Field: field,
+		}
+	}
+	return nil
 }
 
 // tagReg like: `gomate:url` match: `gomate:"foo,url"`
