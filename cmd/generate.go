@@ -120,7 +120,7 @@ func generateEntity(entityCfg *config.Entity) {
 			return
 		}
 		if optFile != "" {
-			log.Info(fmt.Sprintf("%s: generating %s", entityCfg.Name, entityCfg.OptFilePath))
+			log.Info(fmt.Sprintf("%s: generating %s", entityCfg.Name, optFile))
 			optFileDirPath := filepath.Dir(optFile)
 			optPkg := entityCfg.GetEnv("go", "mod") + "/" + optFileDirPath
 			if optPkg == "" {
