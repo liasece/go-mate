@@ -8,38 +8,59 @@ import (
 )
 
 type CodePairCount struct {
-	Count   map[string]int // like "()"":1 "{}"":1 "[]"":1
-	KeyWord []string       // like () {} [], in one string, first rune is left, second rune is right
+	Count      map[string]int // like "()":1 "{}":1 "[]":1
+	KeyWord    []string       // like () {} [], in one string, first rune is left, second rune is right
+	OriginText []string
 }
 
 func (c *CodePairCount) Add(line string) {
-	for _, v := range c.KeyWord {
+	inOrigin := ""
+	for k, v := range c.Count {
+		if v > 0 {
+			for _, originWarp := range c.OriginText {
+				if k == originWarp {
+					inOrigin = originWarp
+					break
+				}
+			}
+		}
+	}
+	for _, key := range c.KeyWord {
+		if inOrigin != "" {
+			if key != inOrigin {
+				continue
+			}
+		}
 		head := ""
 		tail := ""
-		if len(v) == 2 {
-			head = v[:1]
-			tail = v[1:]
+		if len(key) == 2 {
+			head = key[:1]
+			tail = key[1:]
 		} else {
-			list := strings.Split(v, " ")
+			list := strings.Split(key, " ")
 			if len(list) == 2 {
 				head = list[0]
 				tail = list[1]
 			} else {
-				panic("CodePairCount.Add: invalid keyword: " + v)
+				panic("CodePairCount.Add: invalid keyword: " + key)
 			}
 		}
 		if head == tail {
 			if count := strings.Count(line, head); count > 0 {
-				if c.Count[v] > 0 {
-					c.Count[v] -= count % 2
+				if c.Count[key] > 0 {
+					c.Count[key] -= count % 2
 				} else {
-					c.Count[v] += count % 2
+					c.Count[key] += count % 2
 				}
 			}
 		} else {
-			c.Count[v] += strings.Count(line, v[:1])
-			c.Count[v] -= strings.Count(line, v[1:])
+			c.Count[key] += strings.Count(line, head)
+			c.Count[key] -= strings.Count(line, tail)
 		}
+
+		// no repeated count
+		line = strings.ReplaceAll(line, head, "")
+		line = strings.ReplaceAll(line, tail, "")
 	}
 }
 
@@ -60,15 +81,17 @@ type CodeBlockType struct {
 	RegKeyIndex            int
 	RegSubContentIndex     int
 	ParentNames            []string
-	SubsSeparator          string // like "," or ";"
-	SubWarpChar            string // like "()" "{}" "[]"
+	SubsSeparator          string // the sub body separator character, like "," or ";"
+	SubWarpChar            string // the sub body warp character, like "()" "{}" "[]" "((|))" `"""|"""`
 	RegSubWarpContentIndex int
-	KeyCaseIgnored         bool // ABc == abc
+	KeyCaseIgnored         bool     // ABc == abc
+	SubTailChar            []string // the sub body tail character, like "}" ";" "))" ","
 }
 
 type CodeBlockParser struct {
 	Types             []CodeBlockType
 	PairKeys          []string
+	OriginText        []string
 	LineCommentKey    string
 	PendingLinePrefix string
 }
@@ -78,7 +101,7 @@ func (c *CodeBlockParser) Parse(content string) *CodeBlock {
 		Parent:          nil,
 		OriginString:    content,
 		SubOriginString: content,
-		Type:            CodeBlockType{"", true, nil, 0, 0, 0, nil, "\n", "", 0, false},
+		Type:            CodeBlockType{"", true, nil, 0, 0, 0, nil, "\n", "", 0, false, nil},
 	}
 	res.SubList = c.protoBlocksFromString(res, res.SubOriginString)
 	return res
@@ -108,9 +131,6 @@ func (c *CodeBlockParser) protoBlockFromString(parent *CodeBlock, content string
 		// syntax
 		contentReg := v.RegStr
 		partsList := contentReg.FindAllStringSubmatch(content, -1)
-		// if len(partsList) > 0 {
-		// 	fmt.Println("protoBlockFromString:\n" + content + "\n" + fmt.Sprint(partsList))
-		// }
 		for _, parts := range partsList {
 			item := &CodeBlock{
 				Parent:       parent,
@@ -145,8 +165,9 @@ func (c *CodeBlockParser) protoBlocksFromString(parent *CodeBlock, content strin
 	scanner := bufio.NewScanner(strings.NewReader(content))
 	res := make([]*CodeBlock, 0)
 	pairCount := &CodePairCount{
-		Count:   map[string]int{},
-		KeyWord: c.PairKeys,
+		Count:      map[string]int{},
+		KeyWord:    c.PairKeys,
+		OriginText: c.OriginText,
 	}
 	lines := make([]string, 0)
 	for scanner.Scan() {
@@ -156,20 +177,43 @@ func (c *CodeBlockParser) protoBlocksFromString(parent *CodeBlock, content strin
 	for i, line := range lines {
 		lineNoComment := strings.Split(line, c.LineCommentKey)[0]
 		pairCount.Add(lineNoComment)
-		currentBlockContent += line
-		if i != len(lines)-1 || strings.HasSuffix(content, "\n") {
-			currentBlockContent += "\n"
-		}
-		if pairCount.IsZero() {
-			pending := false
-			if c.PendingLinePrefix != "" {
-				if len(lines) > i+1 {
-					if strings.HasPrefix(strings.Trim(lines[i+1], " \t"), c.PendingLinePrefix) {
-						pending = true
-					}
+		{
+			// append code line
+			hasContent := true
+			if currentBlockContent == "" && strings.TrimSpace(lineNoComment) == "" {
+				hasContent = false
+			}
+			if hasContent {
+				currentBlockContent += line
+				if i != len(lines)-1 || strings.HasSuffix(content, "\n") {
+					currentBlockContent += "\n"
 				}
 			}
-			if !pending {
+		}
+		pending := false
+		{
+			// check need pending line
+			if c.PendingLinePrefix != "" {
+				if len(lines) > i+1 && strings.HasPrefix(strings.Trim(lines[i+1], " \t"), c.PendingLinePrefix) {
+					pending = true
+				}
+			}
+			if !pending && len(parent.Type.SubTailChar) > 0 {
+				// must end with tail char
+				find := false
+				for _, tail := range parent.Type.SubTailChar {
+					if strings.HasSuffix(strings.Trim(line, " \t"), tail) {
+						find = true
+						break
+					}
+				}
+				if !find {
+					pending = true
+				}
+			}
+		}
+		if !pending {
+			if pairCount.IsZero() {
 				res = append(res, c.protoBlockFromString(parent, currentBlockContent)...)
 				currentBlockContent = ""
 			}

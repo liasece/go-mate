@@ -109,6 +109,18 @@ func (b *CodeBlock) addSub(income *CodeBlock) {
 	income.Parent = b
 	b.SubList = append(b.SubList, income)
 	if b.SubOriginString == "" && b.Type.SubWarpChar != "" && b.Type.RegSubWarpContentIndex > 0 {
+		subWarpCharHead := ""
+		subWarpCharTail := ""
+		if len(b.Type.SubWarpChar) == 2 {
+			subWarpCharHead = b.Type.SubWarpChar[:1]
+			subWarpCharTail = b.Type.SubWarpChar[1:]
+		} else if ss := strings.Split(b.Type.SubWarpChar, "|"); len(ss) == 2 {
+			subWarpCharHead = ss[0]
+			subWarpCharTail = ss[1]
+		} else {
+			subWarpCharHead = b.Type.SubWarpChar
+			subWarpCharTail = b.Type.SubWarpChar
+		}
 		// new subs
 		myOldOriginString := b.OriginString
 		// insert first sub origin string
@@ -137,7 +149,7 @@ func (b *CodeBlock) addSub(income *CodeBlock) {
 			panic("addSub to empty block: " + income.Key)
 		}
 		if newBlock {
-			b.OriginString = fmt.Sprintf("%s%s%s%s%s%s%s", b.OriginString[:insertPos], b.Type.SubWarpChar[:1], tabStr, b.SubOriginString, tailString, b.Type.SubWarpChar[1:], b.OriginString[insertPos:])
+			b.OriginString = fmt.Sprintf("%s%s%s%s%s%s%s", b.OriginString[:insertPos], subWarpCharHead, tabStr, b.SubOriginString, tailString, subWarpCharTail, b.OriginString[insertPos:])
 		} else {
 			b.OriginString = fmt.Sprintf("%s%s%s%s%s", b.OriginString[:insertPos], tabStr, b.SubOriginString, tailString, b.OriginString[insertPos:])
 		}
