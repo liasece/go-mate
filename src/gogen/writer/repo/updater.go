@@ -68,7 +68,7 @@ func getFieldUpdaterFields(f gocoder.Field) []*FieldUpdaterField {
 	return fs
 }
 
-func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) gocoder.Codeable {
+func getFieldUpdaterMethodToBSON(st gocoder.Struct, fs []*FieldUpdaterField) gocoder.Codable {
 	c := gocoder.NewCode()
 	receiver := cde.Receiver("f", st.GetType())
 	f := cde.Method("ToBSON", receiver, nil, []gocoder.Type{cde.Type(bson.M{})})

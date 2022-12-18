@@ -29,6 +29,7 @@ type TmplItem struct {
 
 type ServiceBase struct {
 	EntityPath                 string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
+	EntityKind                 string                       `json:"entityKind,omitempty" yaml:"entityKind,omitempty"`
 	ProtoTypeFile              string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
 	ProtoTypeFileIndent        string                       `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
 	EntityOptPkg               string                       `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
@@ -70,8 +71,8 @@ type EntityPrefab struct {
 	Tmpl          []*TmplItem                  `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
 	Env           map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	EntityPath    string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
+	EntityKind    string                       `json:"entityKind,omitempty" yaml:"entityKind,omitempty"`
 	ProtoTypeFile string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
-	OptFilePath   string                       `json:"optFilePath,omitempty" yaml:"optFilePath,omitempty"`
 	NoSelector    *bool                        `json:"noSelector,omitempty" yaml:"noSelector,omitempty"`
 }
 
@@ -87,14 +88,14 @@ type Entity struct {
 	Env                        map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	ProtoTypeFileIndent        string                       `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
 	EntityPath                 string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
+	EntityKind                 string                       `json:"entityKind,omitempty" yaml:"entityKind,omitempty"`
 	DecodedEntityPath          string                       `json:"-" yaml:"-"`
 	ProtoTypeFile              string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
 	EntityOptPkg               string                       `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
 	OutputCopierProtoPkgSuffix string                       `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
-	OptFilePath                string                       `json:"optFilePath,omitempty" yaml:"optFilePath,omitempty"`
 	NoSelector                 *bool                        `json:"noSelector,omitempty" yaml:"noSelector,omitempty"`
 
-	CodeType gocoder.Type `json:"-" yaml:"-"`
+	CodeType gocoder.Codable `json:"-" yaml:"-"`
 }
 
 type EntityFieldType string
@@ -261,6 +262,9 @@ func (s *ServiceBase) ApplyToEntity(entity *Entity) {
 	if entity.EntityPath == "" {
 		entity.EntityPath = s.EntityPath
 	}
+	if entity.EntityKind == "" {
+		entity.EntityKind = s.EntityKind
+	}
 	if entity.ProtoTypeFile == "" {
 		entity.ProtoTypeFile = s.ProtoTypeFile
 	}
@@ -329,11 +333,11 @@ func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
 	if prefab.EntityPath == "" && p.EntityPath != "" {
 		prefab.EntityPath = p.EntityPath
 	}
+	if prefab.EntityKind == "" && p.EntityKind != "" {
+		prefab.EntityKind = p.EntityKind
+	}
 	if prefab.ProtoTypeFile == "" && p.ProtoTypeFile != "" {
 		prefab.ProtoTypeFile = p.ProtoTypeFile
-	}
-	if prefab.OptFilePath == "" && p.OptFilePath != "" {
-		prefab.OptFilePath = p.OptFilePath
 	}
 	if prefab.NoSelector == nil && p.NoSelector != nil {
 		prefab.NoSelector = p.NoSelector
@@ -381,11 +385,11 @@ func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
 	if entity.EntityPath == "" && p.EntityPath != "" {
 		entity.EntityPath = p.EntityPath
 	}
+	if entity.EntityKind == "" && p.EntityKind != "" {
+		entity.EntityKind = p.EntityKind
+	}
 	if entity.ProtoTypeFile == "" && p.ProtoTypeFile != "" {
 		entity.ProtoTypeFile = p.ProtoTypeFile
-	}
-	if entity.OptFilePath == "" && p.OptFilePath != "" {
-		entity.OptFilePath = p.OptFilePath
 	}
 	if entity.NoSelector == nil && p.NoSelector != nil {
 		entity.NoSelector = p.NoSelector

@@ -340,6 +340,10 @@ github.com/liasece/gocoder v0.0.8 h1:dQnY1ygLxCSQyd6IKbIxtYXcwMnzI2mP3TA2ZjQVehw
 github.com/liasece/gocoder v0.0.8/go.mod h1:J1ytOuBzJHGGKcZqSaO0m7L+mdz1TiJ2FzF8ZbhfvuU=
 github.com/liasece/gocoder v0.0.9 h1:QqCIDFkJqimliAgr1YUNmmpOLUGA1SDXQTHtGB93MZw=
 github.com/liasece/gocoder v0.0.9/go.mod h1:J1ytOuBzJHGGKcZqSaO0m7L+mdz1TiJ2FzF8ZbhfvuU=
+github.com/liasece/gocoder v0.0.10 h1:fB5UahAiUVZoKdFKgsO1D50Uy/ntLGKIGoPy28bWdXM=
+github.com/liasece/gocoder v0.0.10/go.mod h1:J1ytOuBzJHGGKcZqSaO0m7L+mdz1TiJ2FzF8ZbhfvuU=
+github.com/liasece/gocoder v0.0.11 h1:koS54hf1/04wHcb12Qi2Qur7xHWfOS/HoJubD2y9+YA=
+github.com/liasece/gocoder v0.0.11/go.mod h1:J1ytOuBzJHGGKcZqSaO0m7L+mdz1TiJ2FzF8ZbhfvuU=
 github.com/liasece/log v0.0.2/go.mod h1:1g1oHOJsYCANqD7VcMdP5p1I3xISFUhY570UAzvrw8I=
 github.com/liasece/log v0.0.3 h1:gmuxb3tIXrLUdzhf6bSM+p8dzNiPHXY/+DNo2McxKJ0=
 github.com/liasece/log v0.0.3/go.mod h1:1g1oHOJsYCANqD7VcMdP5p1I3xISFUhY570UAzvrw8I=

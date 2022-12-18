@@ -48,7 +48,7 @@ func getFieldSorterFields(f gocoder.Field) []*FieldSorterField {
 	return fs
 }
 
-func getFieldSorterMethodToBSON(st gocoder.Struct, fs []*FieldSorterField) gocoder.Codeable {
+func getFieldSorterMethodToBSON(st gocoder.Struct, fs []*FieldSorterField) gocoder.Codable {
 	c := gocoder.NewCode()
 	receiver := cde.Receiver("f", st.GetType())
 	f := cde.Method("ToBSON", receiver, nil, []gocoder.Type{cde.Type(bson.D{})})

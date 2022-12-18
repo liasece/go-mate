@@ -10,8 +10,8 @@ import (
 	"github.com/liasece/gocoder"
 )
 
-func GetEntityRepositoryCodeFromTmpl(w *repo.RepositoryWriter, tmplPath string, ctx *TmplContext) (gocoder.Code, error) {
-	code, err := utils.TemplateFromFile(tmplPath, ctx, nil)
+func GetCodeFromTmpl(ctx interface{}, tmplPath string) (gocoder.Code, error) {
+	code, err := utils.TemplateFromFile(tmplPath, ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -21,13 +21,14 @@ func GetEntityRepositoryCodeFromTmpl(w *repo.RepositoryWriter, tmplPath string, 
 }
 
 type EntityTmplContext struct {
-	w         *repo.RepositoryWriter
-	terminate bool
+	*TmplContext
+	w *repo.RepositoryWriter
 }
 
-func NewEntityTmplContext(w *repo.RepositoryWriter) *EntityTmplContext {
+func NewEntityTmplContext(ctx *TmplContext, w *repo.RepositoryWriter) *EntityTmplContext {
 	return &EntityTmplContext{
-		w: w,
+		TmplContext: ctx,
+		w:           w,
 	}
 }
 
@@ -98,15 +99,6 @@ func (e *EntityTmplContext) EnvOr(k1 string, k2 string, or string) string {
 		return v
 	}
 	return or
-}
-
-func (e *EntityTmplContext) Terminate() bool {
-	e.terminate = true
-	return e.terminate
-}
-
-func (e *EntityTmplContext) GetTerminate() bool {
-	return e.terminate
 }
 
 func (e *EntityTmplContext) GetTagOn(filterReg string, targetTag string) string {

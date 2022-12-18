@@ -2,18 +2,35 @@ package context
 
 import (
 	"github.com/liasece/go-mate/src/config"
-	"github.com/liasece/go-mate/src/gogen/writer/repo"
 )
 
+type ITmplContext interface {
+	Terminate() bool
+	GetTerminate() bool
+}
+
+type BaseTmplContext struct {
+	terminate bool
+}
+
+func (e *BaseTmplContext) Terminate() bool {
+	e.terminate = true
+	return e.terminate
+}
+
+func (e *BaseTmplContext) GetTerminate() bool {
+	return e.terminate
+}
+
 type TmplContext struct {
-	*EntityTmplContext
+	BaseTmplContext
 	tmpl *config.TmplItem
 }
 
-func NewTmplContext(w *repo.RepositoryWriter, tmpl *config.TmplItem) *TmplContext {
+func NewTmplContext(tmpl *config.TmplItem) *TmplContext {
 	return &TmplContext{
-		EntityTmplContext: NewEntityTmplContext(w),
-		tmpl:              tmpl,
+		BaseTmplContext: BaseTmplContext{},
+		tmpl:            tmpl,
 	}
 }
 

@@ -3,7 +3,6 @@ package utils
 import (
 	"regexp"
 	"strings"
-	"text/template"
 	"unicode"
 	"unicode/utf8"
 
@@ -25,9 +24,13 @@ var funcs = map[string]interface{}{
 	"GraphqlStyleW":    GraphqlStyleW,
 	"ReplaceWord":      ReplaceWord,
 	"ReplaceWord2":     ReplaceWord2,
+	"LoadGoInterface":  LoadGoInterface,
+	"LoadGoType":       LoadGoType,
+	"LoadGoStruct":     LoadGoStruct,
+	"LoadGoMethods":    LoadGoMethods,
 }
 
-func TemplateFromFile(tmplPath string, env interface{}, fn template.FuncMap) (gocoder.Codeable, error) {
+func TemplateFromFile(tmplPath string, env interface{}) (gocoder.Codable, error) {
 	return gocoder.TemplateFromFile(tmplPath, env, funcs)
 }
 
