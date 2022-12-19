@@ -55,25 +55,26 @@ type Config struct {
 	Base                  `json:"base" yaml:"base"`
 	Entity                []*Entity                    `json:"entity,omitempty" yaml:"entity,omitempty"`
 	EntityPrefab          []*EntityPrefab              `json:"entityPrefab,omitempty" yaml:"entityPrefab,omitempty"`
-	BuildEntityWithPrefab map[string][]string          `json:"buildEntityWithPrefab,omitempty" yaml:"buildEntityWithPrefab,omitempty"`
+	BuildEntityWithPrefab yaml.MapSlice                `json:"buildEntityWithPrefab,omitempty" yaml:"buildEntityWithPrefab,omitempty"`
 	Env                   map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	LogLevel              string                       `json:"logLevel,omitempty" yaml:"logLevel,omitempty"`
 }
 
 type EntityPrefab struct {
-	Comment       `json:",inline" yaml:",inline"`
-	Name          string                       `json:"name" yaml:"name"`
-	Pkg           string                       `json:"pkg,omitempty" yaml:"pkg,omitempty"`
-	Fields        []*EntityField               `json:"fields,omitempty" yaml:"fields,omitempty"`
-	Service       string                       `json:"service,omitempty" yaml:"service,omitempty"`
-	GrpcSubPkg    string                       `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
-	Prefab        []string                     `json:"prefab,omitempty" yaml:"prefab,omitempty"`
-	Tmpl          []*TmplItem                  `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
-	Env           map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
-	EntityPath    string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
-	EntityKind    string                       `json:"entityKind,omitempty" yaml:"entityKind,omitempty"`
-	ProtoTypeFile string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
-	NoSelector    *bool                        `json:"noSelector,omitempty" yaml:"noSelector,omitempty"`
+	Comment        `json:",inline" yaml:",inline"`
+	Name           string                       `json:"name" yaml:"name"`
+	Pkg            string                       `json:"pkg,omitempty" yaml:"pkg,omitempty"`
+	Fields         []*EntityField               `json:"fields,omitempty" yaml:"fields,omitempty"`
+	Service        string                       `json:"service,omitempty" yaml:"service,omitempty"`
+	GrpcSubPkg     string                       `json:"grpcSubPkg,omitempty" yaml:"grpcSubPkg,omitempty"`
+	Prefab         []string                     `json:"prefab,omitempty" yaml:"prefab,omitempty"`
+	Tmpl           []*TmplItem                  `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
+	Env            map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
+	EntityPath     string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
+	EntityKind     string                       `json:"entityKind,omitempty" yaml:"entityKind,omitempty"`
+	RepeatByPrefab []string                     `json:"repeatByPrefab,omitempty" yaml:"repeatByPrefab,omitempty"`
+	ProtoTypeFile  string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
+	NoSelector     *bool                        `json:"noSelector,omitempty" yaml:"noSelector,omitempty"`
 }
 
 type Entity struct {
@@ -171,6 +172,32 @@ func (c *ServiceBase) AfterLoad() {
 	c.ProtoTypeFileIndent = getIndent()
 }
 
+func (c *Config) getPrefab(name string) *EntityPrefab {
+	for _, p := range c.EntityPrefab {
+		if p.Name == name {
+			return p
+		}
+	}
+	return nil
+}
+
+func interfaceToStringList(v interface{}) []string {
+	if v == nil {
+		return nil
+	}
+	switch v.(type) {
+	case []string:
+		return v.([]string)
+	case []interface{}:
+		var ret []string
+		for _, v := range v.([]interface{}) {
+			ret = append(ret, v.(string))
+		}
+		return ret
+	}
+	return nil
+}
+
 func (c *Config) AfterLoad() {
 	// build prefab
 	for _, prefab := range c.EntityPrefab {
@@ -197,19 +224,37 @@ func (c *Config) AfterLoad() {
 		}
 	}
 
-	for prefabName, entityNameList := range c.BuildEntityWithPrefab {
+	{
+		// apply repeat by prefab
+		for _, originBuildEntityWithPrefabV := range c.BuildEntityWithPrefab {
+			prefabName := originBuildEntityWithPrefabV.Key.(string)
+			prefab := c.getPrefab(prefabName)
+			for _, v := range prefab.RepeatByPrefab {
+				for i, buildEntityWithPrefabV := range c.BuildEntityWithPrefab {
+					if buildEntityWithPrefabV.Key.(string) == v {
+						c.BuildEntityWithPrefab[i].Value = append(interfaceToStringList(buildEntityWithPrefabV.Value), interfaceToStringList(originBuildEntityWithPrefabV.Value)...)
+					}
+				}
+			}
+		}
+	}
+
+	for _, v := range c.BuildEntityWithPrefab {
+		prefabName, entityNameList := v.Key.(string), interfaceToStringList(v.Value)
+		prefab := c.getPrefab(prefabName)
 		for _, entityName := range entityNameList {
 			find := false
 			for _, v := range c.Entity {
-				if v.Name == entityName {
+				if v.Name == entityName && v.EntityKind == prefab.EntityKind {
 					find = true
 					break
 				}
 			}
 			if !find {
 				c.Entity = append(c.Entity, &Entity{
-					Name:   entityName,
-					Prefab: []string{prefabName},
+					Name:       entityName,
+					EntityKind: prefab.EntityKind,
+					Prefab:     []string{prefabName},
 				})
 			} else {
 				log.L(nil).Fatal("Config AfterLoad build prefab target entity already exists", log.Any("entityName", entityName))
@@ -335,6 +380,18 @@ func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
 	}
 	if prefab.EntityKind == "" && p.EntityKind != "" {
 		prefab.EntityKind = p.EntityKind
+	}
+	for _, f := range p.RepeatByPrefab {
+		find := false
+		for _, v := range prefab.RepeatByPrefab {
+			if v == f {
+				find = true
+				break
+			}
+		}
+		if !find {
+			prefab.RepeatByPrefab = append(prefab.RepeatByPrefab, f)
+		}
 	}
 	if prefab.ProtoTypeFile == "" && p.ProtoTypeFile != "" {
 		prefab.ProtoTypeFile = p.ProtoTypeFile
