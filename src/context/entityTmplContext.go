@@ -7,18 +7,7 @@ import (
 
 	"github.com/liasece/go-mate/src/gogen/writer/repo"
 	"github.com/liasece/go-mate/src/utils"
-	"github.com/liasece/gocoder"
 )
-
-func GetCodeFromTmpl(ctx interface{}, tmplPath string) (gocoder.Code, error) {
-	code, err := utils.TemplateFromFile(tmplPath, ctx)
-	if err != nil {
-		return nil, err
-	}
-	c := gocoder.NewCode()
-	c.C(code)
-	return c, nil
-}
 
 type EntityTmplContext struct {
 	*TmplContext

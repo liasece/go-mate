@@ -111,11 +111,12 @@ func Generate(genCfg *GenerateCfg) {
 		}
 	}
 
-	for _, entity := range cfg.Entity {
-		switch entity.EntityKind {
+	for _, entityCfg := range cfg.Entity {
+		switch entityCfg.EntityKind {
 		case "methods":
+			generateMethods(entityCfg)
 		default:
-			generateEntity(entity)
+			generateEntity(entityCfg)
 		}
 	}
 }

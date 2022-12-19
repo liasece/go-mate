@@ -68,11 +68,11 @@ func generateEntityProtoType(entityCfg *config.Entity, enGameEntry *repo.Reposit
 }
 
 func generateEntityTmplItem(entityCfg *config.Entity, enGameEntry *repo.RepositoryWriter, tmpl *config.TmplItem) {
-	toFile, err := utils.TemplateRaw(tmpl.To, ccontext.NewEntityTmplContext(ccontext.NewTmplContext(tmpl), enGameEntry))
+	toFile, err := utils.TemplateRaw(tmpl.To, ccontext.NewEntityTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), enGameEntry))
 	if err != nil {
 		log.Fatal("generateEntity TemplateRaw error", log.ErrorField(err))
 		return
 	}
-	tmplCtx := ccontext.NewEntityTmplContext(ccontext.NewTmplContext(tmpl), enGameEntry)
+	tmplCtx := ccontext.NewEntityTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), enGameEntry)
 	generateTmplToFile(tmplCtx, entityCfg.Name, toFile, tmpl)
 }
