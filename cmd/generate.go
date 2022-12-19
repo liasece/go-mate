@@ -64,8 +64,8 @@ func Generate(genCfg *GenerateCfg) {
 					return
 				}
 				if methods == nil {
-					log.Fatal("generateEntity LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
-					return
+					log.Debug("generateEntity methods LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
+					continue
 				}
 				cs := make([]gocoder.Codable, 0, len(methods))
 				for _, v := range methods {
@@ -80,8 +80,8 @@ func Generate(genCfg *GenerateCfg) {
 					return
 				}
 				if interfaceType == nil {
-					log.Fatal("generateEntity LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
-					return
+					log.Debug("generateEntity interface LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
+					continue
 				}
 				entityCfg.CodeType = interfaceType
 			default:
@@ -92,8 +92,8 @@ func Generate(genCfg *GenerateCfg) {
 					return
 				}
 				if entityType == nil {
-					log.Fatal("generateEntity LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
-					return
+					log.Debug("generateEntity entity LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
+					continue
 				}
 				entityType.SetNamed(entityCfg.Name)
 				{
@@ -103,8 +103,8 @@ func Generate(genCfg *GenerateCfg) {
 						typ := entityType.Field(i).GetType()
 						filedNames = append(filedNames, entityType.Field(i).GetName()+"("+typ.ShowString()+")")
 					}
-					log.Debug("generateEntity filedNames", log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("entityNames", entityCfg.Name),
-						log.Any("entityCfg.Name", entityCfg.Name), log.Any("filedNames", filedNames), log.Any("entityKind", entityCfg.EntityKind))
+					log.Debug("generateEntity filedNames", log.Any("entityName", entityCfg.Name), log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityPkg", entityCfg.Pkg),
+						log.Any("filedNames", filedNames), log.Any("entityKind", entityCfg.EntityKind))
 				}
 				entityCfg.CodeType = entityType
 			}

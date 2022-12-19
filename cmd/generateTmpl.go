@@ -43,11 +43,23 @@ func generateTmplToFile(ctx ccontext.ITmplContext, name string, toFile string, t
 		if tmpl.Merge {
 			switch tmpl.Type {
 			case config.TmplItemTypeProto:
-				writer.MergeProtoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				err := writer.MergeProtoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				if err != nil {
+					log.Fatal("generateEntity Tmpl MergeProtoFromFile error", log.ErrorField(err))
+					return
+				}
 			case config.TmplItemTypeGo:
-				writer.MergeGoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				err := writer.MergeGoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				if err != nil {
+					log.Fatal("generateEntity Tmpl MergeGoFromFile error", log.ErrorField(err))
+					return
+				}
 			case config.TmplItemTypeGraphQL:
-				writer.MergeGraphQLFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				err := writer.MergeGraphQLFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+				if err != nil {
+					log.Fatal("generateEntity Tmpl MergeGraphQLFromFile error", log.ErrorField(err))
+					return
+				}
 			default:
 				log.Fatal("generateEntity Template merge type not support", log.Any("tmpl", tmpl))
 			}

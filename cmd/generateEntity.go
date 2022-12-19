@@ -51,7 +51,19 @@ func generateEntityProtoType(entityCfg *config.Entity, enGameEntry *repo.Reposit
 		if entityCfg.NoSelector == nil || !*entityCfg.NoSelector {
 			ts = append(ts, enGameEntry.Selector.GetType())
 		}
-		writer.StructToProto(protoTypeFile, entityCfg.ProtoTypeFileIndent, ts...)
+		err = writer.StructToProto(protoTypeFile, entityCfg.ProtoTypeFileIndent, ts...)
+		if err != nil {
+			log.Fatal("generateEntity StructToProto error", log.ErrorField(err))
+			return
+		}
+		// {
+		// 	// log fields
+		// 	logFields := []string{}
+		// 	for _, field := range enGameEntry.Updater.GetFields() {
+		// 		logFields = append(logFields, fmt.Sprintf("%s(%s)", field.GetName(), field.GetType().ShowString()))
+		// 	}
+		// 	log.Info(fmt.Sprintf("%s: generated fields %s (%.2fs) %s", entityCfg.Name, protoTypeFile, float64(time.Now().Sub(beginTime))/float64(time.Second), logFields))
+		// }
 	}
 }
 

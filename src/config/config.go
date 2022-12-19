@@ -227,13 +227,23 @@ func (c *Config) AfterLoad() {
 	{
 		// apply repeat by prefab
 		for _, originBuildEntityWithPrefabV := range c.BuildEntityWithPrefab {
-			prefabName := originBuildEntityWithPrefabV.Key.(string)
-			prefab := c.getPrefab(prefabName)
-			for _, v := range prefab.RepeatByPrefab {
+			originPrefab := c.getPrefab(originBuildEntityWithPrefabV.Key.(string))
+			for _, repeatByPrefabName := range originPrefab.RepeatByPrefab {
+				find := false
 				for i, buildEntityWithPrefabV := range c.BuildEntityWithPrefab {
-					if buildEntityWithPrefabV.Key.(string) == v {
-						c.BuildEntityWithPrefab[i].Value = append(interfaceToStringList(buildEntityWithPrefabV.Value), interfaceToStringList(originBuildEntityWithPrefabV.Value)...)
+					if buildEntityWithPrefabV.Key.(string) == repeatByPrefabName {
+						c.BuildEntityWithPrefab[i] = yaml.MapItem{
+							Key:   buildEntityWithPrefabV.Key,
+							Value: append(interfaceToStringList(buildEntityWithPrefabV.Value), interfaceToStringList(originBuildEntityWithPrefabV.Value)...),
+						}
+						find = true
 					}
+				}
+				if !find {
+					c.BuildEntityWithPrefab = append(c.BuildEntityWithPrefab, yaml.MapItem{
+						Key:   repeatByPrefabName,
+						Value: originBuildEntityWithPrefabV.Value,
+					})
 				}
 			}
 		}
