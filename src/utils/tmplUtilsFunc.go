@@ -230,7 +230,7 @@ func GraphqlStyleW(fieldName string, typeName string, writeType string) string {
 	case "bool":
 		res = "Boolean"
 	default:
-		if writeType != "" && typeName == writeType {
+		if writeType != "" && (typeName == writeType || regexp.MustCompile(writeType).MatchString(typeName)) {
 			contentReg := regexp.MustCompile(`^[A-Z][\w]*$`)
 			if contentReg.MatchString(typeName) {
 				isPtr = false
