@@ -31,11 +31,11 @@ func (e *TypeTmplContext) FinalElem() *TypeTmplContext {
 }
 
 func (e *TypeTmplContext) ExternalTypeString() string {
-	str := e.Type.String()
+	str := e.Type.Name()
 	finalElem := e.FinalElem()
 	finalElemPkg := finalElem.PackageInReference()
 	if finalElem.KindIsStruct() && finalElemPkg != "" {
-		str = strings.Replace(str, finalElem.String(), finalElemPkg+"."+finalElem.Name(), -1)
+		str = strings.ReplaceAll(str, finalElem.Name(), finalElemPkg+"."+finalElem.Name())
 	}
 	return str
 }

@@ -36,10 +36,13 @@ func Generate(genCfg *GenerateCfg) {
 				VServiceName: entityCfg.Service,
 			})
 			if err != nil {
-				log.Fatal("generateEntity TemplateRaw error", log.ErrorField(err))
+				log.Fatal("Generate TemplateRaw error", log.ErrorField(err))
 				return
 			}
 			entityCfg.DecodedEntityPath = entityPath
+			if entityCfg.Pkg == "" {
+				entityCfg.Pkg = coder_ast.GetDirGoPackage(entityPath)
+			}
 			if entityCfg.Pkg == "" {
 				if entityCfg.GetEnv("go", "mod") != "" {
 					entityCfg.Pkg = entityCfg.GetEnv("go", "mod") + "/" + entityPath
@@ -49,22 +52,19 @@ func Generate(genCfg *GenerateCfg) {
 			}
 			codePaths = append(codePaths, entityPath)
 		}
-		astCoder, err := coder_ast.NewASTCoder(codePaths...)
+		astCoder, err := coder_ast.NewCodeDecoder(codePaths...)
 		if err != nil {
-			log.Fatal("generateEntity NewASTCoder error", log.ErrorField(err))
+			log.Fatal("Generate NewCodeDecoder error", log.ErrorField(err))
 			return
 		}
 		for _, entityCfg := range cfg.Entity {
+			log.Debug("Generate begin", log.Any("entityName", entityCfg.Name), log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("entityKind", entityCfg.EntityKind))
 			switch entityCfg.EntityKind {
 			case "methods":
 				// get entity type
-				methods, err := astCoder.GetMethods(entityCfg.Name, gocoder.NewToCodeOpt().PkgPath(entityCfg.Pkg))
-				if err != nil {
-					log.Fatal("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityKind", entityCfg.EntityKind))
-					return
-				}
+				methods := astCoder.GetMethods(entityCfg.Pkg + "." + entityCfg.Name)
 				if methods == nil {
-					log.Debug("generateEntity methods LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
+					log.Debug("Generate methods LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
 					continue
 				}
 				cs := make([]gocoder.Codable, 0, len(methods))
@@ -74,25 +74,21 @@ func Generate(genCfg *GenerateCfg) {
 				entityCfg.CodeType = gocoder.NewCode().C(cs...)
 			case "interface":
 				// get entity type
-				interfaceType, err := astCoder.GetInterface(entityCfg.Name, gocoder.NewToCodeOpt().PkgPath(entityCfg.Pkg))
+				interfaceType := astCoder.GetInterface(entityCfg.Pkg + "." + entityCfg.Name)
 				if err != nil {
 					log.Fatal("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityKind", entityCfg.EntityKind))
 					return
 				}
 				if interfaceType == nil {
-					log.Debug("generateEntity interface LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
+					log.Debug("Generate interface LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
 					continue
 				}
 				entityCfg.CodeType = interfaceType
 			default:
 				// get entity type
-				entityType, err := astCoder.GetType(entityCfg.Name, gocoder.NewToCodeOpt().PkgPath(entityCfg.Pkg))
-				if err != nil {
-					log.Fatal("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityKind", entityCfg.EntityKind))
-					return
-				}
+				entityType := astCoder.GetType(entityCfg.Pkg + "." + entityCfg.Name)
 				if entityType == nil {
-					log.Debug("generateEntity entity LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
+					log.Debug("Generate entity LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
 					continue
 				}
 				entityType.SetNamed(entityCfg.Name)
@@ -103,7 +99,7 @@ func Generate(genCfg *GenerateCfg) {
 						typ := entityType.Field(i).GetType()
 						filedNames = append(filedNames, entityType.Field(i).GetName()+"("+typ.ShowString()+")")
 					}
-					log.Debug("generateEntity filedNames", log.Any("entityName", entityCfg.Name), log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityPkg", entityCfg.Pkg),
+					log.Debug("Generate filedNames", log.Any("entityName", entityCfg.Name), log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityPkg", entityCfg.Pkg),
 						log.Any("filedNames", filedNames), log.Any("entityKind", entityCfg.EntityKind))
 				}
 				entityCfg.CodeType = entityType

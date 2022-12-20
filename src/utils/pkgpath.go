@@ -13,28 +13,6 @@ import (
 	"sync"
 )
 
-func GetPkgPath(fname string, isDir bool) (string, error) {
-	if !filepath.IsAbs(fname) {
-		pwd, err := os.Getwd()
-		if err != nil {
-			return "", err
-		}
-		fname = filepath.Join(pwd, fname)
-	}
-
-	goModPath, _ := goModPath(fname, isDir)
-	if strings.Contains(goModPath, "go.mod") {
-		pkgPath, err := getPkgPathFromGoMod(fname, isDir, goModPath)
-		if err != nil {
-			return "", err
-		}
-
-		return pkgPath, nil
-	}
-
-	return getPkgPathFromGOPATH(fname, isDir)
-}
-
 var goModPathCache = struct {
 	paths map[string]string
 	sync.RWMutex

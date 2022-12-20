@@ -3,7 +3,7 @@ module github.com/liasece/go-mate
 go 1.17
 
 require (
-	github.com/liasece/gocoder v0.0.12
+	github.com/liasece/gocoder v0.0.13
 	github.com/liasece/log v0.0.3
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0

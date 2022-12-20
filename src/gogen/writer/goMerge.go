@@ -104,7 +104,7 @@ func mergeGoFromFile(protoFile string, newContent string) error {
 		if err != nil {
 			return err
 		}
-		err = ioutil.WriteFile(protoFile, bytes, 0644)
+		err = ioutil.WriteFile(protoFile, bytes, 0600)
 		if err != nil {
 			return errors.Wrapf(err, "failed to write %s", protoFile)
 		}

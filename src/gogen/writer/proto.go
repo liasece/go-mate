@@ -35,7 +35,7 @@ func StructToProto(protoFile string, indent string, ts ...gocoder.Type) error {
 	toContent := toCode.OriginString
 	if toContent != originFileContent {
 		// write to file
-		err := ioutil.WriteFile(protoFile, []byte(toContent), 0644)
+		err := ioutil.WriteFile(protoFile, []byte(toContent), 0600)
 		if err != nil {
 			return err
 		}

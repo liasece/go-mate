@@ -22,7 +22,7 @@ func mergeProtoFromFile(protoFile string, newContent string) error {
 	toContent := mergeProto(originFileContent, newContent)
 	if toContent != originFileContent {
 		// write to file
-		err := ioutil.WriteFile(protoFile, []byte(toContent), 0644)
+		err := ioutil.WriteFile(protoFile, []byte(toContent), 0600)
 		if err != nil {
 			return err
 		}

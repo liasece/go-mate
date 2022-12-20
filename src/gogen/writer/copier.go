@@ -19,7 +19,7 @@ func FillCopierLine(copierFile string, names [][2]string) error {
 	toContent := buildCopierContent(originFileContent, names)
 	if toContent != originFileContent {
 		// write to file
-		err := ioutil.WriteFile(copierFile, []byte(toContent), 0644)
+		err := ioutil.WriteFile(copierFile, []byte(toContent), 0600)
 		if err != nil {
 			return err
 		}
