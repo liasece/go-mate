@@ -7,7 +7,6 @@ import (
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
 	"github.com/liasece/gocoder/cdt"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 type RepositoryWriter struct {
@@ -35,6 +34,19 @@ func NewRepositoryWriterByObj(i interface{}) *RepositoryWriter {
 	return &RepositoryWriter{
 		entity:     t,
 		entityName: t.Name(),
+
+		entityPkg:         "",
+		serviceName:       "",
+		Filter:            nil,
+		Updater:           nil,
+		Sorter:            nil,
+		Selector:          nil,
+		OutTypeSuffix:     "",
+		OutFilterSuffix:   "",
+		OutUpdaterSuffix:  "",
+		OutSorterSuffix:   "",
+		OutSelectorSuffix: "",
+		EntityCfg:         nil,
 	}
 }
 
@@ -49,6 +61,12 @@ func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, serviceN
 		OutUpdaterSuffix:  outUpdaterSuffix,
 		OutSorterSuffix:   outSorterSuffix,
 		OutSelectorSuffix: outSelectorSuffix,
+
+		Filter:    nil,
+		Updater:   nil,
+		Sorter:    nil,
+		Selector:  nil,
+		EntityCfg: nil,
 	}
 }
 
@@ -114,7 +132,7 @@ func (w *RepositoryWriter) GetEntityStruct() gocoder.Struct {
 	for i := 0; i < w.entity.NumField(); i++ {
 		mfs = append(mfs, w.entity.Field(i))
 	}
-	strT := cde.Struct(fmt.Sprintf("%s"))
+	strT := cde.Struct(w.entityName)
 	strT.AddFields(mfs)
 	return strT
 }
@@ -184,53 +202,6 @@ func (w *RepositoryWriter) GetSelectorTypeCode() gocoder.Code {
 	c.C(getFieldSelectorMethodToBSON(strT, mfs))
 
 	return c
-}
-
-func (w *RepositoryWriter) getQueryCode(receiver gocoder.Receiver, filter gocoder.Struct) gocoder.Code {
-	c := gocoder.NewCode()
-	resV := cde.Value("res", cde.Type(w.entity).Slice())
-	countV := cde.Value("count", cde.Type(0))
-	errV := cde.Value("err", cde.TypeError())
-	queryArgV := cde.Arg("query", filter.GetType())
-	ctxV := cde.Arg("ctx", cde.Type("context.Context"))
-	method := cde.Method("Query", receiver, []gocoder.Arg{
-		ctxV,
-		queryArgV,
-	}, []gocoder.Type{
-		resV.Type(),
-		countV.Type(),
-		errV.Type(),
-	})
-	method.C(
-		resV.AutoSet(cde.Make(resV, 0)),
-		countV.AutoSet(0),
-	)
-	bsonQueryV := cde.Value("bsonQuery", cde.Type(bson.M{}))
-	method.C(
-		bsonQueryV.AutoSet(queryArgV.GetValue().Method("ToBSON").Call()),
-		// cde.Values(countV, errV).AutoSet(receiver.GetValue().Field("Mongo").Method("Count").Call()),
-		cde.Return(resV, countV, cde.Value("nil", nil)),
-	)
-	c.C(method)
-	return c
-}
-
-func (w *RepositoryWriter) GetEntityRepositoryCode(filter gocoder.Struct, updater gocoder.Struct) gocoder.Code {
-	c := gocoder.NewCode()
-
-	mfs := make([]gocoder.Field, 0)
-	mfs = append(mfs)
-
-	strT := cde.Struct(fmt.Sprintf("%sRepository", w.entityName), mfs...)
-	c.C(strT)
-	receiver := cde.Receiver("r", strT.GetType().TackPtr())
-	c.C(w.getQueryCode(receiver, filter))
-
-	return c
-}
-
-func (w *RepositoryWriter) GetEntityRepositoryStructCode() gocoder.Code {
-	return w.GetEntityRepositoryCode(w.GetFilterTypeStructCodeStruct(), w.GetUpdaterTypeStructCodeStruct())
 }
 
 func (w *RepositoryWriter) GetEntityRepositoryInterfaceCode() gocoder.Code {

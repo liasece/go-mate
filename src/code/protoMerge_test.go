@@ -40,30 +40,30 @@ service GamedevService {
 func TestProtoBlockFromString(t *testing.T) {
 	c := NewProtoBufCodeBlockParser()
 	type args struct {
-		p       *CodeBlock
+		p       *Block
 		content string
 	}
 	tests := []struct {
 		name string
 		args args
-		want *CodeBlock
+		want *Block
 	}{
 		{
 			name: "test1",
 			args: args{
 				content: protoContent1,
 			},
-			want: &CodeBlock{
+			want: &Block{
 				OriginString:    protoContent1,
 				SubOriginString: protoContent1,
-				Type:            CodeBlockType{MergeAble: true, SubsSeparator: "\n"},
-				SubList: []*CodeBlock{
+				Type:            BlockType{MergeAble: true, SubsSeparator: "\n"},
+				SubList: []*Block{
 					{
 						Key:             "UpdateGameDetailByGameIDRequest",
 						Type:            ProtoBlockTypeMessage,
 						OriginString:    "message UpdateGameDetailByGameIDRequest {\n\tstring game_id = 1;\n\tGameDetailUpdater updater = 2;\n\toptional string op_user_id = 3;\n}",
 						SubOriginString: "string game_id = 1;\n\tGameDetailUpdater updater = 2;\n\toptional string op_user_id = 3;",
-						SubList: []*CodeBlock{
+						SubList: []*Block{
 							{
 								Key:          "game_id",
 								Type:         ProtoBlockTypeMessageField,
@@ -96,13 +96,13 @@ func TestProtoBlockFromString(t *testing.T) {
 						Type:            ProtoBlockTypeMessage,
 						OriginString:    "message BatchGetAssetTokenConfigResponse {\n\trepeated AssetTokenConfig info_list = 1 [json_name = \"nodes\"];\n}",
 						SubOriginString: "repeated AssetTokenConfig info_list = 1 [json_name = \"nodes\"];",
-						SubList: []*CodeBlock{
+						SubList: []*Block{
 							{
 								Key:             "info_list",
 								Type:            ProtoBlockTypeMessageField,
 								OriginString:    "repeated AssetTokenConfig info_list = 1 [json_name = \"nodes\"];",
 								SubOriginString: "json_name = \"nodes\"",
-								SubList: []*CodeBlock{
+								SubList: []*Block{
 									{
 										Key:          "json_name",
 										Type:         ProtoBlockTypeOptionItem,
@@ -118,13 +118,13 @@ func TestProtoBlockFromString(t *testing.T) {
 						Type:            ProtoBlockTypeService,
 						OriginString:    "service GamedevService {\n\toption (base.soptions) = {ds_rpc: true, lua_export: true};\n\trpc FullSetGameHotfixData(FullSetGameHotfixDataRequest) returns (FullSetGameHotfixDataResponse);\n\trpc GetGameHotfixData(GetGameHotfixDataRequest) returns (GetGameHotfixDataResponse) {\n\t\toption (base.moptions) = {ds_rpc: true, lua_export: true};\n\t};\n\trpc GetGameHotfixDataView(GetGameHotfixDataViewRequest) returns (GetGameHotfixDataViewResponse);\n\n\t// game channel\n\trpc ListChannelGameEntry(ListChannelGameEntryRequest) returns(ListChannelGameEntryResponse);\n\trpc InsertGameProject(InsertGameProjectRequest) returns (InsertGameProjectResponse);\n}",
 						SubOriginString: "option (base.soptions) = {ds_rpc: true, lua_export: true};\n\trpc FullSetGameHotfixData(FullSetGameHotfixDataRequest) returns (FullSetGameHotfixDataResponse);\n\trpc GetGameHotfixData(GetGameHotfixDataRequest) returns (GetGameHotfixDataResponse) {\n\t\toption (base.moptions) = {ds_rpc: true, lua_export: true};\n\t};\n\trpc GetGameHotfixDataView(GetGameHotfixDataViewRequest) returns (GetGameHotfixDataViewResponse);\n\n\t// game channel\n\trpc ListChannelGameEntry(ListChannelGameEntryRequest) returns(ListChannelGameEntryResponse);\n\trpc InsertGameProject(InsertGameProjectRequest) returns (InsertGameProjectResponse);",
-						SubList: []*CodeBlock{
+						SubList: []*Block{
 							{
 								Key:             "(base.soptions)",
 								Type:            ProtoBlockTypeOption,
 								OriginString:    "option (base.soptions) = {ds_rpc: true, lua_export: true};",
 								SubOriginString: "ds_rpc: true, lua_export: true",
-								SubList: []*CodeBlock{
+								SubList: []*Block{
 									{
 										Key:          "ds_rpc",
 										Type:         ProtoBlockTypeOptionItem,
@@ -150,13 +150,13 @@ func TestProtoBlockFromString(t *testing.T) {
 								Type:            ProtoBlockTypeRPC,
 								OriginString:    "rpc GetGameHotfixData(GetGameHotfixDataRequest) returns (GetGameHotfixDataResponse) {\n\t\toption (base.moptions) = {ds_rpc: true, lua_export: true};\n\t};",
 								SubOriginString: "option (base.moptions) = {ds_rpc: true, lua_export: true};",
-								SubList: []*CodeBlock{
+								SubList: []*Block{
 									{
 										Key:             "(base.moptions)",
 										Type:            ProtoBlockTypeOption,
 										OriginString:    "option (base.moptions) = {ds_rpc: true, lua_export: true};",
 										SubOriginString: "ds_rpc: true, lua_export: true",
-										SubList: []*CodeBlock{
+										SubList: []*Block{
 											{
 												Key:          "ds_rpc",
 												Type:         ProtoBlockTypeOptionItem,
@@ -212,7 +212,7 @@ func TestProtoBlockFromString(t *testing.T) {
 	}
 }
 
-func fillWantParent(p *CodeBlock, want *CodeBlock) {
+func fillWantParent(p *Block, want *Block) {
 	want.Parent = p
 	// fill want parent
 	for _, v := range want.SubList {
@@ -225,7 +225,7 @@ func fillWantParent(p *CodeBlock, want *CodeBlock) {
 func TestProtoBlock_Merge(t *testing.T) {
 	c := NewProtoBufCodeBlockParser()
 	type args struct {
-		income *CodeBlock
+		income *Block
 	}
 	incomeStr := `
 
@@ -242,9 +242,9 @@ message BatchGetAssetTokenConfigResponse {
 				`
 	tests := []struct {
 		name string
-		b    *CodeBlock
+		b    *Block
 		args args
-		want *CodeBlock
+		want *Block
 	}{
 		{
 			name: "merge",

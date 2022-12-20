@@ -1,0 +1,279 @@
+# options for analysis running
+run:
+  # default concurrency is a available CPU number
+  concurrency: 8
+
+  # timeout for analysis, e.g. 30s, 5m, default is 1m
+  timeout: 10m
+
+  # include test files or not, default is true
+  tests: false
+
+  go: "1.16"
+
+linters:
+  # please, do not use `enable-all`: it's deprecated and will be removed soon.
+  # inverted configuration with `enable-all` and `disable` is not scalable during updates of golangci-lint
+  disable-all: true
+  enable:
+    - bodyclose
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - revive
+
+    - noctx
+    - dupl
+    - gocritic
+    - exportloopref
+    - prealloc
+    - makezero
+    - asciicheck
+    - misspell
+    - dogsled
+    - unconvert
+    - nakedret
+    - nolintlint
+    - gosec
+    - goerr113
+    - errorlint
+    - nilerr
+    - errchkjson
+    # - nestif
+    - exhaustruct
+    - unparam
+    - bidichk
+    - nosprintfhostport
+    - predeclared
+    - asasalint
+    #- gofmt
+    # - gofumpt
+    - gci
+    - importas
+    - depguard
+    - usestdlibvars
+    - reassign
+    - exhaustive
+    #- funlen
+    #- gochecknoinits
+    #- goconst
+    #- gocyclo
+    #- goimports
+    #- gomnd
+    #- goprintffuncname
+    #- lll
+    #- rowserrcheck
+    #- stylecheck
+    #- whitespace
+
+linters-settings:
+  dupl:
+    # tokens count to trigger issue, 150 by default
+    threshold: 200
+
+  govet:
+    # report about shadowed variables
+    check-shadowing: true
+    settings:
+      # Analyzer name, run `go tool vet help` to see all analyzers.
+      shadow:
+        # Whether to be strict about shadowing; can be noisy.
+        # Default: false
+        strict: false
+      unusedresult:
+        # Comma-separated list of functions whose results must be used
+        # (in addition to defaults context.WithCancel,context.WithDeadline,context.WithTimeout,context.WithValue,
+        # errors.New,fmt.Errorf,fmt.Sprint,fmt.Sprintf,sort.Reverse)
+        # Default []
+        funcs:
+          - context.WithCancel
+          - context.WithDeadline
+          - context.WithTimeout
+          - context.WithValue
+          - errors.New
+          - fmt.Errorf
+          - fmt.Sprint
+          - fmt.Sprintf
+          - sort.Reverse
+        # Comma-separated list of names of methods of type func() string whose results must be used
+        # (in addition to default Error,String)
+        # Default []
+        stringmethods:
+          - Error
+          - String
+    # Enable all analyzers.
+    # Default: false
+    enable-all: true
+    disable:
+      - fieldalignment
+      - unusedwrite
+
+  gosec:
+    # To specify a set of rules to explicitly exclude.
+    # Available rules: https://github.com/securego/gosec#available-rules
+    excludes:
+      - G101
+      - G108
+      - G401
+      - G402
+      - G404
+      - G501
+      - G505
+      - G114
+
+  gocritic:
+    disabled-checks:
+      - exitAfterDefer
+
+  errorlint:
+    # Check whether fmt.Errorf uses the %w verb for formatting errors. See the readme for caveats
+    errorf: true
+    # Check for plain type assertions and type switches
+    asserts: true
+    # Check for plain error comparisons
+    comparison: true
+
+  nestif:
+    # minimal complexity of if statements to report, 5 by default
+    min-complexity: 17
+
+  gosimple:
+    # Select the Go version to target. The default is '1.13'.
+    go: "1.16"
+    # https://staticcheck.io/docs/options#checks
+    checks: ["all"]
+
+  staticcheck:
+    # Select the Go version to target. The default is '1.13'.
+    go: "1.16"
+    # https://staticcheck.io/docs/options#checks
+    checks: ["all"]
+
+  asasalint:
+    # To specify a set of function names to exclude.
+    # The values are merged with the builtin exclusions.
+    # The builtin exclusions can be disabled by setting `use-builtin-exclusions` to `false`.
+    # Default: ["^(fmt|log|logger)\.(Print|Fprint|Sprint|Fatal|Panic|Error|Warn|Warning|Info|Debug)(|f|ln)$"]
+    exclude:
+      - append
+      - \.Wrapf
+    # To enable/disable the asasalint builtin exclusions of function names.
+    # See the default value of `exclude` to get the builtin exclusions.
+    # Default: true
+    use-builtin-exclusions: false
+    # Ignore *_test.go files.
+    # Default: false
+    ignore-test: true
+
+  gofmt:
+    # Simplify code: gofmt with `-s` option.
+    # Default: true
+    simplify: false
+
+  gofumpt:
+    # Select the Go version to target.
+    # Default: "1.15"
+    # Deprecated: use the global `run.go` instead.
+    lang-version: "1.16"
+    # Module path which contains the source code being formatted.
+    # Default: ""
+    # Choose whether to use the extra rules.
+    # Default: false
+    extra-rules: false
+
+  gci:
+    # Section configuration to compare against.
+    # Section names are case-insensitive and may contain parameters in ().
+    # Default: ["standard", "default"]
+    sections:
+      - standard # Captures all standard packages if they do not match another section.
+      - default # Contains all imports that could not be matched to another section type.
+
+  usestdlibvars:
+    # Suggest the use of http.MethodXX
+    # Default: true
+    http-method: true
+    # Suggest the use of http.StatusXX
+    # Default: true
+    http-status-code: true
+    # Suggest the use of time.Weekday
+    # Default: true
+    time-weekday: true
+    # Suggest the use of time.Month
+    # Default: false
+    time-month: true
+    # Suggest the use of time.Layout
+    # Default: false
+    time-layout: true
+    # Suggest the use of crypto.Hash
+    # Default: false
+    crypto-hash: true
+    # Suggest the use of rpc.DefaultXXPath
+    # Default: false
+    default-rpc-path: true
+
+  exhaustive:
+    # Check switch statements in generated files also.
+    # Default: false
+    check-generated: true
+    # Presence of "default" case in switch statements satisfies exhaustiveness,
+    # even if all enum members are not listed.
+    # Default: false
+    default-signifies-exhaustive: true
+    # Enum members matching the supplied regex do not have to be listed in
+    # switch statements to satisfy exhaustiveness.
+    # Default: ""
+    # ignore-enum-members: "Example.+"
+    # Consider enums only in package scopes, not in inner scopes.
+    # Default: false
+    package-scope-only: false
+
+  depguard:
+    list-type: denylist
+    include-go-root: true # to check stdlib packages as well
+    packages-with-error-message:
+      - sync/atomic: "`sync/atomic` is easy to forget which variables must be accessed atomically. use `go.uber.org/atomic` instead"
+      - github.com/pborman/uuid: "use `github.com/google/uuid` instead"
+
+  reassign:
+    # Patterns for global variable names that are checked for reassignment.
+    # See https://github.com/curioswitch/go-reassign#usage
+    # Default: ["EOF", "Err.*"]
+    patterns:
+      - "EOF"
+      - "Err.*"
+
+  unparam:
+    # Inspect exported functions.
+    #
+    # Set to true if no external program/library imports your code.
+    # XXX: if you enable this setting, unparam will report a lot of false-positives in text editors:
+    # if it's called for subdir of a project it can't find external interfaces. All text editor integrations
+    # with golangci-lint call it on a directory with the changed file.
+    #
+    # Default: false
+    check-exported: true
+
+  importas:
+    # By default, importas allows non-aliased imports, even when the package is specified by -alias flag.
+    # With no-unaliased option, force to use alias.
+    # With no-extra-aliases option, importas does not allow any unspecified aliases.
+    no-unaliased: true
+    # List of aliases
+
+issues:
+  exclude:
+    - 'declaration of "err" shadows declaration at'
+
+  # Independently from option `exclude` we use default exclude patterns,
+  # it can be disabled by this option. To list all
+  # excluded by default patterns execute `golangci-lint run --help`.
+  # Default value for this option is true.
+  exclude-use-default: true
+
+  include:
+    - EXC0005

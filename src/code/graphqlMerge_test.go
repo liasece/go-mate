@@ -48,30 +48,30 @@ extend type Query {
 func TestGraphqlBlockFromString(t *testing.T) {
 	c := NewGraphqlCodeBlockParser()
 	type args struct {
-		p       *CodeBlock
+		p       *Block
 		content string
 	}
 	tests := []struct {
 		name string
 		args args
-		want *CodeBlock
+		want *Block
 	}{
 		{
 			name: "test1",
 			args: args{
 				content: graphqlContent1,
 			},
-			want: &CodeBlock{
+			want: &Block{
 				OriginString:    graphqlContent1,
 				SubOriginString: graphqlContent1,
-				Type:            CodeBlockType{MergeAble: true, SubsSeparator: "\n"},
-				SubList: []*CodeBlock{
+				Type:            BlockType{MergeAble: true, SubsSeparator: "\n"},
+				SubList: []*Block{
 					{
 						Key:             "GameEntry",
 						Type:            GraphqlBlockTypeType,
 						OriginString:    "type GameEntry implements Node {\n  id: ID!\n  name: String!\n  channelID: String!\n  createAt: Timestamp!\n  updateAt: Timestamp!\n  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n  visibilityType: Int!\n  ownerID: String!\n  groupID: String!\n  oldGameID: String!\n  oldGameVersion: String!\n  detailID: String!\n  indexWeight: Int!\n\n  detail: GameDetail @goField(forceResolver: true)\n  game: Game @goField(forceResolver: true)\n}",
 						SubOriginString: "id: ID!\n  name: String!\n  channelID: String!\n  createAt: Timestamp!\n  updateAt: Timestamp!\n  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n  visibilityType: Int!\n  ownerID: String!\n  groupID: String!\n  oldGameID: String!\n  oldGameVersion: String!\n  detailID: String!\n  indexWeight: Int!\n\n  detail: GameDetail @goField(forceResolver: true)\n  game: Game @goField(forceResolver: true)",
-						SubList: []*CodeBlock{
+						SubList: []*Block{
 							{
 								Key:             "id",
 								Type:            GraphqlBlockTypeTypeField,
@@ -170,7 +170,7 @@ func TestGraphqlBlockFromString(t *testing.T) {
 						Type:            GraphqlBlockTypeInput,
 						OriginString:    "input GameEntryUpdater {\n  justDelete: Boolean\n}\n",
 						SubOriginString: "justDelete: Boolean",
-						SubList: []*CodeBlock{
+						SubList: []*Block{
 							{
 								Key:             "justDelete",
 								Type:            GraphqlBlockTypeInputField,
@@ -184,13 +184,13 @@ func TestGraphqlBlockFromString(t *testing.T) {
 						Type:            GraphqlBlockTypeType,
 						OriginString:    "extend type Query {\n  gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n}",
 						SubOriginString: "gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })",
-						SubList: []*CodeBlock{
+						SubList: []*Block{
 							{
 								Key:             "gameEntry",
 								Type:            GraphqlBlockTypeTypeField,
 								OriginString:    "gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })",
 								SubOriginString: "id: ID!",
-								SubList: []*CodeBlock{
+								SubList: []*Block{
 									{
 										Key:             "id",
 										Type:            GraphqlBlockTypeTypeFieldArg,
@@ -204,7 +204,7 @@ func TestGraphqlBlockFromString(t *testing.T) {
 								Type:            GraphqlBlockTypeTypeField,
 								OriginString:    "gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })",
 								SubOriginString: "filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!",
-								SubList: []*CodeBlock{
+								SubList: []*Block{
 									{
 										Key:             "filter",
 										Type:            GraphqlBlockTypeTypeFieldArg,
@@ -236,7 +236,7 @@ func TestGraphqlBlockFromString(t *testing.T) {
 								Type:            GraphqlBlockTypeTypeField,
 								OriginString:    "searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })",
 								SubOriginString: "filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!",
-								SubList: []*CodeBlock{
+								SubList: []*Block{
 									{
 										Key:             "filter",
 										Type:            GraphqlBlockTypeTypeFieldArg,
@@ -287,7 +287,7 @@ func TestGraphqlBlockFromString(t *testing.T) {
 func TestGraphqlBlock_Merge(t *testing.T) {
 	c := NewGraphqlCodeBlockParser()
 	type args struct {
-		income *CodeBlock
+		income *Block
 	}
 	incomeStr := `
 type GameEntryNew {
@@ -314,9 +314,9 @@ extend type Query {
 }`
 	tests := []struct {
 		name string
-		b    *CodeBlock
+		b    *Block
 		args args
-		want *CodeBlock
+		want *Block
 	}{
 		{
 			name: "merge",

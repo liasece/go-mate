@@ -1,7 +1,6 @@
 package context
 
 import (
-	"context"
 	"reflect"
 	"strings"
 
@@ -158,5 +157,5 @@ func (e *EntityTmplContext) findFieldNumByTagOn(filterReg string) int {
 
 // get gorm indexes
 func (e *EntityTmplContext) GormIndexes() []*utils.Index {
-	return utils.GormIndexes(context.Background(), e.w.Entity())
+	return utils.GormIndexes(e.w.Entity())
 }

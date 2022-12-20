@@ -1,7 +1,7 @@
 package writer
 
 import (
-	"io/ioutil"
+	"os"
 
 	"github.com/liasece/go-mate/src/code"
 )
@@ -14,7 +14,7 @@ func mergeProtoFromFile(protoFile string, newContent string) error {
 	originFileContent := ""
 	{
 		// read from file
-		content, err := ioutil.ReadFile(protoFile)
+		content, err := os.ReadFile(protoFile)
 		if err == nil {
 			originFileContent = string(content)
 		}
@@ -22,7 +22,7 @@ func mergeProtoFromFile(protoFile string, newContent string) error {
 	toContent := mergeProto(originFileContent, newContent)
 	if toContent != originFileContent {
 		// write to file
-		err := ioutil.WriteFile(protoFile, []byte(toContent), 0600)
+		err := os.WriteFile(protoFile, []byte(toContent), 0600)
 		if err != nil {
 			return err
 		}

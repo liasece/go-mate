@@ -18,13 +18,22 @@ type GenerateCfg struct {
 func Generate(genCfg *GenerateCfg) {
 	cfg, err := config.LoadConfig(genCfg.ConfigFile)
 	if err != nil {
-		log.L(nil).Fatal("generate LoadConfig error", log.ErrorField(err), log.Any("genCfg", genCfg))
+		log.Fatal("generate LoadConfig error", log.ErrorField(err), log.Any("genCfg", genCfg))
+		return
 	}
-	log.InitLogByLevel(cfg.LogLevel)
-	log.L(nil).Debug("generate LoadConfig finish", log.Any("genCfg", genCfg), log.Any("cfg", cfg))
+	err = log.InitLogByLevel(cfg.LogLevel)
+	if err != nil {
+		log.Fatal("generate InitLogByLevel error", log.ErrorField(err), log.Any("genCfg", genCfg))
+		return
+	}
+	log.Debug("generate LoadConfig finish", log.Any("genCfg", genCfg), log.Any("cfg", cfg))
 	{
-		j, _ := json.MarshalIndent(cfg.Entity, "", "\t")
-		log.L(nil).Debug("entity generate config:\n" + string(j))
+		j, err := json.MarshalIndent(cfg.Entity, "", "\t")
+		if err != nil {
+			log.Fatal("Generate MarshalIndent error", log.ErrorField(err))
+			return
+		}
+		log.Debug("entity generate config:\n" + string(j))
 	}
 
 	{
@@ -75,10 +84,6 @@ func Generate(genCfg *GenerateCfg) {
 			case "interface":
 				// get entity type
 				interfaceType := astCoder.GetInterface(entityCfg.Pkg + "." + entityCfg.Name)
-				if err != nil {
-					log.Fatal("LoadTypeFromSource error", log.ErrorField(err), log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityKind", entityCfg.EntityKind))
-					return
-				}
 				if interfaceType == nil {
 					log.Debug("Generate interface LoadTypeFromSource not found", log.Any("entityCfg.Name", entityCfg.Name), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
 					continue

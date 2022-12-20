@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-type CodePairCount struct {
+type PairCount struct {
 	Count      map[string]int // like "()":1 "{}":1 "[]":1
 	KeyWord    []string       // like () {} [], in one string, first rune is left, second rune is right
 	OriginText []string
 }
 
-func (c *CodePairCount) Add(line string) {
+func (c *PairCount) Add(line string) {
 	inOrigin := ""
 	for k, v := range c.Count {
 		if v > 0 {
@@ -64,7 +64,7 @@ func (c *CodePairCount) Add(line string) {
 	}
 }
 
-func (c *CodePairCount) IsZero() bool {
+func (c *PairCount) IsZero() bool {
 	for _, v := range c.KeyWord {
 		if c.Count[v] != 0 {
 			return false
@@ -73,7 +73,7 @@ func (c *CodePairCount) IsZero() bool {
 	return true
 }
 
-type CodeBlockType struct {
+type BlockType struct {
 	Name                   string
 	MergeAble              bool
 	RegStr                 *regexp.Regexp
@@ -88,28 +88,30 @@ type CodeBlockType struct {
 	SubTailChar            []string // the sub body tail character, like "}" ";" "))" ","
 }
 
-type CodeBlockParser struct {
-	Types             []CodeBlockType
+type BlockParser struct {
+	Types             []BlockType
 	PairKeys          []string
 	OriginText        []string
 	LineCommentKey    string
 	PendingLinePrefix string
 }
 
-func (c *CodeBlockParser) Parse(content string) *CodeBlock {
-	res := &CodeBlock{
+func (c *BlockParser) Parse(content string) *Block {
+	res := &Block{
+		Key:             "",
+		SubList:         nil,
 		Parent:          nil,
 		OriginString:    content,
 		SubOriginString: content,
-		Type:            CodeBlockType{"", true, nil, 0, 0, 0, nil, "\n", "", 0, false, nil},
+		Type:            BlockType{"", true, nil, 0, 0, 0, nil, "\n", "", 0, false, nil},
 	}
 	res.SubList = c.protoBlocksFromString(res, res.SubOriginString)
 	return res
 }
 
-func (c *CodeBlockParser) protoBlockFromString(parent *CodeBlock, content string) []*CodeBlock {
+func (c *BlockParser) protoBlockFromString(parent *Block, content string) []*Block {
 	for _, v := range c.Types {
-		res := []*CodeBlock{}
+		res := []*Block{}
 		if v.RegStr == nil {
 			continue
 		}
@@ -132,11 +134,14 @@ func (c *CodeBlockParser) protoBlockFromString(parent *CodeBlock, content string
 		contentReg := v.RegStr
 		partsList := contentReg.FindAllStringSubmatch(content, -1)
 		for _, parts := range partsList {
-			item := &CodeBlock{
-				Parent:       parent,
-				OriginString: parts[v.RegOriginIndex],
+			item := &Block{
+				Parent:          parent,
+				OriginString:    parts[v.RegOriginIndex],
+				Key:             "",
+				Type:            v,
+				SubOriginString: "",
+				SubList:         nil,
 			}
-			item.Type = v
 			if v.RegKeyIndex >= 0 {
 				item.Key = parts[v.RegKeyIndex]
 			}
@@ -160,11 +165,11 @@ func (c *CodeBlockParser) protoBlockFromString(parent *CodeBlock, content string
 	return nil
 }
 
-func (c *CodeBlockParser) protoBlocksFromString(parent *CodeBlock, content string) []*CodeBlock {
+func (c *BlockParser) protoBlocksFromString(parent *Block, content string) []*Block {
 	// fmt.Println("ProtoBlocksFromString:\n" + content)
 	scanner := bufio.NewScanner(strings.NewReader(content))
-	res := make([]*CodeBlock, 0)
-	pairCount := &CodePairCount{
+	res := make([]*Block, 0)
+	pairCount := &PairCount{
 		Count:      map[string]int{},
 		KeyWord:    c.PairKeys,
 		OriginText: c.OriginText,

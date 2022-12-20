@@ -3,7 +3,7 @@ package writer
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"sort"
 	"strconv"
@@ -12,6 +12,8 @@ import (
 	"github.com/liasece/go-mate/src/code"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/log"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 func StructToProto(protoFile string, indent string, ts ...gocoder.Type) error {
@@ -21,7 +23,7 @@ func StructToProto(protoFile string, indent string, ts ...gocoder.Type) error {
 	originFileContent := ""
 	{
 		// read from file
-		content, err := ioutil.ReadFile(protoFile)
+		content, err := os.ReadFile(protoFile)
 		if err == nil {
 			originFileContent = string(content)
 		}
@@ -35,7 +37,7 @@ func StructToProto(protoFile string, indent string, ts ...gocoder.Type) error {
 	toContent := toCode.OriginString
 	if toContent != originFileContent {
 		// write to file
-		err := ioutil.WriteFile(protoFile, []byte(toContent), 0600)
+		err := os.WriteFile(protoFile, []byte(toContent), 0600)
 		if err != nil {
 			return err
 		}
@@ -49,12 +51,12 @@ type ProtoInfo struct {
 
 func ReadProtoInfo(protoFile string) (*ProtoInfo, error) {
 	// read from file
-	content, err := ioutil.ReadFile(protoFile)
+	content, err := os.ReadFile(protoFile)
 	if err != nil {
 		return nil, err
 	}
 
-	res := &ProtoInfo{}
+	var res ProtoInfo
 
 	originContent := string(content)
 	scanner := bufio.NewScanner(strings.NewReader(originContent))
@@ -68,7 +70,7 @@ func ReadProtoInfo(protoFile string) (*ProtoInfo, error) {
 			}
 		}
 	}
-	return res, nil
+	return &res, nil
 }
 
 func getProtoFromStr(originContent string, typ string) string {
@@ -109,7 +111,7 @@ func snakeString(s string) string {
 		d := s[i]
 		// or通过ASCII码进行大小写的转化
 		// 65-90（A-Z），97-122（a-z）
-		//判断如果字母为大写的A-Z就在前面拼接一个_
+		// 判断如果字母为大写的A-Z就在前面拼接一个_
 		if i > 0 && d >= 'A' && d <= 'Z' && j {
 			noUp := false
 			// if i != num-1 && s[i+1] >= 'A' && s[i+1] <= 'Z' {
@@ -130,15 +132,8 @@ func snakeString(s string) string {
 		}
 		data = append(data, d)
 	}
-	//ToLower把大写字母统一转小写
-	return strings.ToLower(string(data[:]))
-}
-
-func toTitle(str string) string {
-	if str == "" {
-		return ""
-	}
-	return strings.ToUpper(str[:1]) + str[1:]
+	// ToLower把大写字母统一转小写
+	return strings.ToLower(string(data))
 }
 
 func getProdFiledNumInOriginMsg(origin string, fieldNameRaw string) int {
@@ -165,10 +160,8 @@ func getMaxProdFiledNumInOriginMsg(origin string) int {
 		i, err := strconv.Atoi(fieldLine[2])
 		if err != nil {
 			log.Error("getProdFiledNumInOriginMsg Atoi error", log.ErrorField(err), log.Any("line", fieldLine))
-		} else {
-			if i > res {
-				res = i
-			}
+		} else if i > res {
+			res = i
 		}
 	}
 	return res
@@ -187,8 +180,6 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 	}
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
-		// log.Error("in buildProtoContent filed", log.Any("i", i), log.Any("f", f))
-		// typ := f.GetType().GetNamed()
 		typ := f.GetType().String()
 		isBaseType := true
 		tailPkg := f.GetType().AllSub()[0].PackageInReference()
@@ -203,17 +194,15 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 				typ = strings.ReplaceAll(typ, "[]", "")
 			}
 			typ = prefix + tailPkg + "." + typ
-			// log.Error("in buildProtoContent filed", log.Any("typ", typ), log.Any("msgName", msgName))
 		}
 		{
 			ss := strings.Split(typ, ".")
 			if len(ss) > 1 {
 				for i, s := range ss {
-					ss[i] = strings.Title(s)
+					ss[i] = cases.Title(language.Und).String(s)
 				}
 				typ = strings.Join(ss, "")
 				isBaseType = false
-				// log.Warn("in buildProtoContent filed", log.Any("typ", typ), log.Any("msgName", msgName))
 			}
 		}
 		isPtr := false
@@ -251,7 +240,7 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 			if originIndex := getProdFiledNumInOriginMsg(matchOrigin, name); originIndex > 0 {
 				fieldStr[originIndex] = fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, originIndex)
 			} else {
-				maxOriginFieldNum += 1
+				maxOriginFieldNum++
 				fieldStr[maxOriginFieldNum] = fmt.Sprintf("%s%s%s %s = %d;\n", indent, opt, typ, name, maxOriginFieldNum)
 			}
 		} else {

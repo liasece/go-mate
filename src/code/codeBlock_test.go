@@ -11,13 +11,13 @@ import (
 func TestCodeBlock_addSub(t *testing.T) {
 	graphqlC := NewGraphqlCodeBlockParser()
 	type args struct {
-		income *CodeBlock
+		income *Block
 	}
 	tests := []struct {
 		name string
 		args args
-		b    *CodeBlock
-		want *CodeBlock
+		b    *Block
+		want *Block
 	}{
 		{
 			name: "test1",
@@ -78,12 +78,12 @@ extend type Query {
 func TestCodeBlock_getSubJoinString(t *testing.T) {
 	graphqlC := NewGraphqlCodeBlockParser()
 	type args struct {
-		income *CodeBlock
+		income *Block
 	}
 	tests := []struct {
 		name string
 		args args
-		b    *CodeBlock
+		b    *Block
 		want string
 	}{
 		{
@@ -123,7 +123,7 @@ extend type Query {
 			}
 			fmt.Println("Old:\n```" + string(jsOld) + "```")
 			fmt.Println("Income:\n```" + string(incomeJs) + "```")
-			got := tt.b.getSubJoinString(tt.args.income)
+			got := tt.b.getSubJoinString()
 			assert.Equal(t, tt.want, got)
 		})
 	}

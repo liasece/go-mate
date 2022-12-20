@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"context"
 	"reflect"
 	"sort"
 	"strconv"
@@ -91,17 +90,18 @@ func parseFieldIndexes(field gocoder.Field) (indexes []*Index) {
 		}
 	}
 
-	return
+	return indexes
 }
 
 // get index config from gorm tag
-func GormIndexes(ctx context.Context, t gocoder.Type) []*Index {
+func GormIndexes(t gocoder.Type) []*Index {
 	var indexes = []*Index{}
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		for _, index := range parseFieldIndexes(field) {
-			idx := &Index{}
+			var newIdx Index
+			idx := &newIdx
 			find := false
 			for _, v := range indexes {
 				if v.Name == index.Name {

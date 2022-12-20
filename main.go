@@ -10,17 +10,20 @@ func main() {
 
 	{
 		// generate
-		cfg := &cmd.GenerateCfg{}
+		var cfg cmd.GenerateCfg
 		var generateCmd = &cobra.Command{
 			Use:   "generate",
 			Short: "build a go main.go to target entity folder",
 			Long:  "",
 			Run: func(c *cobra.Command, args []string) {
-				cmd.Generate(cfg)
+				cmd.Generate(&cfg)
 			},
 		}
-		cmd.InitFlag(generateCmd, cfg)
+		cmd.InitFlag(generateCmd, &cfg)
 		rootCmd.AddCommand(generateCmd)
 	}
-	rootCmd.Execute()
+	err := rootCmd.Execute()
+	if err != nil {
+		panic(err)
+	}
 }

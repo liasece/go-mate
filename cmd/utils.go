@@ -92,7 +92,10 @@ func InitFlag(c *cobra.Command, cfg interface{}) {
 			log.Fatal("unknown BuildCfg field type", log.Any("fieldName", f.Name), log.Any("fieldType", f.Type.String()))
 		}
 		if _, ok := tagMap["required"]; ok {
-			c.MarkFlagRequired(name)
+			err := c.MarkFlagRequired(name)
+			if err != nil {
+				log.Fatal("MarkFlagRequired error", log.Any("err", err))
+			}
 		}
 	}
 }

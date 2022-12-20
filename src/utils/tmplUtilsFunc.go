@@ -45,12 +45,11 @@ func SplitN(origin string, sep string, n int) string {
 			return ""
 		}
 		return ss[len(ss)+n]
-	} else {
-		if n >= len(ss) {
-			return ""
-		}
-		return ss[n]
 	}
+	if n >= len(ss) {
+		return ""
+	}
+	return ss[n]
 }
 
 func ToLowerCamelCase(str string) string {
@@ -150,7 +149,7 @@ func SplitCamelCase(src string) (entries []string) {
 	class := 0
 	// split into fields based on class of unicode character
 	for _, r := range src {
-		switch true {
+		switch {
 		case unicode.IsLower(r):
 			class = 1
 		case unicode.IsUpper(r):
@@ -181,7 +180,7 @@ func SplitCamelCase(src string) (entries []string) {
 			entries = append(entries, string(s))
 		}
 	}
-	return
+	return entries
 }
 
 func GraphqlStyle(fieldName string, typeName string) string {
@@ -241,7 +240,7 @@ func GraphqlStyleW(fieldName string, typeName string, writeType string) string {
 		}
 	}
 	if !isPtr {
-		res = res + "!"
+		res += "!"
 	}
 	if isSlice {
 		res = "[" + res + "]"
@@ -249,21 +248,21 @@ func GraphqlStyleW(fieldName string, typeName string, writeType string) string {
 	return res
 }
 
-func ReplaceWord(str string, old string, new string) string {
+func ReplaceWord(str string, old string, newStr string) string {
 	nameWords := SplitCamelCase(str)
 	for i, word := range nameWords {
 		if word == old {
-			nameWords[i] = new
+			nameWords[i] = newStr
 		}
 	}
 	return strings.Join(nameWords, "")
 }
 
-func ReplaceWord2(str string, old string, new string, old2 string, new2 string) string {
+func ReplaceWord2(str string, old1 string, new1 string, old2 string, new2 string) string {
 	nameWords := SplitCamelCase(str)
 	for i, word := range nameWords {
-		if word == old {
-			nameWords[i] = new
+		if word == old1 {
+			nameWords[i] = new1
 		}
 		if word == old2 {
 			nameWords[i] = new2

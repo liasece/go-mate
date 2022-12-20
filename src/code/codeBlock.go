@@ -6,16 +6,16 @@ import (
 	"strings"
 )
 
-type CodeBlock struct {
-	Parent          *CodeBlock `json:"-"`
+type Block struct {
+	Parent          *Block `json:"-"`
 	Key             string
-	Type            CodeBlockType
+	Type            BlockType
 	OriginString    string
 	SubOriginString string
-	SubList         []*CodeBlock
+	SubList         []*Block
 }
 
-func (b *CodeBlock) Find(typ CodeBlockType, key string) *CodeBlock {
+func (b *Block) Find(typ BlockType, key string) *Block {
 	bKey := b.Key
 	if b.Type.KeyCaseIgnored || typ.KeyCaseIgnored {
 		key = strings.ToLower(key)
@@ -36,7 +36,7 @@ func (b *CodeBlock) Find(typ CodeBlockType, key string) *CodeBlock {
 	return nil
 }
 
-func (b *CodeBlock) getSubJoinString(income *CodeBlock) string {
+func (b *Block) getSubJoinString() string {
 	if b.Type.SubsSeparator != "" {
 		oldSub := ""
 		subs := strings.Split(b.Type.SubsSeparator, "|")
@@ -57,7 +57,7 @@ func (b *CodeBlock) getSubJoinString(income *CodeBlock) string {
 	return ""
 }
 
-func (b *CodeBlock) getSubTabStr(originTail string) string {
+func (b *Block) getSubTabStr(originTail string) string {
 	str := ""
 	if len(b.SubList) > 0 {
 		contentReg := regexp.MustCompile(`(?s)(` + originTail + `)?(\s*)` + regexp.QuoteMeta(b.SubList[0].OriginString))
@@ -93,8 +93,8 @@ func (b *CodeBlock) getSubTabStr(originTail string) string {
 	return str
 }
 
-func (b *CodeBlock) addSub(income *CodeBlock) {
-	joinString := b.getSubJoinString(income)
+func (b *Block) addSub(income *Block) {
+	joinString := b.getSubJoinString()
 	tailString := ""
 	tabStr := ""
 	if joinString == "\n" {
@@ -177,25 +177,16 @@ func (b *CodeBlock) addSub(income *CodeBlock) {
 	}
 }
 
-func (b *CodeBlock) Merge(income *CodeBlock) *CodeBlock {
+func (b *Block) Merge(income *Block) *Block {
 	exists := b.Find(income.Type, income.Key)
 	if exists == nil {
 		// fmt.Println("Merge not exists:" + income.Key + "(b: " + b.Key + "(" + b.Type.Name + ")" + ")" + "(income: " + income.Key + "(" + income.Type.Name + ")" + ")")
 		// append to current block
 		b.addSub(income)
-	} else {
-		// fmt.Println("Merge exists:" + income.Key + "(" + exists.Type.Name + ")" + " (MergeAble: " + fmt.Sprint(exists.Type.MergeAble) + ")")
-		if exists.Type.MergeAble && income.Type.MergeAble {
-			for _, v := range income.SubList {
-				exists.Merge(v)
-			}
+	} else if exists.Type.MergeAble && income.Type.MergeAble {
+		for _, v := range income.SubList {
+			exists.Merge(v)
 		}
-		// switch exists.Type.Name {
-		// case ProtoBlockTypeService.Name, ProtoBlockTypeMessage.Name, ProtoBlockTypeOption.Name, ProtoBlockTypeNone.Name, ProtoBlockTypeMessageField.Name:
-		// 	for _, v := range income.SubList {
-		// 		exists.Merge(v)
-		// 	}
-		// }
 	}
 	return b
 }

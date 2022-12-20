@@ -1,10 +1,7 @@
 package repo
 
 import (
-	"reflect"
-
 	"github.com/liasece/go-mate/src/utils"
-
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
 	"github.com/liasece/gocoder/cdt"
@@ -40,10 +37,6 @@ func getFieldSorterFields(f gocoder.Field) []*FieldSorterField {
 		return nil
 	}
 	fs := make([]*FieldSorterField, 0)
-	ft := f.GetType()
-	if ft.Kind() == reflect.Ptr {
-		ft = ft.Elem()
-	}
 	fs = append(fs, newFieldSorterField(f, "", cdt.Int().TackPtr()))
 	return fs
 }

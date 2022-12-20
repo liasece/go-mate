@@ -1,7 +1,7 @@
 package config
 
 import (
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 
@@ -141,35 +141,36 @@ func (c *Entity) GetEnv(k1, k2 string) string {
 
 func (c *TmplItem) AfterLoad() {
 	if c.Type == "" {
-		if strings.HasSuffix(c.To, ".go") {
+		switch {
+		case strings.HasSuffix(c.To, ".go"):
 			c.Type = TmplItemTypeGo
-		} else if strings.HasSuffix(c.To, ".proto") {
+		case strings.HasSuffix(c.To, ".proto"):
 			c.Type = TmplItemTypeProto
-		} else if strings.HasSuffix(c.To, ".graphql") {
+		case strings.HasSuffix(c.To, ".graphql"):
 			c.Type = TmplItemTypeGraphQL
-		} else {
-			log.L(nil).Fatal("TmplItem AfterLoad unknown tmpl type", log.Any("tmpl", c))
+		default:
+			log.Fatal("TmplItem AfterLoad unknown tmpl type", log.Any("tmpl", c))
 		}
 	}
 }
 
-func (c *ServiceBase) AfterLoad() {
+func (s *ServiceBase) AfterLoad() {
 	getIndent := func() string {
-		if c.ProtoTypeFileIndent == "" {
+		if s.ProtoTypeFileIndent == "" {
 			return "\t"
 		}
-		if strings.HasPrefix(c.ProtoTypeFileIndent, "$") {
-			switch c.ProtoTypeFileIndent[1:] {
+		if strings.HasPrefix(s.ProtoTypeFileIndent, "$") {
+			switch s.ProtoTypeFileIndent[1:] {
 			case "tab":
 				return "\t"
 			default:
-				a, _ := strconv.Atoi(c.ProtoTypeFileIndent[1:])
+				a, _ := strconv.Atoi(s.ProtoTypeFileIndent[1:])
 				return strings.Repeat(" ", a)
 			}
 		}
-		return c.ProtoTypeFileIndent
+		return s.ProtoTypeFileIndent
 	}
-	c.ProtoTypeFileIndent = getIndent()
+	s.ProtoTypeFileIndent = getIndent()
 }
 
 func (c *Config) getPrefab(name string) *EntityPrefab {
@@ -185,12 +186,12 @@ func interfaceToStringList(v interface{}) []string {
 	if v == nil {
 		return nil
 	}
-	switch v.(type) {
+	switch v := v.(type) {
 	case []string:
-		return v.([]string)
+		return v
 	case []interface{}:
 		var ret []string
-		for _, v := range v.([]interface{}) {
+		for _, v := range v {
 			ret = append(ret, v.(string))
 		}
 		return ret
@@ -216,7 +217,7 @@ func (c *Config) AfterLoad() {
 			if findEntityPrefab != nil {
 				findEntityPrefab.ApplyToPrefab(prefab)
 			} else {
-				log.L(nil).Fatal("Config AfterLoad entity prefab not found", log.Any("innerPrefab", innerPrefab))
+				log.Fatal("Config AfterLoad entity prefab not found", log.Any("innerPrefab", innerPrefab))
 			}
 		}
 		for _, tmpl := range prefab.Tmpl {
@@ -265,9 +266,26 @@ func (c *Config) AfterLoad() {
 					Name:       entityName,
 					EntityKind: prefab.EntityKind,
 					Prefab:     []string{prefabName},
+
+					// it will be override by prefab list
+					Comment:                    Comment{Doc: ""},
+					Pkg:                        "",
+					Fields:                     nil,
+					Service:                    "",
+					GrpcSubPkg:                 "",
+					Tmpl:                       nil,
+					Env:                        nil,
+					ProtoTypeFileIndent:        "",
+					EntityPath:                 "",
+					DecodedEntityPath:          "",
+					ProtoTypeFile:              "",
+					EntityOptPkg:               "",
+					OutputCopierProtoPkgSuffix: "",
+					NoSelector:                 nil,
+					CodeType:                   nil,
 				})
 			} else {
-				log.L(nil).Fatal("Config AfterLoad build prefab target entity already exists", log.Any("entityName", entityName))
+				log.Fatal("Config AfterLoad build prefab target entity already exists", log.Any("entityName", entityName))
 			}
 		}
 	}
@@ -288,7 +306,7 @@ func (c *Config) AfterLoad() {
 			if findEntityPrefab != nil {
 				findEntityPrefab.ApplyToEntity(entity)
 			} else {
-				log.L(nil).Fatal("Config AfterLoad entity prefab not found", log.Any("entity", entity))
+				log.Fatal("Config AfterLoad entity prefab not found", log.Any("entity", entity))
 			}
 		}
 		if entity.Service != "" {
@@ -302,7 +320,7 @@ func (c *Config) AfterLoad() {
 			if findService != nil {
 				findService.ApplyToEntity(entity)
 			} else {
-				log.L(nil).Fatal("Config AfterLoad service not found", log.Any("entity", entity))
+				log.Fatal("Config AfterLoad service not found", log.Any("entity", entity))
 			}
 		}
 	}
@@ -464,17 +482,17 @@ func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
 }
 
 func LoadConfig(path string) (*Config, error) {
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	res := &Config{}
-	err = decodeFromYaml(string(content), res)
+	var res Config
+	err = decodeFromYaml(string(content), &res)
 	if err != nil {
 		return nil, err
 	}
 	res.AfterLoad()
-	return res, nil
+	return &res, nil
 }
 
 func decodeFromYaml(content string, cfg *Config) error {

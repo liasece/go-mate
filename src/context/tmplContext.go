@@ -44,7 +44,8 @@ type TmplContext struct {
 
 func NewTmplContext(tmpl *config.TmplItem, entityCfg *config.Entity) *TmplContext {
 	return &TmplContext{
-		BaseTmplContext: BaseTmplContext{},
+		EntityCfg:       entityCfg,
+		BaseTmplContext: BaseTmplContext{terminate: false},
 		tmpl:            tmpl,
 	}
 }

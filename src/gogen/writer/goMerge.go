@@ -2,7 +2,7 @@ package writer
 
 import (
 	"bufio"
-	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 
@@ -93,18 +93,25 @@ func mergeGoFromFile(protoFile string, newContent string) error {
 	originFileContent := ""
 	{
 		// read from file
-		content, err := ioutil.ReadFile(protoFile)
+		content, err := os.ReadFile(protoFile)
 		if err == nil {
 			originFileContent = string(content)
 		}
 	}
 	toContent := mergeGo(originFileContent, newContent)
 	if toContent != originFileContent {
-		bytes, err := imports.Process(protoFile, []byte(toContent), &imports.Options{FormatOnly: true, Comments: true, TabIndent: true, TabWidth: 8})
+		bytes, err := imports.Process(protoFile, []byte(toContent), &imports.Options{
+			FormatOnly: true,
+			Comments:   true,
+			TabIndent:  true,
+			TabWidth:   8,
+			Fragment:   false,
+			AllErrors:  false,
+		})
 		if err != nil {
 			return err
 		}
-		err = ioutil.WriteFile(protoFile, bytes, 0600)
+		err = os.WriteFile(protoFile, bytes, 0600)
 		if err != nil {
 			return errors.Wrapf(err, "failed to write %s", protoFile)
 		}
@@ -131,7 +138,7 @@ func mergeGo(originContent string, newContent string) string {
 		// log.Info("mergeGo", log.Any("b", newBlock), log.Any("newHead", newBlockHead), log.Any("origin", origin), log.Any("index", index))
 		if origin == "" {
 			// add
-			res = res + newBlock
+			res += newBlock
 		} else {
 			// replace
 			if strings.Count(newBlock, "\n") > 1 {
