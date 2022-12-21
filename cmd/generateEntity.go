@@ -14,7 +14,11 @@ import (
 )
 
 func generateEntity(entityCfg *config.Entity) {
-	enGameEntry := repo.NewRepositoryWriterByType(entityCfg.CodeType.(gocoder.Type), entityCfg.Name, entityCfg.Pkg, entityCfg.Service, "", "", "", "", "")
+	if entityCfg.CodeType == nil {
+		return
+	}
+	entityType := entityCfg.CodeType.(gocoder.Type)
+	enGameEntry := repo.NewRepositoryWriterByType(entityType, entityCfg.Name, entityCfg.Pkg, entityCfg.Service, "", "", "", "", "")
 	enGameEntry.EntityCfg = entityCfg
 	enGameEntry.Filter, _ = enGameEntry.GetFilterTypeStructCode()
 	enGameEntry.Updater, _ = enGameEntry.GetUpdaterTypeStructCode()

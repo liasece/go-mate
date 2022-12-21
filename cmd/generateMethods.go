@@ -9,12 +9,15 @@ import (
 )
 
 func generateMethods(entityCfg *config.Entity) {
+	if entityCfg.CodeType == nil {
+		return
+	}
+	cs := entityCfg.CodeType.(gocoder.Code).GetCodes()
+	methods := make([]gocoder.Func, 0)
+	for _, c := range cs {
+		methods = append(methods, c.(gocoder.Func))
+	}
 	for _, tmpl := range entityCfg.Tmpl {
-		cs := entityCfg.CodeType.(gocoder.Code).GetCodes()
-		methods := make([]gocoder.Func, 0)
-		for _, c := range cs {
-			methods = append(methods, c.(gocoder.Func))
-		}
 		generateMethodsTmplItem(entityCfg, tmpl, methods)
 	}
 }
