@@ -37,7 +37,12 @@ func fieldUpdaterFieldsToGocoder(mfs []*FieldUpdaterField) []gocoder.Field {
 	return fs
 }
 
-func getFieldUpdaterFields(f gocoder.Field) []*FieldUpdaterField {
+func getFieldUpdaterFields(f gocoder.Field, opts ...TypeOpt) []*FieldUpdaterField {
+	cfg := &TypeCfg{}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
 	bsonFiled := utils.GetFieldBSONName(f)
 	if bsonFiled == "-" {
 		return nil
@@ -57,6 +62,9 @@ func getFieldUpdaterFields(f gocoder.Field) []*FieldUpdaterField {
 	}
 	fs = append(fs, newFieldUpdaterField(f, "", filterFt))
 	if ft.Kind() == reflect.Slice {
+		if cfg.addSlicePBEmpty {
+			fs = append(fs, newFieldUpdaterField(f, "PBEmpty", cde.Type(false)))
+		}
 		fs = append(fs, newFieldUpdaterField(f, "Add", cde.Type(ft)))
 		fs = append(fs, newFieldUpdaterField(f, "Del", cde.Type(ft)))
 		fs = append(fs, newFieldUpdaterField(f, "Replace", cde.Type(ft).Elem().TackPtr()))

@@ -146,11 +146,23 @@ func (w *RepositoryWriter) GetFilterTypeCode() gocoder.Code {
 	return c
 }
 
-func (w *RepositoryWriter) GetUpdaterTypeStructCode() (gocoder.Struct, []*FieldUpdaterField) {
+type TypeCfg struct {
+	addSlicePBEmpty bool
+}
+
+type TypeOpt func(*TypeCfg)
+
+func TypeOptAddSlicePBEmpty(v bool) TypeOpt {
+	return func(cfg *TypeCfg) {
+		cfg.addSlicePBEmpty = v
+	}
+}
+
+func (w *RepositoryWriter) GetUpdaterTypeStructCode(opts ...TypeOpt) (gocoder.Struct, []*FieldUpdaterField) {
 	mfs := make([]*FieldUpdaterField, 0)
 	mfs = append(mfs, newFieldUpdaterField(nil, "JustDelete", cde.Type(true)))
 	for i := 0; i < w.entity.NumField(); i++ {
-		mfs = append(mfs, getFieldUpdaterFields(w.entity.Field(i))...)
+		mfs = append(mfs, getFieldUpdaterFields(w.entity.Field(i), opts...)...)
 	}
 
 	strT := cde.Struct(fmt.Sprintf("%sUpdater%s%s", w.entityName, w.OutUpdaterSuffix, w.OutTypeSuffix), fieldUpdaterFieldsToGocoder(mfs)...)

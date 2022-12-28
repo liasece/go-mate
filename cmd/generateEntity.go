@@ -46,10 +46,15 @@ func generateEntityProtoType(entityCfg *config.Entity, enGameEntry *repo.Reposit
 		defer func() {
 			log.Info(fmt.Sprintf("%s: generated %s (%.2fs)", entityCfg.Name, protoTypeFile, float64(time.Since(beginTime))/float64(time.Second)))
 		}()
+		var updater gocoder.Struct
+		{
+			// build pb updater
+			updater, _ = enGameEntry.GetUpdaterTypeStructCode(repo.TypeOptAddSlicePBEmpty(true))
+		}
 		ts := []gocoder.Type{
 			entityCfg.CodeType.(gocoder.Type),
 			enGameEntry.Filter.GetType(),
-			enGameEntry.Updater.GetType(),
+			updater.GetType(),
 			enGameEntry.Sorter.GetType(),
 		}
 		if entityCfg.NoSelector == nil || !*entityCfg.NoSelector {
