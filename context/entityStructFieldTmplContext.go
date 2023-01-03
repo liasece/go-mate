@@ -9,8 +9,24 @@ import (
 )
 
 type EntityStructFieldTmplContext struct {
+	*TmplContext
 	w     *repo.RepositoryWriter
 	Field gocoder.Field
+}
+
+func NewEntityStructFieldTmplContextList(ctx *TmplContext, methods []gocoder.Field) []*EntityStructFieldTmplContext {
+	res := make([]*EntityStructFieldTmplContext, 0, len(methods))
+	for _, m := range methods {
+		res = append(res, NewEntityStructFieldTmplContext(ctx, m))
+	}
+	return res
+}
+
+func NewEntityStructFieldTmplContext(ctx *TmplContext, typ gocoder.Field) *EntityStructFieldTmplContext {
+	return &EntityStructFieldTmplContext{
+		TmplContext: ctx,
+		Field:       typ,
+	}
 }
 
 func (e *EntityStructFieldTmplContext) Name() string {
@@ -42,4 +58,8 @@ func (e *EntityStructFieldTmplContext) IsMatchTag3(tagReg string, tagReg2 string
 
 func (e *EntityStructFieldTmplContext) GetMatchTag(tagReg string) string {
 	return utils.GetTagMatch(tagReg, string(e.Tag()))
+}
+
+func (e *EntityStructFieldTmplContext) GraphqlDefinition() string {
+	return utils.ToLowerCamelCase(e.Name()) + ": " + utils.GraphqlStyle(e.Name(), e.Type().Name())
 }

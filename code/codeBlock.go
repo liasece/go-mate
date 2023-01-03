@@ -188,5 +188,11 @@ func (b *Block) Merge(income *Block) *Block {
 			exists.Merge(v)
 		}
 	}
+	{
+		// add end line
+		if b.OriginString != "" && b.OriginString[len(b.OriginString)-1] != '\n' {
+			b.OriginString += "\n"
+		}
+	}
 	return b
 }

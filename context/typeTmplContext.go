@@ -1,6 +1,7 @@
 package context
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 type TypeTmplContext struct {
 	*TmplContext
 	gocoder.Type
+	fields []*EntityStructFieldTmplContext
 }
 
 func NewTypeTmplContextList(ctx *TmplContext, methods []gocoder.Type) []*TypeTmplContext {
@@ -21,9 +23,14 @@ func NewTypeTmplContextList(ctx *TmplContext, methods []gocoder.Type) []*TypeTmp
 }
 
 func NewTypeTmplContext(ctx *TmplContext, typ gocoder.Type) *TypeTmplContext {
+	var fs []gocoder.Field
+	if typ.Kind() == reflect.Struct {
+		fs = typ.GetStruct().GetFields()
+	}
 	return &TypeTmplContext{
 		TmplContext: ctx,
 		Type:        typ,
+		fields:      NewEntityStructFieldTmplContextList(ctx, fs),
 	}
 }
 
@@ -164,4 +171,19 @@ func (e *TypeTmplContext) KindIsStruct() bool {
 
 func (e *TypeTmplContext) KindIsUnsafePointer() bool {
 	return e.Type.Kind() == reflect.UnsafePointer
+}
+
+func (e *TypeTmplContext) FieldsGraphqlDefinition() string {
+	res := ""
+	for _, arg := range e.fields {
+		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
+			continue
+		}
+		typeStr := arg.GraphqlDefinition()
+		if typeStr == "" {
+			continue
+		}
+		res += fmt.Sprintf("  %s\n", typeStr)
+	}
+	return strings.TrimSpace(res)
 }

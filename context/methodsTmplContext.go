@@ -29,3 +29,13 @@ func (c *MethodsTmplContext) FindMethods(nameReg string) []*MethodTmplContext {
 	}
 	return res
 }
+
+func (c *MethodsTmplContext) FindMethodsNot(nameReg string) []*MethodTmplContext {
+	res := make([]*MethodTmplContext, 0)
+	for _, m := range c.methods {
+		if !m.IsNameReg(nameReg) {
+			res = append(res, m)
+		}
+	}
+	return res
+}

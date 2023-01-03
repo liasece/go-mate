@@ -1,7 +1,9 @@
 package context
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/liasece/gocoder"
 )
@@ -45,4 +47,38 @@ func (c *MethodTmplContext) Args() []*ArgTmplContext {
 
 func (c *MethodTmplContext) Returns() []*ArgTmplContext {
 	return c.returns
+}
+
+func (c *MethodTmplContext) GraphqlArgsDefinition() string {
+	res := ""
+	for _, arg := range c.args {
+		if arg.Type().Name() == "error" || arg.Name() == "opUserID" || arg.Type().Name() == "Context" {
+			continue
+		}
+		if arg.Type().IsStruct() && strings.HasSuffix(arg.Type().Name(), "Input") {
+			res += arg.Type().FieldsGraphqlDefinition()
+			continue
+		}
+		typeStr := arg.GraphqlType()
+		if typeStr == "" {
+			continue
+		}
+		res += fmt.Sprintf("  %s: %s\n", arg.Name(), typeStr)
+	}
+	return strings.TrimSpace(res)
+}
+
+func (c *MethodTmplContext) GraphqlReturnsDefinition() string {
+	res := ""
+	for _, arg := range c.returns {
+		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
+			continue
+		}
+		typeStr := arg.GraphqlType()
+		if typeStr == "" {
+			continue
+		}
+		res += fmt.Sprintf("  %s: %s\n", arg.Name(), typeStr)
+	}
+	return strings.TrimSpace(res)
 }

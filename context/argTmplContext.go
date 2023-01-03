@@ -1,6 +1,7 @@
 package context
 
 import (
+	"github.com/liasece/go-mate/utils"
 	"github.com/liasece/gocoder"
 )
 
@@ -32,4 +33,8 @@ func (e *ArgTmplContext) Name() string {
 
 func (e *ArgTmplContext) Type() *TypeTmplContext {
 	return e.typ
+}
+
+func (e *ArgTmplContext) GraphqlType() string {
+	return utils.GraphqlStyle(e.Name(), e.typ.Name())
 }
