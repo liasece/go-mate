@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/liasece/go-mate/src/code"
+	"github.com/liasece/go-mate/code"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/log"
 	"golang.org/x/text/cases"

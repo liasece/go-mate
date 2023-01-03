@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/liasece/go-mate/src/config"
-	ccontext "github.com/liasece/go-mate/src/context"
-	"github.com/liasece/go-mate/src/utils"
+	"github.com/liasece/go-mate/config"
+	ccontext "github.com/liasece/go-mate/context"
+	"github.com/liasece/go-mate/utils"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/log"
 )
@@ -29,5 +29,5 @@ func generateMethodsTmplItem(entityCfg *config.Entity, tmpl *config.TmplItem, me
 		return
 	}
 	tmplCtx := ccontext.NewMethodsTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), methods)
-	generateTmplToFile(tmplCtx, entityCfg.Name, toFile, tmpl)
+	generateTmplToFile(tmplCtx, entityCfg.CodeName, toFile, tmpl)
 }

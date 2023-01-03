@@ -8,17 +8,35 @@ import (
 )
 
 type TypeTmplContext struct {
+	*TmplContext
 	gocoder.Type
+}
+
+func NewTypeTmplContextList(ctx *TmplContext, methods []gocoder.Type) []*TypeTmplContext {
+	res := make([]*TypeTmplContext, 0, len(methods))
+	for _, m := range methods {
+		res = append(res, NewTypeTmplContext(ctx, m))
+	}
+	return res
+}
+
+func NewTypeTmplContext(ctx *TmplContext, typ gocoder.Type) *TypeTmplContext {
+	return &TypeTmplContext{
+		TmplContext: ctx,
+		Type:        typ,
+	}
 }
 
 func (e *TypeTmplContext) Elem() *TypeTmplContext {
 	if next := e.Type.GetNext(); next != nil {
 		return &TypeTmplContext{
-			Type: next,
+			TmplContext: e.TmplContext,
+			Type:        next,
 		}
 	}
 	return &TypeTmplContext{
-		Type: e.Type.Elem(),
+		TmplContext: e.TmplContext,
+		Type:        e.Type.Elem(),
 	}
 }
 

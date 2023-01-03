@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/liasece/go-mate/src/utils"
+	"github.com/liasece/go-mate/utils"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
 	"go.mongodb.org/mongo-driver/bson"

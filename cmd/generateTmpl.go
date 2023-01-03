@@ -6,9 +6,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/liasece/go-mate/src/config"
-	ccontext "github.com/liasece/go-mate/src/context"
-	"github.com/liasece/go-mate/src/gogen/writer"
+	"github.com/liasece/go-mate/config"
+	ccontext "github.com/liasece/go-mate/context"
+	"github.com/liasece/go-mate/gogen/writer"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/log"
 )

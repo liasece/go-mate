@@ -3,7 +3,7 @@ package repo
 import (
 	"fmt"
 
-	"github.com/liasece/go-mate/src/config"
+	"github.com/liasece/go-mate/config"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
 	"github.com/liasece/gocoder/cdt"

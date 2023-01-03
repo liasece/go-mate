@@ -3,8 +3,8 @@ package context
 import (
 	"reflect"
 
-	"github.com/liasece/go-mate/src/gogen/writer/repo"
-	"github.com/liasece/go-mate/src/utils"
+	"github.com/liasece/go-mate/gogen/writer/repo"
+	"github.com/liasece/go-mate/utils"
 	"github.com/liasece/gocoder"
 )
 
@@ -23,7 +23,8 @@ func (e *EntityStructFieldTmplContext) Tag() reflect.StructTag {
 
 func (e *EntityStructFieldTmplContext) Type() *TypeTmplContext {
 	return &TypeTmplContext{
-		Type: e.Field.GetType(),
+		TmplContext: nil,
+		Type:        e.Field.GetType(),
 	}
 }
 

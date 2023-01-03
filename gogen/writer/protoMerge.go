@@ -3,7 +3,7 @@ package writer
 import (
 	"os"
 
-	"github.com/liasece/go-mate/src/code"
+	"github.com/liasece/go-mate/code"
 )
 
 func MergeProtoFromFile(protoFile string, newContent string) error {

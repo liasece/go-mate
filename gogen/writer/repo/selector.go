@@ -1,7 +1,7 @@
 package repo
 
 import (
-	"github.com/liasece/go-mate/src/utils"
+	"github.com/liasece/go-mate/utils"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/gocoder/cde"
 	"github.com/liasece/gocoder/cdt"

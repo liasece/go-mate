@@ -3,8 +3,8 @@ package context
 import (
 	"strings"
 
-	"github.com/liasece/go-mate/src/config"
-	"github.com/liasece/go-mate/src/utils"
+	"github.com/liasece/go-mate/config"
+	"github.com/liasece/go-mate/utils"
 	"github.com/liasece/gocoder"
 )
 
@@ -52,6 +52,10 @@ func NewTmplContext(tmpl *config.TmplItem, entityCfg *config.Entity) *TmplContex
 
 func (e *TmplContext) EntityName() string {
 	return e.EntityCfg.Name
+}
+
+func (e *TmplContext) EntityCodeName() string {
+	return e.EntityCfg.CodeName
 }
 
 func (e *TmplContext) ServiceName() string {

@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/liasece/go-mate/src/gogen/writer/repo"
-	"github.com/liasece/go-mate/src/utils"
+	"github.com/liasece/go-mate/gogen/writer/repo"
+	"github.com/liasece/go-mate/utils"
 )
 
 type EntityTmplContext struct {

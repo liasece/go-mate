@@ -82,6 +82,7 @@ type EntityPrefab struct {
 type Entity struct {
 	Comment                    `json:",inline" yaml:",inline"`
 	Name                       string                       `json:"name" yaml:"name"`
+	CodeName                   string                       `json:"-" yaml:"-"`
 	Pkg                        string                       `json:"pkg,omitempty" yaml:"pkg,omitempty"`
 	Fields                     []*EntityField               `json:"fields,omitempty" yaml:"fields,omitempty"`
 	Service                    string                       `json:"service,omitempty" yaml:"service,omitempty"`

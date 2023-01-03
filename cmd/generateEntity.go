@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/liasece/go-mate/src/config"
-	ccontext "github.com/liasece/go-mate/src/context"
-	"github.com/liasece/go-mate/src/gogen/writer"
-	"github.com/liasece/go-mate/src/gogen/writer/repo"
-	"github.com/liasece/go-mate/src/utils"
+	"github.com/liasece/go-mate/config"
+	ccontext "github.com/liasece/go-mate/context"
+	"github.com/liasece/go-mate/gogen/writer"
+	"github.com/liasece/go-mate/gogen/writer/repo"
+	"github.com/liasece/go-mate/utils"
 	"github.com/liasece/gocoder"
 	"github.com/liasece/log"
 )
@@ -18,7 +18,7 @@ func generateEntity(entityCfg *config.Entity) {
 		return
 	}
 	entityType := entityCfg.CodeType.(gocoder.Type)
-	enGameEntry := repo.NewRepositoryWriterByType(entityType, entityCfg.Name, entityCfg.Pkg, entityCfg.Service, "", "", "", "", "")
+	enGameEntry := repo.NewRepositoryWriterByType(entityType, entityCfg.CodeName, entityCfg.Pkg, entityCfg.Service, "", "", "", "", "")
 	enGameEntry.EntityCfg = entityCfg
 	enGameEntry.Filter, _ = enGameEntry.GetFilterTypeStructCode()
 	enGameEntry.Updater, _ = enGameEntry.GetUpdaterTypeStructCode()
@@ -41,10 +41,10 @@ func generateEntityProtoType(entityCfg *config.Entity, enGameEntry *repo.Reposit
 		return
 	}
 	if protoTypeFile != "" {
-		log.Debug(fmt.Sprintf("%s: generating %s", entityCfg.Name, protoTypeFile))
+		log.Debug(fmt.Sprintf("%s: generating %s", entityCfg.CodeName, protoTypeFile))
 		beginTime := time.Now()
 		defer func() {
-			log.Info(fmt.Sprintf("%s: generated %s (%.2fs)", entityCfg.Name, protoTypeFile, float64(time.Since(beginTime))/float64(time.Second)))
+			log.Info(fmt.Sprintf("%s: generated %s (%.2fs)", entityCfg.CodeName, protoTypeFile, float64(time.Since(beginTime))/float64(time.Second)))
 		}()
 		var updater gocoder.Struct
 		{
@@ -75,5 +75,5 @@ func generateEntityTmplItem(entityCfg *config.Entity, enGameEntry *repo.Reposito
 		return
 	}
 	tmplCtx := ccontext.NewEntityTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), enGameEntry)
-	generateTmplToFile(tmplCtx, entityCfg.Name, toFile, tmpl)
+	generateTmplToFile(tmplCtx, entityCfg.CodeName, toFile, tmpl)
 }
