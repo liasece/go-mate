@@ -30,6 +30,7 @@ type TmplItem struct {
 type ServiceBase struct {
 	EntityPath                 string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
 	EntityKind                 string                       `json:"entityKind,omitempty" yaml:"entityKind,omitempty"`
+	EntityRealName             string                       `json:"entityRealName,omitempty" yaml:"entityRealName,omitempty"`
 	ProtoTypeFile              string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
 	ProtoTypeFileIndent        string                       `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
 	EntityOptPkg               string                       `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
@@ -72,6 +73,7 @@ type EntityPrefab struct {
 	Env            map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	EntityPath     string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
 	EntityKind     string                       `json:"entityKind,omitempty" yaml:"entityKind,omitempty"`
+	EntityRealName string                       `json:"entityRealName,omitempty" yaml:"entityRealName,omitempty"`
 	RepeatByPrefab []string                     `json:"repeatByPrefab,omitempty" yaml:"repeatByPrefab,omitempty"`
 	ProtoTypeFile  string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
 	NoSelector     *bool                        `json:"noSelector,omitempty" yaml:"noSelector,omitempty"`
@@ -90,6 +92,7 @@ type Entity struct {
 	ProtoTypeFileIndent        string                       `json:"protoTypeFileIndent,omitempty" yaml:"protoTypeFileIndent,omitempty"`
 	EntityPath                 string                       `json:"entityPath,omitempty" yaml:"entityPath,omitempty"`
 	EntityKind                 string                       `json:"entityKind,omitempty" yaml:"entityKind,omitempty"`
+	EntityRealName             string                       `json:"entityRealName,omitempty" yaml:"entityRealName,omitempty"`
 	DecodedEntityPath          string                       `json:"-" yaml:"-"`
 	ProtoTypeFile              string                       `json:"protoTypeFile,omitempty" yaml:"protoTypeFile,omitempty"`
 	EntityOptPkg               string                       `json:"entityOptPkg,omitempty" yaml:"entityOptPkg,omitempty"`
@@ -256,16 +259,17 @@ func (c *Config) AfterLoad() {
 		for _, entityName := range entityNameList {
 			find := false
 			for _, v := range c.Entity {
-				if v.Name == entityName && v.EntityKind == prefab.EntityKind {
+				if v.Name == entityName && v.EntityRealName == prefab.EntityRealName && v.EntityKind == prefab.EntityKind {
 					find = true
 					break
 				}
 			}
 			if !find {
 				c.Entity = append(c.Entity, &Entity{
-					Name:       entityName,
-					EntityKind: prefab.EntityKind,
-					Prefab:     []string{prefabName},
+					Name:           entityName,
+					EntityKind:     prefab.EntityKind,
+					EntityRealName: prefab.EntityRealName,
+					Prefab:         []string{prefabName},
 
 					// it will be override by prefab list
 					Comment:                    Comment{Doc: ""},
@@ -338,6 +342,9 @@ func (s *ServiceBase) ApplyToEntity(entity *Entity) {
 	if entity.EntityKind == "" {
 		entity.EntityKind = s.EntityKind
 	}
+	if entity.EntityRealName == "" {
+		entity.EntityRealName = s.EntityRealName
+	}
 	if entity.ProtoTypeFile == "" {
 		entity.ProtoTypeFile = s.ProtoTypeFile
 	}
@@ -409,6 +416,9 @@ func (p *EntityPrefab) ApplyToPrefab(prefab *EntityPrefab) {
 	if prefab.EntityKind == "" && p.EntityKind != "" {
 		prefab.EntityKind = p.EntityKind
 	}
+	if prefab.EntityRealName == "" && p.EntityRealName != "" {
+		prefab.EntityRealName = p.EntityRealName
+	}
 	for _, f := range p.RepeatByPrefab {
 		find := false
 		for _, v := range prefab.RepeatByPrefab {
@@ -472,6 +482,9 @@ func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
 	}
 	if entity.EntityKind == "" && p.EntityKind != "" {
 		entity.EntityKind = p.EntityKind
+	}
+	if entity.EntityRealName == "" && p.EntityRealName != "" {
+		entity.EntityRealName = p.EntityRealName
 	}
 	if entity.ProtoTypeFile == "" && p.ProtoTypeFile != "" {
 		entity.ProtoTypeFile = p.ProtoTypeFile

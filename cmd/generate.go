@@ -40,6 +40,17 @@ func Generate(genCfg *GenerateCfg) {
 		// build entity info
 		codePaths := []string{}
 		for _, entityCfg := range cfg.Entity {
+			if entityCfg.EntityRealName != "" {
+				entityRealName, err := utils.TemplateRaw(entityCfg.EntityRealName, &ccontext.ConfigTmplContext{
+					VEntityName:  entityCfg.Name,
+					VServiceName: entityCfg.Service,
+				})
+				if err != nil {
+					log.Fatal("Generate EntityRealName TemplateRaw error", log.ErrorField(err))
+					return
+				}
+				entityCfg.Name = entityRealName
+			}
 			entityPath, err := utils.TemplateRaw(entityCfg.EntityPath, &ccontext.ConfigTmplContext{
 				VEntityName:  entityCfg.Name,
 				VServiceName: entityCfg.Service,
