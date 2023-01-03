@@ -221,11 +221,11 @@ func (w *RepositoryWriter) GetEntityRepositoryInterfaceCode() gocoder.Code {
 
 	mfs := make([]gocoder.Func, 0)
 	mfs = append(mfs, cde.Func("InitDB", []gocoder.Arg{cde.Arg("ctx", cdt.Context())}, nil))
-	mfs = append(mfs, cde.Func("Insert", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.ArgVar("docs", cde.TypeD(w.entityPkg, w.entityName))}, []gocoder.Type{cde.TypeError()}))
-	mfs = append(mfs, cde.Func("Update", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("filter", cde.TypeD("", fmt.Sprintf("%sFilter", w.entityName))), cde.Arg("updater", cde.TypeD("", fmt.Sprintf("%sUpdater", w.entityName)))}, []gocoder.Type{cde.TypeError()}))
-	mfs = append(mfs, cde.Func("Get", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("id", cdt.String())}, []gocoder.Type{cde.TypeD(w.entityPkg, w.entityName).TackPtr(), cde.TypeError()}))
-	mfs = append(mfs, cde.Func("GetBatch", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("ids", cdt.StringSlice())}, []gocoder.Type{cde.TypeD(w.entityPkg, w.entityName).TackPtr().Slice(), cde.TypeError()}))
-	mfs = append(mfs, cde.Func("Query", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("filter", cde.TypeD("", fmt.Sprintf("%sFilter", w.entityName))), cde.Arg("skipLen", cdt.Int()), cde.Arg("limitLen", cdt.Int())}, []gocoder.Type{cde.TypeD(w.entityPkg, w.entityName).TackPtr().Slice(), cdt.Int(), cde.TypeError()}))
+	mfs = append(mfs, cde.Func("Insert", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.ArgVar("docs", cde.TypeD(w.entityPkg, w.entityName))}, []gocoder.Arg{cde.Arg("", cde.TypeError())}))
+	mfs = append(mfs, cde.Func("Update", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("filter", cde.TypeD("", fmt.Sprintf("%sFilter", w.entityName))), cde.Arg("updater", cde.TypeD("", fmt.Sprintf("%sUpdater", w.entityName)))}, []gocoder.Arg{cde.Arg("", cde.TypeError())}))
+	mfs = append(mfs, cde.Func("Get", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("id", cdt.String())}, []gocoder.Arg{cde.Arg("", cde.TypeD(w.entityPkg, w.entityName).TackPtr()), cde.Arg("", cde.TypeError())}))
+	mfs = append(mfs, cde.Func("GetBatch", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("ids", cdt.StringSlice())}, []gocoder.Arg{cde.Arg("", cde.TypeD(w.entityPkg, w.entityName).TackPtr().Slice()), cde.Arg("", cde.TypeError())}))
+	mfs = append(mfs, cde.Func("Query", []gocoder.Arg{cde.Arg("ctx", cdt.Context()), cde.Arg("filter", cde.TypeD("", fmt.Sprintf("%sFilter", w.entityName))), cde.Arg("skipLen", cdt.Int()), cde.Arg("limitLen", cdt.Int())}, []gocoder.Arg{cde.Arg("", cde.TypeD(w.entityPkg, w.entityName).TackPtr().Slice()), cde.Arg("", cdt.Int()), cde.Arg("", cde.TypeError())}))
 
 	strT := cde.Interface(fmt.Sprintf("Base%sRepository", w.entityName), mfs...)
 	c.C(strT)

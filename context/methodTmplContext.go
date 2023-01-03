@@ -8,7 +8,9 @@ import (
 
 type MethodTmplContext struct {
 	*TmplContext
-	method gocoder.Func
+	method  gocoder.Func
+	args    []*ArgTmplContext
+	returns []*ArgTmplContext
 }
 
 func NewMethodTmplContextList(ctx *TmplContext, methods []gocoder.Func) []*MethodTmplContext {
@@ -23,6 +25,8 @@ func NewMethodTmplContext(ctx *TmplContext, method gocoder.Func) *MethodTmplCont
 	return &MethodTmplContext{
 		TmplContext: ctx,
 		method:      method,
+		args:        NewArgTmplContextList(ctx, method.GetArgs()),
+		returns:     NewArgTmplContextList(ctx, method.GetReturns()),
 	}
 }
 
@@ -33,4 +37,12 @@ func (c *MethodTmplContext) Name() string {
 func (c *MethodTmplContext) IsNameReg(nameReg string) bool {
 	reg := regexp.MustCompile(nameReg)
 	return reg.MatchString(c.Name())
+}
+
+func (c *MethodTmplContext) Args() []*ArgTmplContext {
+	return c.args
+}
+
+func (c *MethodTmplContext) Returns() []*ArgTmplContext {
+	return c.returns
 }
