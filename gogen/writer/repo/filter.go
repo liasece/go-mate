@@ -76,9 +76,9 @@ func getFieldFilterFields(f gocoder.Field) []*FieldFilterField {
 	return fs
 }
 
-func getFieldFilterMethodToBSON(st gocoder.Struct, fs []*FieldFilterField) gocoder.Codable {
+func getFieldFilterMethodToBSON(st gocoder.Type, fs []*FieldFilterField) gocoder.Codable {
 	c := gocoder.NewCode()
-	receiver := cde.Receiver("f", st.GetType())
+	receiver := cde.Receiver("f", st)
 	f := cde.Method("ToBSON", receiver, nil, []gocoder.Arg{cde.Arg("", bson.M{})})
 	resV := cde.Value("res", bson.M{})
 	setC := gocoder.NewCode()

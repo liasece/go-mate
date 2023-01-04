@@ -25,7 +25,7 @@ func NewTypeTmplContextList(ctx *TmplContext, methods []gocoder.Type) []*TypeTmp
 func NewTypeTmplContext(ctx *TmplContext, typ gocoder.Type) *TypeTmplContext {
 	var fs []gocoder.Field
 	if typ.Kind() == reflect.Struct {
-		fs = typ.GetStruct().GetFields()
+		fs = typ.GetFields()
 	}
 	return &TypeTmplContext{
 		TmplContext: ctx,

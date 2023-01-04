@@ -41,9 +41,9 @@ func getFieldSelectorFields(f gocoder.Field) []*FieldSelectorField {
 	return fs
 }
 
-func getFieldSelectorMethodToBSON(st gocoder.Struct, fs []*FieldSelectorField) gocoder.Codable {
+func getFieldSelectorMethodToBSON(st gocoder.Type, fs []*FieldSelectorField) gocoder.Codable {
 	c := gocoder.NewCode()
-	receiver := cde.Receiver("f", st.GetType())
+	receiver := cde.Receiver("f", st)
 	f := cde.Method("ToBSON", receiver, nil, []gocoder.Arg{cde.Arg("", cde.Type(bson.M{}))})
 	resV := cde.Value("res", bson.M{})
 	selectorC := gocoder.NewCode()

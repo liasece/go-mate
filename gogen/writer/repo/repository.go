@@ -15,10 +15,10 @@ type RepositoryWriter struct {
 	entityPkg   string
 	serviceName string
 
-	Filter   gocoder.Struct
-	Updater  gocoder.Struct
-	Sorter   gocoder.Struct
-	Selector gocoder.Struct
+	Filter   gocoder.Type
+	Updater  gocoder.Type
+	Sorter   gocoder.Type
+	Selector gocoder.Type
 
 	OutTypeSuffix     string
 	OutFilterSuffix   string
@@ -70,7 +70,7 @@ func NewRepositoryWriterByType(t gocoder.Type, name string, pkg string, serviceN
 	}
 }
 
-func (w *RepositoryWriter) GetFilterTypeStructCodeStruct() gocoder.Struct {
+func (w *RepositoryWriter) GetFilterTypeStructCodeStruct() gocoder.Type {
 	if w.Filter != nil {
 		return w.Filter
 	}
@@ -90,7 +90,7 @@ func (w *RepositoryWriter) ServiceName() string {
 	return w.serviceName
 }
 
-func (w *RepositoryWriter) GetUpdaterTypeStructCodeStruct() gocoder.Struct {
+func (w *RepositoryWriter) GetUpdaterTypeStructCodeStruct() gocoder.Type {
 	if w.Updater != nil {
 		return w.Updater
 	}
@@ -98,7 +98,7 @@ func (w *RepositoryWriter) GetUpdaterTypeStructCodeStruct() gocoder.Struct {
 	return res
 }
 
-func (w *RepositoryWriter) GetSorterTypeStructCodeStruct() gocoder.Struct {
+func (w *RepositoryWriter) GetSorterTypeStructCodeStruct() gocoder.Type {
 	if w.Sorter != nil {
 		return w.Sorter
 	}
@@ -106,7 +106,7 @@ func (w *RepositoryWriter) GetSorterTypeStructCodeStruct() gocoder.Struct {
 	return res
 }
 
-func (w *RepositoryWriter) GetSelectorTypeStructCodeStruct() gocoder.Struct {
+func (w *RepositoryWriter) GetSelectorTypeStructCodeStruct() gocoder.Type {
 	if w.Selector != nil {
 		return w.Selector
 	}
@@ -114,20 +114,20 @@ func (w *RepositoryWriter) GetSelectorTypeStructCodeStruct() gocoder.Struct {
 	return res
 }
 
-func (w *RepositoryWriter) GetFilterTypeStructCode() (gocoder.Struct, []*FieldFilterField) {
+func (w *RepositoryWriter) GetFilterTypeStructCode() (gocoder.Type, []*FieldFilterField) {
 	mfs := make([]*FieldFilterField, 0)
 	mfs = append(mfs, newFieldFilterField(nil, "NoCount", cde.Type(false)))
 	for i := 0; i < w.entity.NumField(); i++ {
 		mfs = append(mfs, getFieldFilterFields(w.entity.Field(i))...)
 	}
 	strT := cde.Struct(fmt.Sprintf("%sFilter%s%s", w.entityName, w.OutFilterSuffix, w.OutTypeSuffix))
-	strT.AddFields(fieldFilterFieldsToGocoder(newFieldFilterField(nil, "Ands", strT.GetType().TackPtr().Slice())))
-	strT.AddFields(fieldFilterFieldsToGocoder(newFieldFilterField(nil, "Ors", strT.GetType().TackPtr().Slice())))
+	strT.AddFields(fieldFilterFieldsToGocoder(newFieldFilterField(nil, "Ands", strT.TackPtr().Slice())))
+	strT.AddFields(fieldFilterFieldsToGocoder(newFieldFilterField(nil, "Ors", strT.TackPtr().Slice())))
 	strT.AddFields(fieldFilterFieldsToGocoder(mfs...))
 	return strT, mfs
 }
 
-func (w *RepositoryWriter) GetEntityStruct() gocoder.Struct {
+func (w *RepositoryWriter) GetEntityStruct() gocoder.Type {
 	mfs := make([]gocoder.Field, 0)
 	for i := 0; i < w.entity.NumField(); i++ {
 		mfs = append(mfs, w.entity.Field(i))
@@ -158,7 +158,7 @@ func TypeOptAddSlicePBEmpty(v bool) TypeOpt {
 	}
 }
 
-func (w *RepositoryWriter) GetUpdaterTypeStructCode(opts ...TypeOpt) (gocoder.Struct, []*FieldUpdaterField) {
+func (w *RepositoryWriter) GetUpdaterTypeStructCode(opts ...TypeOpt) (gocoder.Type, []*FieldUpdaterField) {
 	mfs := make([]*FieldUpdaterField, 0)
 	mfs = append(mfs, newFieldUpdaterField(nil, "JustDelete", cde.Type(true)))
 	for i := 0; i < w.entity.NumField(); i++ {
@@ -178,7 +178,7 @@ func (w *RepositoryWriter) GetUpdaterTypeCode() gocoder.Code {
 	return c
 }
 
-func (w *RepositoryWriter) GetSorterTypeStructCode() (gocoder.Struct, []*FieldSorterField) {
+func (w *RepositoryWriter) GetSorterTypeStructCode() (gocoder.Type, []*FieldSorterField) {
 	mfs := make([]*FieldSorterField, 0)
 	for i := 0; i < w.entity.NumField(); i++ {
 		mfs = append(mfs, getFieldSorterFields(w.entity.Field(i))...)
@@ -188,7 +188,7 @@ func (w *RepositoryWriter) GetSorterTypeStructCode() (gocoder.Struct, []*FieldSo
 	return strT, mfs
 }
 
-func (w *RepositoryWriter) GetSelectorTypeStructCode() (gocoder.Struct, []*FieldSelectorField) {
+func (w *RepositoryWriter) GetSelectorTypeStructCode() (gocoder.Type, []*FieldSelectorField) {
 	mfs := make([]*FieldSelectorField, 0)
 	for i := 0; i < w.entity.NumField(); i++ {
 		mfs = append(mfs, getFieldSelectorFields(w.entity.Field(i))...)

@@ -11,7 +11,7 @@ import (
 
 type EntityStructTmplContext struct {
 	w      *repo.RepositoryWriter
-	Struct gocoder.Struct
+	Struct gocoder.Type
 }
 
 func (e *EntityStructTmplContext) Fields() []*EntityStructFieldTmplContext {
