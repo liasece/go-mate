@@ -13,7 +13,7 @@ type PairCount struct {
 	OriginText []string
 }
 
-func (c *PairCount) Add(line string) {
+func (c *PairCount) Add(line string) (effectKey string) {
 	inOrigin := ""
 	for k, v := range c.Count {
 		if v > 0 {
@@ -52,16 +52,26 @@ func (c *PairCount) Add(line string) {
 				} else {
 					c.Count[key] += count % 2
 				}
+				effectKey = key
 			}
 		} else {
-			c.Count[key] += strings.Count(line, head)
-			c.Count[key] -= strings.Count(line, tail)
+			headCount := strings.Count(line, head)
+			if headCount > 0 {
+				c.Count[key] += headCount
+				effectKey = key
+			}
+			tailCount := strings.Count(line, tail)
+			if tailCount > 0 {
+				c.Count[key] -= tailCount
+				effectKey = key
+			}
 		}
 
 		// no repeated count
 		line = strings.ReplaceAll(line, head, "")
 		line = strings.ReplaceAll(line, tail, "")
 	}
+	return effectKey
 }
 
 func (c *PairCount) IsZero() bool {
@@ -89,11 +99,12 @@ type BlockType struct {
 }
 
 type BlockParser struct {
-	Types             []BlockType
-	PairKeys          []string
-	OriginText        []string
-	LineCommentKey    string
-	PendingLinePrefix string
+	Types              []BlockType
+	PairKeys           []string
+	OriginText         []string
+	HeadViscousPairKey []string // this PairKey will viscous the next block
+	LineCommentKey     string
+	PendingLinePrefix  string
 }
 
 func (c *BlockParser) Parse(content string) *Block {
@@ -181,7 +192,7 @@ func (c *BlockParser) protoBlocksFromString(parent *Block, content string) []*Bl
 	currentBlockContent := ""
 	for i, line := range lines {
 		lineNoComment := strings.Split(line, c.LineCommentKey)[0]
-		pairCount.Add(lineNoComment)
+		effectKey := pairCount.Add(lineNoComment)
 		{
 			// append code line
 			hasContent := true
@@ -201,6 +212,17 @@ func (c *BlockParser) protoBlocksFromString(parent *Block, content string) []*Bl
 			if c.PendingLinePrefix != "" {
 				if len(lines) > i+1 && strings.HasPrefix(strings.Trim(lines[i+1], " \t"), c.PendingLinePrefix) {
 					pending = true
+				}
+			}
+			if !pending {
+				// HeadViscousPairKey check
+				if effectKey != "" {
+					for _, v := range c.HeadViscousPairKey {
+						if v == effectKey {
+							pending = true
+							break
+						}
+					}
 				}
 			}
 			if !pending && len(parent.Type.SubTailChar) > 0 {
