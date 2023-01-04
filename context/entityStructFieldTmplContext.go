@@ -2,6 +2,8 @@ package context
 
 import (
 	"reflect"
+	"regexp"
+	"strings"
 
 	"github.com/liasece/go-mate/gogen/writer/repo"
 	"github.com/liasece/go-mate/utils"
@@ -62,4 +64,23 @@ func (e *EntityStructFieldTmplContext) GetMatchTag(tagReg string) string {
 
 func (e *EntityStructFieldTmplContext) GraphqlDefinition() string {
 	return utils.ToLowerCamelCase(e.Name()) + ": " + utils.GraphqlStyle(e.Name(), e.Type().Name())
+}
+
+// docReg like `@description\s+(.*)` group like 1, doc like `@description xxx`, return `xxx`
+func (e *EntityStructFieldTmplContext) GetDocByReg(docReg string, group int) string {
+	reg := regexp.MustCompile(docReg)
+	for _, note := range e.Field.Notes() {
+		if ss := reg.FindStringSubmatch(note.GetContent()); len(ss) > 0 {
+			return ss[group]
+		}
+	}
+	return ""
+}
+
+func (e *EntityStructFieldTmplContext) Doc() string {
+	resList := make([]string, 0)
+	for _, note := range e.Field.Notes() {
+		resList = append(resList, note.GetContent())
+	}
+	return strings.Join(resList, "\n")
 }

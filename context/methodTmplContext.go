@@ -41,6 +41,28 @@ func (c *MethodTmplContext) IsNameReg(nameReg string) bool {
 	return reg.MatchString(c.Name())
 }
 
+// check this method doc is match the reg, docReg like `@ext\s+@graphql\s+@mutation.*`, doc like `@ext @graphql @mutation`
+func (c *MethodTmplContext) IsDocReg(docReg string) bool {
+	reg := regexp.MustCompile(docReg)
+	for _, note := range c.method.Notes() {
+		if reg.MatchString(note.GetContent()) {
+			return true
+		}
+	}
+	return false
+}
+
+// docReg like `@description\s+(.*)` group like 1, doc like `@description xxx`, return `xxx`
+func (c *MethodTmplContext) GetDocByReg(docReg string, group int) string {
+	reg := regexp.MustCompile(docReg)
+	for _, note := range c.method.Notes() {
+		if ss := reg.FindStringSubmatch(note.GetContent()); len(ss) > 0 {
+			return ss[group]
+		}
+	}
+	return ""
+}
+
 func (c *MethodTmplContext) Args() []*ArgTmplContext {
 	return c.args
 }
@@ -55,13 +77,20 @@ func (c *MethodTmplContext) GraphqlArgsDefinition() string {
 		if arg.Type().Name() == "error" || arg.Name() == "opUserID" || arg.Type().Name() == "Context" {
 			continue
 		}
-		if arg.Type().IsStruct() && strings.HasSuffix(arg.Type().Name(), "Input") {
-			res += arg.Type().FieldsGraphqlDefinition()
+		argType := NewTypeTmplContext(c.TmplContext, arg.Type().UnPtr())
+		if argType.IsStruct() && strings.HasSuffix(argType.Name(), "Input") {
+			res += argType.FieldsGraphqlDefinition()
 			continue
 		}
 		typeStr := arg.GraphqlType()
 		if typeStr == "" {
 			continue
+		}
+		{
+			// add doc
+			if doc := c.GetDocByReg(`@return\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
+			}
 		}
 		res += fmt.Sprintf("  %s: %s\n", arg.Name(), typeStr)
 	}
@@ -77,6 +106,12 @@ func (c *MethodTmplContext) GraphqlReturnsDefinition() string {
 		typeStr := arg.GraphqlType()
 		if typeStr == "" {
 			continue
+		}
+		{
+			// add doc
+			if doc := c.GetDocByReg(`@return\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
+			}
 		}
 		res += fmt.Sprintf("  %s: %s\n", arg.Name(), typeStr)
 	}

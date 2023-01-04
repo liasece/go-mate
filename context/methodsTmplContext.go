@@ -39,3 +39,13 @@ func (c *MethodsTmplContext) FindMethodsNot(nameReg string) []*MethodTmplContext
 	}
 	return res
 }
+
+func (c *MethodsTmplContext) FindMethodsByDoc(docReg string) []*MethodTmplContext {
+	res := make([]*MethodTmplContext, 0)
+	for _, m := range c.methods {
+		if m.IsDocReg(docReg) {
+			res = append(res, m)
+		}
+	}
+	return res
+}

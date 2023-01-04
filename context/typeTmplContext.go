@@ -3,6 +3,7 @@ package context
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/liasece/gocoder"
@@ -173,6 +174,25 @@ func (e *TypeTmplContext) KindIsUnsafePointer() bool {
 	return e.Type.Kind() == reflect.UnsafePointer
 }
 
+// docReg like `@description\s+(.*)` group like 1, doc like `@description xxx`, return `xxx`
+func (e *TypeTmplContext) GetDocByReg(docReg string, group int) string {
+	reg := regexp.MustCompile(docReg)
+	for _, note := range e.Type.Notes() {
+		if ss := reg.FindStringSubmatch(note.GetContent()); len(ss) > 0 {
+			return ss[group]
+		}
+	}
+	return ""
+}
+
+func (e *TypeTmplContext) Doc() string {
+	resList := make([]string, 0)
+	for _, note := range e.Type.Notes() {
+		resList = append(resList, note.GetContent())
+	}
+	return strings.Join(resList, "\n")
+}
+
 func (e *TypeTmplContext) FieldsGraphqlDefinition() string {
 	res := ""
 	for _, arg := range e.fields {
@@ -182,6 +202,13 @@ func (e *TypeTmplContext) FieldsGraphqlDefinition() string {
 		typeStr := arg.GraphqlDefinition()
 		if typeStr == "" {
 			continue
+		}
+		{
+			// add doc
+			doc := arg.Doc()
+			if doc != "" {
+				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
+			}
 		}
 		res += fmt.Sprintf("  %s\n", typeStr)
 	}
