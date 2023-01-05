@@ -3,100 +3,10 @@ package code
 import (
 	"bufio"
 	"fmt"
-	"regexp"
 	"strings"
+
+	"github.com/rs/xid"
 )
-
-type PairCount struct {
-	Count      map[string]int // like "()":1 "{}":1 "[]":1
-	KeyWord    []string       // like () {} [], in one string, first rune is left, second rune is right
-	OriginText []string
-}
-
-func (c *PairCount) Add(line string) (effectKey string) {
-	inOrigin := ""
-	for k, v := range c.Count {
-		if v > 0 {
-			for _, originWarp := range c.OriginText {
-				if k == originWarp {
-					inOrigin = originWarp
-					break
-				}
-			}
-		}
-	}
-	for _, key := range c.KeyWord {
-		if inOrigin != "" {
-			if key != inOrigin {
-				continue
-			}
-		}
-		head := ""
-		tail := ""
-		if len(key) == 2 {
-			head = key[:1]
-			tail = key[1:]
-		} else {
-			list := strings.Split(key, " ")
-			if len(list) == 2 {
-				head = list[0]
-				tail = list[1]
-			} else {
-				panic("CodePairCount.Add: invalid keyword: " + key)
-			}
-		}
-		if head == tail {
-			if count := strings.Count(line, head); count > 0 {
-				if c.Count[key] > 0 {
-					c.Count[key] -= count % 2
-				} else {
-					c.Count[key] += count % 2
-				}
-				effectKey = key
-			}
-		} else {
-			headCount := strings.Count(line, head)
-			if headCount > 0 {
-				c.Count[key] += headCount
-				effectKey = key
-			}
-			tailCount := strings.Count(line, tail)
-			if tailCount > 0 {
-				c.Count[key] -= tailCount
-				effectKey = key
-			}
-		}
-
-		// no repeated count
-		line = strings.ReplaceAll(line, head, "")
-		line = strings.ReplaceAll(line, tail, "")
-	}
-	return effectKey
-}
-
-func (c *PairCount) IsZero() bool {
-	for _, v := range c.KeyWord {
-		if c.Count[v] != 0 {
-			return false
-		}
-	}
-	return true
-}
-
-type BlockType struct {
-	Name                   string
-	MergeAble              bool
-	RegStr                 *regexp.Regexp
-	RegOriginIndex         int
-	RegKeyIndex            int
-	RegSubContentIndex     int
-	ParentNames            []string
-	SubsSeparator          string // the sub body separator character, like "," or ";"
-	SubWarpChar            string // the sub body warp character, like "()" "{}" "[]" "((|))" `"""|"""`
-	RegSubWarpContentIndex int
-	KeyCaseIgnored         bool     // ABc == abc
-	SubTailChar            []string // the sub body tail character, like "}" ";" "))" ","
-}
 
 type BlockParser struct {
 	Types              []BlockType
@@ -109,22 +19,40 @@ type BlockParser struct {
 
 func (c *BlockParser) Parse(content string) *Block {
 	res := &Block{
-		Key:             "",
-		SubList:         nil,
-		Parent:          nil,
-		OriginString:    content,
-		SubOriginString: content,
-		Type:            BlockType{"", true, nil, 0, 0, 0, nil, "\n", "", 0, false, nil},
+		ID:               xid.New().String(),
+		BlockParser:      c,
+		Key:              "",
+		SubList:          nil,
+		Parent:           nil,
+		OriginString:     content,
+		SubOriginString:  []string{content},
+		RegOriginStrings: nil,
+		RegOriginIndexes: nil,
+		SubOriginIndex:   nil,
+		Type:             BlockType{"", nil, 0, 0, nil, nil, []bool{true}, nil, "\n", "", 0, false, nil},
 	}
-	res.SubList = c.protoBlocksFromString(res, res.SubOriginString)
+	res.SubList = [][]*Block{c.protoBlocksFromString(res, res.SubOriginString[0], nil)}
 	return res
 }
 
-func (c *BlockParser) protoBlockFromString(parent *Block, content string) []*Block {
+func (c *BlockParser) protoBlockFromString(parent *Block, content string, mustTypeName []string) []*Block {
+	allowTypeNames := make([]string, 0)
 	for _, v := range c.Types {
 		res := []*Block{}
 		if v.RegStr == nil {
 			continue
+		}
+		if mustTypeName != nil {
+			find := false
+			for _, name := range mustTypeName {
+				if v.Name == name {
+					find = true
+					break
+				}
+			}
+			if !find {
+				continue
+			}
 		}
 		if len(v.ParentNames) > 0 {
 			if parent == nil {
@@ -141,42 +69,72 @@ func (c *BlockParser) protoBlockFromString(parent *Block, content string) []*Blo
 				continue
 			}
 		}
+
+		allowTypeNames = append(allowTypeNames, v.Name)
+
 		// syntax
 		contentReg := v.RegStr
 		partsList := contentReg.FindAllStringSubmatch(content, -1)
-		for _, parts := range partsList {
+		partsIndexList := contentReg.FindAllStringSubmatchIndex(content, -1)
+		// log.Warn("partsIndexList", log.Any("partsIndexList", partsIndexList), log.Any("partsList", partsList))
+		for partIndex, parts := range partsList {
 			item := &Block{
-				Parent:          parent,
-				OriginString:    parts[v.RegOriginIndex],
-				Key:             "",
-				Type:            v,
-				SubOriginString: "",
-				SubList:         nil,
+				ID:               xid.New().String(),
+				BlockParser:      c,
+				Parent:           parent,
+				OriginString:     parts[0],
+				Key:              "",
+				Type:             v,
+				RegOriginStrings: make([]string, len(parts)),
+				RegOriginIndexes: make([][]int, len(parts)),
+				SubOriginString:  make([]string, len(v.RegSubContentIndex)),
+				SubOriginIndex:   make([][]int, len(v.RegSubContentIndex)),
+				SubList:          make([][]*Block, len(v.RegSubContentIndex)),
+			}
+			for i, v := range parts {
+				item.RegOriginStrings[i] = v
+				index1, index2 := partsIndexList[partIndex][i*2], partsIndexList[partIndex][i*2+1]
+				if index1 >= 0 || index2 >= 0 {
+					item.RegOriginIndexes[i] = []int{index1, index2}
+				}
 			}
 			if v.RegKeyIndex >= 0 {
-				item.Key = parts[v.RegKeyIndex]
+				item.Key = strings.TrimSpace(parts[v.RegKeyIndex])
 			}
-			if v.RegSubContentIndex >= 0 {
-				item.SubOriginString = parts[v.RegSubContentIndex]
-				item.SubList = append(item.SubList, c.protoBlocksFromString(item, item.SubOriginString)...)
+			for subIndex, regSubContentIndex := range v.RegSubContentIndex {
+				item.SubOriginString[subIndex] = parts[regSubContentIndex]
+				{
+					// set index
+					index1, index2 := partsIndexList[partIndex][2*regSubContentIndex], partsIndexList[partIndex][2*regSubContentIndex+1]
+					if index1 >= 0 || index2 >= 0 {
+						item.SubOriginIndex[subIndex] = []int{index1, index2}
+					}
+				}
+				item.SubList[subIndex] = append(item.SubList[subIndex], c.protoBlocksFromString(item, item.SubOriginString[subIndex], v.RegSubContentTypeNames[subIndex])...)
 			}
+			// if item.Type.Name == GraphqlBlockExplain.Name {
+			// 	log.Warn("item.SubOriginString", log.Any("item.SubOriginString", item.SubOriginString), log.Any("content", content), log.Any("parent", parent))
+			// }
+			// if item.Key == "gameDetails" {
+			// 	log.Warn("gameDetails: ", log.Any("item.SubOriginString", item.SubOriginString), log.Any("content", content), log.Any("parent", parent))
+			// }
 			res = append(res, item)
 		}
 		if len(res) > 0 {
 			return res
 		}
 	}
-	{
+	if len(allowTypeNames) > 0 {
 		lineNoComment := strings.Split(content, c.LineCommentKey)[0]
 		lineNoComment = strings.TrimSpace(lineNoComment)
 		if lineNoComment != "" {
-			fmt.Println("ProtoBlockFromString unknown:\n" + content)
+			fmt.Printf("ProtoBlockFromString unknown(mustTypeName:%v allowTypeNames:%v):\n%s\n", mustTypeName, allowTypeNames, content)
 		}
 	}
 	return nil
 }
 
-func (c *BlockParser) protoBlocksFromString(parent *Block, content string) []*Block {
+func (c *BlockParser) protoBlocksFromString(parent *Block, content string, mustTypeName []string) []*Block {
 	// fmt.Println("ProtoBlocksFromString:\n" + content)
 	scanner := bufio.NewScanner(strings.NewReader(content))
 	res := make([]*Block, 0)
@@ -191,6 +149,12 @@ func (c *BlockParser) protoBlocksFromString(parent *Block, content string) []*Bl
 	}
 	currentBlockContent := ""
 	for i, line := range lines {
+		var nextLine string
+		if i+1 < len(lines) {
+			nextLine = lines[i+1]
+		}
+		_ = nextLine
+
 		lineNoComment := strings.Split(line, c.LineCommentKey)[0]
 		effectKey := pairCount.Add(lineNoComment)
 		{
@@ -211,6 +175,7 @@ func (c *BlockParser) protoBlocksFromString(parent *Block, content string) []*Bl
 			// check need pending line
 			if c.PendingLinePrefix != "" {
 				if len(lines) > i+1 && strings.HasPrefix(strings.Trim(lines[i+1], " \t"), c.PendingLinePrefix) {
+					// log.Warn("pending line 1", log.Any("line", line), log.Any("nextLine", nextLine))
 					pending = true
 				}
 			}
@@ -219,8 +184,12 @@ func (c *BlockParser) protoBlocksFromString(parent *Block, content string) []*Bl
 				if effectKey != "" {
 					for _, v := range c.HeadViscousPairKey {
 						if v == effectKey {
-							pending = true
-							break
+							_, tail := pairKeySplit(v)
+							if strings.HasSuffix(strings.TrimSpace(lineNoComment), tail) {
+								pending = true
+								// log.Warn("pending line 2", log.Any("line", line), log.Any("nextLine", nextLine))
+								break
+							}
 						}
 					}
 				}
@@ -236,21 +205,22 @@ func (c *BlockParser) protoBlocksFromString(parent *Block, content string) []*Bl
 				}
 				if !find {
 					pending = true
+					// log.Warn("pending line 3", log.Any("line", line), log.Any("nextLine", nextLine))
 				}
 			}
 		}
 		if !pending {
 			if pairCount.IsZero() {
-				res = append(res, c.protoBlockFromString(parent, currentBlockContent)...)
+				res = append(res, c.protoBlockFromString(parent, currentBlockContent, mustTypeName)...)
 				currentBlockContent = ""
 			}
 		}
 	}
-	if currentBlockContent != "" {
+	if currentBlockContent != "" && currentBlockContent[len(currentBlockContent)-1:] == "\n" {
 		currentBlockContent = currentBlockContent[:len(currentBlockContent)-1]
 	}
 	if currentBlockContent != "" {
-		res = append(res, c.protoBlockFromString(parent, currentBlockContent)...)
+		res = append(res, c.protoBlockFromString(parent, currentBlockContent, mustTypeName)...)
 	}
 	return res
 }
