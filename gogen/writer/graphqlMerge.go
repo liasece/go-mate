@@ -32,6 +32,13 @@ func mergeGraphQLFromFile(protoFile string, newContent string) error {
 
 func mergeGraphQL(originContent string, newContent string) string {
 	c := code.NewGraphqlCodeBlockParser()
-	res := c.Parse(originContent).Merge(c.Parse(newContent))
-	return res.OriginString
+	res := c.Parse(originContent).Merge(0, c.Parse(newContent))
+	toContent := res.OriginString
+	{
+		// add end line
+		if toContent != "" && toContent[len(toContent)-1] != '\n' {
+			toContent += "\n"
+		}
+	}
+	return toContent
 }

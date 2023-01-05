@@ -36,6 +36,13 @@ func MergeProto(originContent string, newContent string) string {
 
 func mergeProto(originContent string, newContent string) string {
 	c := code.NewProtoBufCodeBlockParser()
-	res := c.Parse(originContent).Merge(c.Parse(newContent))
-	return res.OriginString
+	res := c.Parse(originContent).Merge(0, c.Parse(newContent))
+	toContent := res.OriginString
+	{
+		// add end line
+		if toContent != "" && toContent[len(toContent)-1] != '\n' {
+			toContent += "\n"
+		}
+	}
+	return toContent
 }

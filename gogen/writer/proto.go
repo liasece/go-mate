@@ -32,9 +32,15 @@ func StructToProto(protoFile string, indent string, ts ...gocoder.Type) error {
 	toCode := parser.Parse(originFileContent)
 	for _, t := range ts {
 		newContent := buildProtoContent(toCode.OriginString, t, indent)
-		toCode.Merge(parser.Parse(newContent))
+		toCode.Merge(0, parser.Parse(newContent))
 	}
 	toContent := toCode.OriginString
+	{
+		// add end line
+		if toContent != "" && toContent[len(toContent)-1] != '\n' {
+			toContent += "\n"
+		}
+	}
 	if toContent != originFileContent {
 		// write to file
 		err := os.WriteFile(protoFile, []byte(toContent), 0600)

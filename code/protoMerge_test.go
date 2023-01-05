@@ -55,141 +55,169 @@ func TestProtoBlockFromString(t *testing.T) {
 			},
 			want: &Block{
 				OriginString:    protoContent1,
-				SubOriginString: protoContent1,
-				Type:            BlockType{MergeAble: true, SubsSeparator: "\n"},
-				SubList: []*Block{
+				SubOriginString: []string{protoContent1},
+				Type:            BlockType{SubMergeType: []bool{}, SubsSeparator: "\n"},
+				SubList: [][]*Block{
 					{
-						Key:             "UpdateGameDetailByGameIDRequest",
-						Type:            ProtoBlockTypeMessage,
-						OriginString:    "message UpdateGameDetailByGameIDRequest {\n\tstring game_id = 1;\n\tGameDetailUpdater updater = 2;\n\toptional string op_user_id = 3;\n}",
-						SubOriginString: "string game_id = 1;\n\tGameDetailUpdater updater = 2;\n\toptional string op_user_id = 3;",
-						SubList: []*Block{
-							{
-								Key:          "game_id",
-								Type:         ProtoBlockTypeMessageField,
-								OriginString: "string game_id = 1;",
-								SubList:      nil,
-							},
-							{
-								Key:          "updater",
-								Type:         ProtoBlockTypeMessageField,
-								OriginString: "GameDetailUpdater updater = 2;",
-								SubList:      nil,
-							},
-							{
-								Key:          "op_user_id",
-								Type:         ProtoBlockTypeMessageField,
-								OriginString: "optional string op_user_id = 3;",
-								SubList:      nil,
-							},
-						},
-					},
-					{
-						Key:             "UpdateGameDetailByGameIDResponse",
-						Type:            ProtoBlockTypeMessage,
-						OriginString:    "message UpdateGameDetailByGameIDResponse {\n}",
-						SubOriginString: "",
-						SubList:         nil,
-					},
-					{
-						Key:             "BatchGetAssetTokenConfigResponse",
-						Type:            ProtoBlockTypeMessage,
-						OriginString:    "message BatchGetAssetTokenConfigResponse {\n\trepeated AssetTokenConfig info_list = 1 [json_name = \"nodes\"];\n}",
-						SubOriginString: "repeated AssetTokenConfig info_list = 1 [json_name = \"nodes\"];",
-						SubList: []*Block{
-							{
-								Key:             "info_list",
-								Type:            ProtoBlockTypeMessageField,
-								OriginString:    "repeated AssetTokenConfig info_list = 1 [json_name = \"nodes\"];",
-								SubOriginString: "json_name = \"nodes\"",
-								SubList: []*Block{
+						{
+							Key:             "UpdateGameDetailByGameIDRequest",
+							Type:            ProtoBlockTypeMessage,
+							OriginString:    "message UpdateGameDetailByGameIDRequest {\n\tstring game_id = 1;\n\tGameDetailUpdater updater = 2;\n\toptional string op_user_id = 3;\n}",
+							SubOriginString: []string{"string game_id = 1;\n\tGameDetailUpdater updater = 2;\n\toptional string op_user_id = 3;"},
+							SubList: [][]*Block{
+								{
 									{
-										Key:          "json_name",
-										Type:         ProtoBlockTypeOptionItem,
-										OriginString: "json_name = \"nodes\"",
-										SubList:      nil,
+										Key:             "game_id",
+										Type:            ProtoBlockTypeMessageField,
+										OriginString:    "string game_id = 1;",
+										SubOriginString: []string{""},
+										SubList:         [][]*Block{nil},
+									},
+									{
+										Key:             "updater",
+										Type:            ProtoBlockTypeMessageField,
+										OriginString:    "GameDetailUpdater updater = 2;",
+										SubOriginString: []string{""},
+										SubList:         [][]*Block{nil},
+									},
+									{
+										Key:             "op_user_id",
+										Type:            ProtoBlockTypeMessageField,
+										OriginString:    "optional string op_user_id = 3;",
+										SubOriginString: []string{""},
+										SubList:         [][]*Block{nil},
 									},
 								},
 							},
 						},
-					},
-					{
-						Key:             "GamedevService",
-						Type:            ProtoBlockTypeService,
-						OriginString:    "service GamedevService {\n\toption (base.soptions) = {ds_rpc: true, lua_export: true};\n\trpc FullSetGameHotfixData(FullSetGameHotfixDataRequest) returns (FullSetGameHotfixDataResponse);\n\trpc GetGameHotfixData(GetGameHotfixDataRequest) returns (GetGameHotfixDataResponse) {\n\t\toption (base.moptions) = {ds_rpc: true, lua_export: true};\n\t};\n\trpc GetGameHotfixDataView(GetGameHotfixDataViewRequest) returns (GetGameHotfixDataViewResponse);\n\n\t// game channel\n\trpc ListChannelGameEntry(ListChannelGameEntryRequest) returns(ListChannelGameEntryResponse);\n\trpc InsertGameProject(InsertGameProjectRequest) returns (InsertGameProjectResponse);\n}",
-						SubOriginString: "option (base.soptions) = {ds_rpc: true, lua_export: true};\n\trpc FullSetGameHotfixData(FullSetGameHotfixDataRequest) returns (FullSetGameHotfixDataResponse);\n\trpc GetGameHotfixData(GetGameHotfixDataRequest) returns (GetGameHotfixDataResponse) {\n\t\toption (base.moptions) = {ds_rpc: true, lua_export: true};\n\t};\n\trpc GetGameHotfixDataView(GetGameHotfixDataViewRequest) returns (GetGameHotfixDataViewResponse);\n\n\t// game channel\n\trpc ListChannelGameEntry(ListChannelGameEntryRequest) returns(ListChannelGameEntryResponse);\n\trpc InsertGameProject(InsertGameProjectRequest) returns (InsertGameProjectResponse);",
-						SubList: []*Block{
-							{
-								Key:             "(base.soptions)",
-								Type:            ProtoBlockTypeOption,
-								OriginString:    "option (base.soptions) = {ds_rpc: true, lua_export: true};",
-								SubOriginString: "ds_rpc: true, lua_export: true",
-								SubList: []*Block{
+						{
+							Key:             "UpdateGameDetailByGameIDResponse",
+							Type:            ProtoBlockTypeMessage,
+							OriginString:    "message UpdateGameDetailByGameIDResponse {\n}",
+							SubOriginString: []string{""},
+							SubList:         [][]*Block{nil},
+						},
+						{
+							Key:             "BatchGetAssetTokenConfigResponse",
+							Type:            ProtoBlockTypeMessage,
+							OriginString:    "message BatchGetAssetTokenConfigResponse {\n\trepeated AssetTokenConfig info_list = 1 [json_name = \"nodes\"];\n}",
+							SubOriginString: []string{"repeated AssetTokenConfig info_list = 1 [json_name = \"nodes\"];"},
+							SubList: [][]*Block{
+								{
 									{
-										Key:          "ds_rpc",
-										Type:         ProtoBlockTypeOptionItem,
-										OriginString: "ds_rpc: true",
-										SubList:      nil,
-									},
-									{
-										Key:          "lua_export",
-										Type:         ProtoBlockTypeOptionItem,
-										OriginString: "lua_export: true",
-										SubList:      nil,
-									},
-								},
-							},
-							{
-								Key:          "FullSetGameHotfixData",
-								Type:         ProtoBlockTypeRPC,
-								OriginString: "rpc FullSetGameHotfixData(FullSetGameHotfixDataRequest) returns (FullSetGameHotfixDataResponse);",
-								SubList:      nil,
-							},
-							{
-								Key:             "GetGameHotfixData",
-								Type:            ProtoBlockTypeRPC,
-								OriginString:    "rpc GetGameHotfixData(GetGameHotfixDataRequest) returns (GetGameHotfixDataResponse) {\n\t\toption (base.moptions) = {ds_rpc: true, lua_export: true};\n\t};",
-								SubOriginString: "option (base.moptions) = {ds_rpc: true, lua_export: true};",
-								SubList: []*Block{
-									{
-										Key:             "(base.moptions)",
-										Type:            ProtoBlockTypeOption,
-										OriginString:    "option (base.moptions) = {ds_rpc: true, lua_export: true};",
-										SubOriginString: "ds_rpc: true, lua_export: true",
-										SubList: []*Block{
+										Key:             "info_list",
+										Type:            ProtoBlockTypeMessageField,
+										OriginString:    "repeated AssetTokenConfig info_list = 1 [json_name = \"nodes\"];",
+										SubOriginString: []string{"json_name = \"nodes\""},
+										SubList: [][]*Block{
 											{
-												Key:          "ds_rpc",
-												Type:         ProtoBlockTypeOptionItem,
-												OriginString: "ds_rpc: true",
-												SubList:      nil,
-											},
-											{
-												Key:          "lua_export",
-												Type:         ProtoBlockTypeOptionItem,
-												OriginString: "lua_export: true",
-												SubList:      nil,
+												{
+													Key:             "json_name",
+													Type:            ProtoBlockTypeOptionItem,
+													OriginString:    "json_name = \"nodes\"",
+													SubOriginString: []string{},
+													SubList:         [][]*Block{},
+												},
 											},
 										},
 									},
 								},
 							},
-							{
-								Key:          "GetGameHotfixDataView",
-								Type:         ProtoBlockTypeRPC,
-								OriginString: "rpc GetGameHotfixDataView(GetGameHotfixDataViewRequest) returns (GetGameHotfixDataViewResponse);",
-								SubList:      nil,
-							},
-							{
-								Key:          "ListChannelGameEntry",
-								Type:         ProtoBlockTypeRPC,
-								OriginString: "rpc ListChannelGameEntry(ListChannelGameEntryRequest) returns(ListChannelGameEntryResponse);",
-								SubList:      nil,
-							},
-							{
-								Key:          "InsertGameProject",
-								Type:         ProtoBlockTypeRPC,
-								OriginString: "rpc InsertGameProject(InsertGameProjectRequest) returns (InsertGameProjectResponse);",
-								SubList:      nil,
+						},
+						{
+							Key:             "GamedevService",
+							Type:            ProtoBlockTypeService,
+							OriginString:    "service GamedevService {\n\toption (base.soptions) = {ds_rpc: true, lua_export: true};\n\trpc FullSetGameHotfixData(FullSetGameHotfixDataRequest) returns (FullSetGameHotfixDataResponse);\n\trpc GetGameHotfixData(GetGameHotfixDataRequest) returns (GetGameHotfixDataResponse) {\n\t\toption (base.moptions) = {ds_rpc: true, lua_export: true};\n\t};\n\trpc GetGameHotfixDataView(GetGameHotfixDataViewRequest) returns (GetGameHotfixDataViewResponse);\n\n\t// game channel\n\trpc ListChannelGameEntry(ListChannelGameEntryRequest) returns(ListChannelGameEntryResponse);\n\trpc InsertGameProject(InsertGameProjectRequest) returns (InsertGameProjectResponse);\n}",
+							SubOriginString: []string{"option (base.soptions) = {ds_rpc: true, lua_export: true};\n\trpc FullSetGameHotfixData(FullSetGameHotfixDataRequest) returns (FullSetGameHotfixDataResponse);\n\trpc GetGameHotfixData(GetGameHotfixDataRequest) returns (GetGameHotfixDataResponse) {\n\t\toption (base.moptions) = {ds_rpc: true, lua_export: true};\n\t};\n\trpc GetGameHotfixDataView(GetGameHotfixDataViewRequest) returns (GetGameHotfixDataViewResponse);\n\n\t// game channel\n\trpc ListChannelGameEntry(ListChannelGameEntryRequest) returns(ListChannelGameEntryResponse);\n\trpc InsertGameProject(InsertGameProjectRequest) returns (InsertGameProjectResponse);"},
+							SubList: [][]*Block{
+								{
+									{
+										Key:             "(base.soptions)",
+										Type:            ProtoBlockTypeOption,
+										OriginString:    "option (base.soptions) = {ds_rpc: true, lua_export: true};",
+										SubOriginString: []string{"ds_rpc: true, lua_export: true"},
+										SubList: [][]*Block{
+											{
+												{
+													Key:             "ds_rpc",
+													Type:            ProtoBlockTypeOptionItem,
+													OriginString:    "ds_rpc: true",
+													SubOriginString: []string{},
+													SubList:         [][]*Block{},
+												},
+												{
+													Key:             "lua_export",
+													Type:            ProtoBlockTypeOptionItem,
+													OriginString:    "lua_export: true",
+													SubOriginString: []string{},
+													SubList:         [][]*Block{},
+												},
+											},
+										},
+									},
+									{
+										Key:             "FullSetGameHotfixData",
+										Type:            ProtoBlockTypeRPC,
+										OriginString:    "rpc FullSetGameHotfixData(FullSetGameHotfixDataRequest) returns (FullSetGameHotfixDataResponse);",
+										SubOriginString: []string{""},
+										SubList:         [][]*Block{nil},
+									},
+									{
+										Key:             "GetGameHotfixData",
+										Type:            ProtoBlockTypeRPC,
+										OriginString:    "rpc GetGameHotfixData(GetGameHotfixDataRequest) returns (GetGameHotfixDataResponse) {\n\t\toption (base.moptions) = {ds_rpc: true, lua_export: true};\n\t};",
+										SubOriginString: []string{"option (base.moptions) = {ds_rpc: true, lua_export: true};"},
+										SubList: [][]*Block{
+											{
+												{
+													Key:             "(base.moptions)",
+													Type:            ProtoBlockTypeOption,
+													OriginString:    "option (base.moptions) = {ds_rpc: true, lua_export: true};",
+													SubOriginString: []string{"ds_rpc: true, lua_export: true"},
+													SubList: [][]*Block{
+														{
+															{
+																Key:             "ds_rpc",
+																Type:            ProtoBlockTypeOptionItem,
+																OriginString:    "ds_rpc: true",
+																SubOriginString: []string{},
+																SubList:         [][]*Block{},
+															},
+															{
+																Key:             "lua_export",
+																Type:            ProtoBlockTypeOptionItem,
+																OriginString:    "lua_export: true",
+																SubOriginString: []string{},
+																SubList:         [][]*Block{},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									{
+										Key:             "GetGameHotfixDataView",
+										Type:            ProtoBlockTypeRPC,
+										OriginString:    "rpc GetGameHotfixDataView(GetGameHotfixDataViewRequest) returns (GetGameHotfixDataViewResponse);",
+										SubOriginString: []string{""},
+										SubList:         [][]*Block{nil},
+									},
+									{
+										Key:             "ListChannelGameEntry",
+										Type:            ProtoBlockTypeRPC,
+										OriginString:    "rpc ListChannelGameEntry(ListChannelGameEntryRequest) returns(ListChannelGameEntryResponse);",
+										SubOriginString: []string{""},
+										SubList:         [][]*Block{nil},
+									},
+									{
+										Key:             "InsertGameProject",
+										Type:            ProtoBlockTypeRPC,
+										OriginString:    "rpc InsertGameProject(InsertGameProjectRequest) returns (InsertGameProjectResponse);",
+										SubOriginString: []string{""},
+										SubList:         [][]*Block{nil},
+									},
+								},
 							},
 						},
 					},
@@ -216,8 +244,10 @@ func fillWantParent(p *Block, want *Block) {
 	want.Parent = p
 	// fill want parent
 	for _, v := range want.SubList {
-		if v != nil {
-			fillWantParent(want, v)
+		for _, v2 := range v {
+			if v2 != nil {
+				fillWantParent(want, v2)
+			}
 		}
 	}
 }
@@ -290,7 +320,7 @@ service GamedevService {
 			if err != nil {
 				t.Errorf("json.MarshalIndent error: %v", err)
 			}
-			got := tt.b.Merge(tt.args.income)
+			got := tt.b.Merge(0, tt.args.income)
 
 			if !assert.Equal(t, tt.want, got) {
 				fmt.Println("Old:\n```" + string(jsOld) + "```")

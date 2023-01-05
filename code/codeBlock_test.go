@@ -33,20 +33,20 @@ extend type Query {
   ): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`).SubList[0].SubList[0].SubList[4],
+`).SubList[0][0].SubList[0][0].SubList[0][4],
 			},
 			b: graphqlC.Parse(`
 extend type Query {
   gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`).SubList[0].SubList[0],
+`).SubList[0][0].SubList[0][0],
 			want: graphqlC.Parse(`
 extend type Query {
   gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!, test: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`).SubList[0].SubList[0],
+`).SubList[0][0].SubList[0][0],
 		},
 	}
 	for _, tt := range tests {
@@ -59,7 +59,7 @@ extend type Query {
 			if err != nil {
 				t.Errorf("json.MarshalIndent error: %v", err)
 			}
-			tt.b.addSub(tt.args.income)
+			tt.b.addSub(0, tt.args.income)
 
 			if !assert.Equal(t, tt.want, tt.b) {
 				fmt.Println("Old:\n```" + string(jsOld) + "```")
@@ -100,14 +100,14 @@ extend type Query {
   ): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`).SubList[0].SubList[0].SubList[4],
+`).SubList[0][0].SubList[0][0].SubList[0][4],
 			},
 			b: graphqlC.Parse(`
 extend type Query {
   gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`).SubList[0].SubList[0],
+`).SubList[0][0].SubList[0][0],
 			want: ", ",
 		},
 	}
@@ -123,7 +123,7 @@ extend type Query {
 			}
 			fmt.Println("Old:\n```" + string(jsOld) + "```")
 			fmt.Println("Income:\n```" + string(incomeJs) + "```")
-			got := tt.b.getSubJoinString()
+			got := tt.b.getSubJoinString(0)
 			assert.Equal(t, tt.want, got)
 		})
 	}
