@@ -89,7 +89,7 @@ func (c *MethodTmplContext) GraphqlArgsDefinition() string {
 		}
 		{
 			// add doc
-			if doc := c.GetDocByReg(`@return\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+			if doc := c.GetDocByReg(`@param\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
 				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
 			}
 		}
@@ -137,7 +137,7 @@ func (c *MethodTmplContext) ProtoBuffArgsDefinition() string {
 		}
 		{
 			// add doc
-			if doc := c.GetDocByReg(`@return\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+			if doc := c.GetDocByReg(`@param\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
 				res += fmt.Sprintf("  //%s\n", doc)
 			}
 		}
