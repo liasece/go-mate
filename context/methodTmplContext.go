@@ -182,6 +182,40 @@ func (c *MethodTmplContext) GRPCCallGoArgsDefinition(reqValueName string) string
 	return strings.Join(res, ", ")
 }
 
+func (c *MethodTmplContext) GoArgsDefinition() string {
+	res := []string{}
+	for _, arg := range c.args {
+		res = append(res, fmt.Sprintf("%s %s", arg.Name(), arg.Type().Type.String()))
+	}
+	return strings.Join(res, ", ")
+}
+
+func (c *MethodTmplContext) GraphqlGoArgsDefinition() string {
+	res := []string{}
+	for _, arg := range c.args {
+		if arg.Type().Name() == "error" || arg.Name() == "opUserID" {
+			continue
+		}
+		typ := arg.Type().Type.String()
+		if pkg := arg.Type().Type.PackageInReference(); pkg != "" {
+			typ = pkg + "." + typ
+		}
+		res = append(res, fmt.Sprintf("%s %s", arg.Name(), typ))
+	}
+	return strings.Join(res, ", ")
+}
+
+func (c *MethodTmplContext) CallGRPCArgsDefinition() string {
+	res := []string{}
+	for _, arg := range c.args {
+		if arg.Type().Name() == "Context" {
+			continue
+		}
+		res = append(res, fmt.Sprintf("%s: %s", utils.SnakeStringToBigHump(utils.SnakeString(arg.Name())), arg.Name()))
+	}
+	return strings.Join(res, ", ")
+}
+
 func (c *MethodTmplContext) CallGoReturnsDefinition() string {
 	res := []string{}
 	for i, arg := range c.returns {
