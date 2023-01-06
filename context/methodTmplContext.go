@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/liasece/go-mate/utils"
 	"github.com/liasece/gocoder"
 )
 
@@ -116,4 +117,102 @@ func (c *MethodTmplContext) GraphqlReturnsDefinition() string {
 		res += fmt.Sprintf("  %s: %s\n", arg.Name(), typeStr)
 	}
 	return strings.TrimSpace(res)
+}
+
+func (c *MethodTmplContext) ProtoBuffArgsDefinition() string {
+	res := ""
+	argIndex := 1
+	for _, arg := range c.args {
+		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
+			continue
+		}
+		argType := NewTypeTmplContext(c.TmplContext, arg.Type().UnPtr())
+		if argType.IsStruct() && strings.HasSuffix(argType.Name(), "Input") {
+			res += argType.FieldsProtoBuffDefinition()
+			continue
+		}
+		typeStr := arg.ProtoBuffType()
+		if typeStr == "" {
+			continue
+		}
+		{
+			// add doc
+			if doc := c.GetDocByReg(`@return\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+				res += fmt.Sprintf("  //%s\n", doc)
+			}
+		}
+		res += fmt.Sprintf("  %s %s = %d;\n", typeStr, utils.SnakeString(arg.Name()), argIndex)
+		argIndex++
+	}
+	return strings.TrimSpace(res)
+}
+
+func (c *MethodTmplContext) ProtoBuffReturnsDefinition() string {
+	res := ""
+	argIndex := 1
+	for _, arg := range c.returns {
+		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
+			continue
+		}
+		typeStr := arg.ProtoBuffType()
+		if typeStr == "" {
+			continue
+		}
+		{
+			// add doc
+			if doc := c.GetDocByReg(`@return\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+				res += fmt.Sprintf("  //%s\n", doc)
+			}
+		}
+		res += fmt.Sprintf("  %s %s = %d;\n", typeStr, utils.SnakeString(arg.Name()), argIndex)
+		argIndex++
+	}
+	return strings.TrimSpace(res)
+}
+
+func (c *MethodTmplContext) GRPCCallGoArgsDefinition(reqValueName string) string {
+	res := []string{}
+	for _, arg := range c.args {
+		if arg.Type().Name() == "Context" {
+			res = append(res, "ctx")
+			continue
+		}
+		res = append(res, reqValueName+"."+utils.SnakeStringToBigHump(utils.SnakeString(arg.Name())))
+	}
+	return strings.Join(res, ", ")
+}
+
+func (c *MethodTmplContext) CallGoReturnsDefinition() string {
+	res := []string{}
+	for i, arg := range c.returns {
+		name := arg.Name()
+		if name == "" {
+			if arg.Type().Name() == "error" {
+				name = "err"
+			} else {
+				name = fmt.Sprintf("ret%d", i)
+			}
+		}
+		res = append(res, name)
+	}
+	return strings.Join(res, ", ")
+}
+
+func (c *MethodTmplContext) GRPCCallGoReturnsResponseDefinition() string {
+	res := []string{}
+	for i, arg := range c.returns {
+		if arg.Type().Name() == "error" {
+			continue
+		}
+		goName := arg.Name()
+		if goName == "" {
+			if arg.Type().Name() == "error" {
+				goName = "err"
+			} else {
+				goName = fmt.Sprintf("ret%d", i)
+			}
+		}
+		res = append(res, fmt.Sprintf("%s: %s", utils.SnakeStringToBigHump(utils.SnakeString(arg.Name())), goName))
+	}
+	return strings.Join(res, ", \n")
 }

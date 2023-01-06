@@ -10,24 +10,27 @@ import (
 )
 
 var funcs = map[string]interface{}{
-	"SplitN":           SplitN,
-	"ToCamelCase":      ToCamelCase,
-	"Contains":         Contains,
-	"HasPrefix":        HasPrefix,
-	"HasSuffix":        HasSuffix,
-	"ToUpper":          ToUpper,
-	"ToLower":          ToLower,
-	"ToLowerCamelCase": ToLowerCamelCase,
-	"Plural":           Plural,
-	"SplitCamelCase":   SplitCamelCase,
-	"GraphqlStyle":     GraphqlStyle,
-	"GraphqlStyleW":    GraphqlStyleW,
-	"ReplaceWord":      ReplaceWord,
-	"ReplaceWord2":     ReplaceWord2,
-	"LoadGoInterface":  LoadGoInterface,
-	"LoadGoType":       LoadGoType,
-	"LoadGoStruct":     LoadGoStruct,
-	"LoadGoMethods":    LoadGoMethods,
+	"SplitN":               SplitN,
+	"ToCamelCase":          ToCamelCase,
+	"Contains":             Contains,
+	"HasPrefix":            HasPrefix,
+	"HasSuffix":            HasSuffix,
+	"ToUpper":              ToUpper,
+	"ToLower":              ToLower,
+	"ToLowerCamelCase":     ToLowerCamelCase,
+	"Plural":               Plural,
+	"SplitCamelCase":       SplitCamelCase,
+	"GraphqlStyle":         GraphqlStyle,
+	"GraphqlStyleW":        GraphqlStyleW,
+	"ReplaceWord":          ReplaceWord,
+	"ReplaceWord2":         ReplaceWord2,
+	"LoadGoInterface":      LoadGoInterface,
+	"LoadGoType":           LoadGoType,
+	"LoadGoStruct":         LoadGoStruct,
+	"LoadGoMethods":        LoadGoMethods,
+	"SnakeString":          SnakeString,
+	"SnakeStringToBigHump": SnakeStringToBigHump,
+	"Title":                Title,
 }
 
 func TemplateFromFile(tmplPath string, env interface{}) (gocoder.Codable, error) {
@@ -244,6 +247,67 @@ func GraphqlStyleW(fieldName string, typeName string, writeType string) string {
 	}
 	if isSlice {
 		res = "[" + res + "]"
+	}
+	return res
+}
+
+func ProtoBuffTypeStyle(fieldName string, typeName string) string {
+	return ProtoBuffTypeStyleW(fieldName, typeName, "")
+}
+
+func ProtoBuffTypeStyleW(fieldName string, typeName string, writeType string) string {
+	nameWords := SplitCamelCase(fieldName)
+	isID := false
+	for _, word := range nameWords {
+		if strings.ToLower(word) == "id" {
+			isID = true
+			break
+		}
+	}
+	for strings.HasPrefix(typeName, "**") {
+		typeName = typeName[1:]
+	}
+	for strings.HasPrefix(typeName, "*[]") {
+		typeName = typeName[1:]
+	}
+	isSlice := false
+	if strings.HasPrefix(typeName, "[]") {
+		isSlice = true
+		typeName = typeName[2:]
+	}
+	isPtr := false
+	for strings.HasPrefix(typeName, "*") {
+		isPtr = true
+		typeName = typeName[1:]
+	}
+	res := ""
+	switch typeName {
+	case "string":
+		if isID {
+			res = "string"
+		} else {
+			res = "string"
+		}
+	case "int", "int32", "int64", "uint", "uint32", "uint64", "float32", "float64", "bool":
+		res = typeName
+	case "time.Time":
+		res = "google.protobuf.Timestamp"
+	default:
+		if writeType != "" && (typeName == writeType || regexp.MustCompile(writeType).MatchString(typeName)) {
+			contentReg := regexp.MustCompile(`^[A-Z][\w]*$`)
+			if contentReg.MatchString(typeName) {
+				isPtr = false
+			}
+			res = typeName
+		} else {
+			return ""
+		}
+	}
+
+	if isSlice {
+		res = "repeated " + res
+	} else if isPtr {
+		res = "optional " + res
 	}
 	return res
 }

@@ -2,6 +2,8 @@ package writer
 
 import (
 	"testing"
+
+	"github.com/liasece/go-mate/utils"
 )
 
 func Test_getProtoFromStr(t *testing.T) {
@@ -80,8 +82,8 @@ func Test_snakeString(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := snakeString(tt.args.s); got != tt.want {
-				t.Errorf("snakeString() = %v, want %v", got, tt.want)
+			if got := utils.SnakeString(tt.args.s); got != tt.want {
+				t.Errorf("utils.SnakeString() = %v, want %v", got, tt.want)
 			}
 		})
 	}

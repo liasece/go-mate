@@ -20,6 +20,10 @@ func (c *MethodsTmplContext) Methods() []*MethodTmplContext {
 	return c.methods
 }
 
+func (c *MethodsTmplContext) HaveMethods() bool {
+	return len(c.methods) > 0
+}
+
 func (c *MethodsTmplContext) FindMethods(nameReg string) []*MethodTmplContext {
 	res := make([]*MethodTmplContext, 0)
 	for _, m := range c.methods {

@@ -1,6 +1,7 @@
 package context
 
 import (
+	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
@@ -64,6 +65,10 @@ func (e *EntityStructFieldTmplContext) GetMatchTag(tagReg string) string {
 
 func (e *EntityStructFieldTmplContext) GraphqlDefinition() string {
 	return utils.ToLowerCamelCase(e.Name()) + ": " + utils.GraphqlStyle(e.Name(), e.Type().Name())
+}
+
+func (e *EntityStructFieldTmplContext) ProtoBuffDefinition(index int) string {
+	return utils.ProtoBuffTypeStyle(e.Name(), e.Type().Name()) + utils.SnakeString(e.Name()) + " = " + fmt.Sprint(index) + ";"
 }
 
 // docReg like `@description\s+(.*)` group like 1, doc like `@description xxx`, return `xxx`

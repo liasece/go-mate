@@ -38,3 +38,7 @@ func (e *ArgTmplContext) Type() *TypeTmplContext {
 func (e *ArgTmplContext) GraphqlType() string {
 	return utils.GraphqlStyle(e.Name(), e.typ.Name())
 }
+
+func (e *ArgTmplContext) ProtoBuffType() string {
+	return utils.ProtoBuffTypeStyle(e.Name(), e.typ.Name())
+}

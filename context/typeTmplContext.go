@@ -214,3 +214,27 @@ func (e *TypeTmplContext) FieldsGraphqlDefinition() string {
 	}
 	return strings.TrimSpace(res)
 }
+
+func (e *TypeTmplContext) FieldsProtoBuffDefinition() string {
+	res := ""
+	argIndex := 1
+	for _, arg := range e.fields {
+		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
+			continue
+		}
+		typeStr := arg.ProtoBuffDefinition(argIndex)
+		if typeStr == "" {
+			continue
+		}
+		{
+			// add doc
+			doc := arg.Doc()
+			if doc != "" {
+				res += fmt.Sprintf("  // %s\n", doc)
+			}
+		}
+		res += fmt.Sprintf("  %s\n", typeStr)
+		argIndex++
+	}
+	return strings.TrimSpace(res)
+}

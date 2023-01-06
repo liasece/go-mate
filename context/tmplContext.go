@@ -70,6 +70,13 @@ func (e *TmplContext) ServiceNameTitle() string {
 	return strings.ToUpper(s[:1]) + s[1:]
 }
 
+func (e *TmplContext) EntityGrpcSubPkg() string {
+	if e.EntityCfg == nil {
+		return ""
+	}
+	return e.EntityCfg.GrpcSubPkg
+}
+
 func (e *TmplContext) Env(k1 string, k2 string) string {
 	if e.EntityCfg != nil {
 		if _, ok := e.EntityCfg.Env[k1]; ok {
