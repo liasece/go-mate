@@ -72,6 +72,21 @@ func (c *MethodTmplContext) Returns() []*ArgTmplContext {
 	return c.returns
 }
 
+// GetStdDoc like `@<docGroup>\s+<fieldName>\s+(.*)` group 1, doc like `@param foo xxx`, docGroup = param, fieldName == foo, return `xxx`
+func (c *MethodTmplContext) GetStdDoc(docGroup string, fieldName string) string {
+	return c.GetDocByReg(`@`+regexp.QuoteMeta(docGroup)+`\s+`+regexp.QuoteMeta(fieldName)+`\s+(.*)`, 1)
+}
+
+// alias GetStdDoc("param", fieldName)
+func (c *MethodTmplContext) GetParamStdDoc(fieldName string) string {
+	return c.GetStdDoc("param", fieldName)
+}
+
+// alias GetStdDoc("return", fieldName)
+func (c *MethodTmplContext) GetReturnStdDoc(fieldName string) string {
+	return c.GetStdDoc("return", fieldName)
+}
+
 func (c *MethodTmplContext) GraphqlArgsDefinition() string {
 	res := ""
 	for _, arg := range c.args {
@@ -83,17 +98,17 @@ func (c *MethodTmplContext) GraphqlArgsDefinition() string {
 			res += argType.FieldsGraphqlDefinition()
 			continue
 		}
-		typeStr := arg.GraphqlType()
-		if typeStr == "" {
+		definitionStr := arg.GraphqlDefinition()
+		if definitionStr == "" {
 			continue
 		}
 		{
 			// add doc
-			if doc := c.GetDocByReg(`@param\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+			if doc := c.GetParamStdDoc(arg.Name()); doc != "" {
 				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
 			}
 		}
-		res += fmt.Sprintf("  %s: %s\n", arg.Name(), typeStr)
+		res += fmt.Sprintf("  %s\n", definitionStr)
 	}
 	return strings.TrimSpace(res)
 }
@@ -104,17 +119,17 @@ func (c *MethodTmplContext) GraphqlReturnsDefinition() string {
 		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
 			continue
 		}
-		typeStr := arg.GraphqlType()
-		if typeStr == "" {
+		definitionStr := arg.GraphqlDefinition()
+		if definitionStr == "" {
 			continue
 		}
 		{
 			// add doc
-			if doc := c.GetDocByReg(`@return\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+			if doc := c.GetReturnStdDoc(arg.Name()); doc != "" {
 				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
 			}
 		}
-		res += fmt.Sprintf("  %s: %s\n", arg.Name(), typeStr)
+		res += fmt.Sprintf("  %s\n", definitionStr)
 	}
 	return strings.TrimSpace(res)
 }
@@ -126,22 +141,22 @@ func (c *MethodTmplContext) ProtoBuffArgsDefinition() string {
 		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
 			continue
 		}
-		argType := NewTypeTmplContext(c.TmplContext, arg.Type().UnPtr())
+		argType := NewTypeTmplContext(arg.TmplContext, arg.Type().UnPtr())
 		if argType.IsStruct() && strings.HasSuffix(argType.Name(), "Input") {
 			res += argType.FieldsProtoBuffDefinition()
 			continue
 		}
-		typeStr := arg.ProtoBuffType()
-		if typeStr == "" {
+		definitionStr := arg.ProtoBuffDefinition(argIndex)
+		if definitionStr == "" {
 			continue
 		}
 		{
 			// add doc
-			if doc := c.GetDocByReg(`@param\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+			if doc := c.GetParamStdDoc(arg.Name()); doc != "" {
 				res += fmt.Sprintf("  //%s\n", doc)
 			}
 		}
-		res += fmt.Sprintf("  %s %s = %d;\n", typeStr, utils.SnakeString(arg.Name()), argIndex)
+		res += fmt.Sprintf("  %s\n", definitionStr)
 		argIndex++
 	}
 	return strings.TrimSpace(res)
@@ -151,20 +166,20 @@ func (c *MethodTmplContext) ProtoBuffReturnsDefinition() string {
 	res := ""
 	argIndex := 1
 	for _, arg := range c.returns {
-		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
+		if arg.Type().Name() == "error" {
 			continue
 		}
-		typeStr := arg.ProtoBuffType()
-		if typeStr == "" {
+		definitionStr := arg.ProtoBuffDefinition(argIndex)
+		if definitionStr == "" {
 			continue
 		}
 		{
 			// add doc
-			if doc := c.GetDocByReg(`@return\s+`+arg.Name()+`\s+(.*)`, 1); doc != "" {
+			if doc := c.GetReturnStdDoc(arg.Name()); doc != "" {
 				res += fmt.Sprintf("  //%s\n", doc)
 			}
 		}
-		res += fmt.Sprintf("  %s %s = %d;\n", typeStr, utils.SnakeString(arg.Name()), argIndex)
+		res += fmt.Sprintf("  %s\n", definitionStr)
 		argIndex++
 	}
 	return strings.TrimSpace(res)

@@ -228,8 +228,7 @@ func (e *TypeTmplContext) FieldsProtoBuffDefinition() string {
 		}
 		{
 			// add doc
-			doc := arg.Doc()
-			if doc != "" {
+			if doc := arg.Doc(); doc != "" {
 				res += fmt.Sprintf("  // %s\n", doc)
 			}
 		}
