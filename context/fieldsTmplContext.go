@@ -35,22 +35,37 @@ func (c *FieldsTmplContext) GetFieldDoc(fieldName string) string {
 	var docs []string
 	for _, field := range c.fields {
 		if field.Name() == fieldName {
-			if doc := field.Doc(); doc != "" {
-				docs = append(docs, doc)
-			}
-			if c.docReader != nil {
-				if doc := c.docReader(fieldName); doc != "" {
-					docs = append(docs, doc)
-				}
-			}
+			docs = append(docs, c.getFieldDoc(field))
 		}
 	}
 	return strings.Join(docs, "\n")
 }
 
-func (c *FieldsTmplContext) GraphqlArgsDefinition() string {
+func (c *FieldsTmplContext) getFieldDoc(field IField) string {
+	var docs []string
+
+	if doc := field.Doc(); doc != "" {
+		docs = append(docs, doc)
+	}
+	if c.docReader != nil {
+		if doc := c.docReader(field.Name()); doc != "" {
+			docs = append(docs, doc)
+		}
+	}
+
+	return strings.Join(docs, "\n")
+}
+
+func (c *FieldsTmplContext) GraphqlDefinition() string {
+	return c.GraphqlDefinitionFilterFunc(nil)
+}
+
+func (c *FieldsTmplContext) GraphqlDefinitionFilterFunc(filter func(IField) bool) string {
 	res := ""
 	for _, arg := range c.fields {
+		if filter != nil && !filter(arg) {
+			continue
+		}
 		argType := NewTypeTmplContext(c.TmplContext, arg.Type().UnPtr())
 		if argType.IsStruct() && strings.HasSuffix(argType.Name(), "Input") {
 			res += argType.FieldsGraphqlDefinition()
@@ -62,7 +77,7 @@ func (c *FieldsTmplContext) GraphqlArgsDefinition() string {
 		}
 		{
 			// add doc
-			if doc := c.GetFieldDoc(arg.Name()); doc != "" {
+			if doc := c.getFieldDoc(arg); doc != "" {
 				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
 			}
 		}
@@ -71,28 +86,17 @@ func (c *FieldsTmplContext) GraphqlArgsDefinition() string {
 	return strings.TrimSpace(res)
 }
 
-func (c *FieldsTmplContext) GraphqlReturnsDefinition() string {
-	res := ""
-	for _, arg := range c.fields {
-		definitionStr := arg.GraphqlDefinition()
-		if definitionStr == "" {
-			continue
-		}
-		{
-			// add doc
-			if doc := c.GetFieldDoc(arg.Name()); doc != "" {
-				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
-			}
-		}
-		res += fmt.Sprintf("  %s\n", definitionStr)
-	}
-	return strings.TrimSpace(res)
+func (c *FieldsTmplContext) ProtoBuffDefinition() string {
+	return c.ProtoBuffDefinitionFilterFunc(nil)
 }
 
-func (c *FieldsTmplContext) ProtoBuffArgsDefinition() string {
+func (c *FieldsTmplContext) ProtoBuffDefinitionFilterFunc(filter func(IField) bool) string {
 	res := ""
 	argIndex := 1
 	for _, arg := range c.fields {
+		if filter != nil && !filter(arg) {
+			continue
+		}
 		argType := NewTypeTmplContext(arg.GetTmplContext(), arg.Type().UnPtr())
 		if argType.IsStruct() && strings.HasSuffix(argType.Name(), "Input") {
 			res += argType.FieldsProtoBuffDefinition()
@@ -104,7 +108,7 @@ func (c *FieldsTmplContext) ProtoBuffArgsDefinition() string {
 		}
 		{
 			// add doc
-			if doc := c.GetFieldDoc(arg.Name()); doc != "" {
+			if doc := c.getFieldDoc(arg); doc != "" {
 				res += fmt.Sprintf("  //%s\n", doc)
 			}
 		}
@@ -114,29 +118,16 @@ func (c *FieldsTmplContext) ProtoBuffArgsDefinition() string {
 	return strings.TrimSpace(res)
 }
 
-func (c *FieldsTmplContext) ProtoBuffReturnsDefinition() string {
-	res := ""
-	argIndex := 1
-	for _, arg := range c.fields {
-		definitionStr := arg.ProtoBuffDefinition(argIndex)
-		if definitionStr == "" {
-			continue
-		}
-		{
-			// add doc
-			if doc := c.GetFieldDoc(arg.Name()); doc != "" {
-				res += fmt.Sprintf("  //%s\n", doc)
-			}
-		}
-		res += fmt.Sprintf("  %s\n", definitionStr)
-		argIndex++
-	}
-	return strings.TrimSpace(res)
+func (c *FieldsTmplContext) GRPCCallGoDefinition(reqValueName string) string {
+	return c.GRPCCallGoDefinitionFilterFunc(nil, reqValueName)
 }
 
-func (c *FieldsTmplContext) GRPCCallGoArgsDefinition(reqValueName string) string {
+func (c *FieldsTmplContext) GRPCCallGoDefinitionFilterFunc(filter func(IField) bool, reqValueName string) string {
 	res := []string{}
 	for _, arg := range c.fields {
+		if filter != nil && !filter(arg) {
+			continue
+		}
 		if arg.Type().Name() == "Context" {
 			res = append(res, "ctx")
 			continue
@@ -146,17 +137,31 @@ func (c *FieldsTmplContext) GRPCCallGoArgsDefinition(reqValueName string) string
 	return strings.Join(res, ", ")
 }
 
-func (c *FieldsTmplContext) GoArgsDefinition() string {
+func (c *FieldsTmplContext) GoDefinition() string {
+	return c.GoDefinitionFilterFunc(nil)
+}
+
+func (c *FieldsTmplContext) GoDefinitionFilterFunc(filter func(IField) bool) string {
 	res := []string{}
 	for _, arg := range c.fields {
+		if filter != nil && !filter(arg) {
+			continue
+		}
 		res = append(res, fmt.Sprintf("%s %s", arg.Name(), arg.Type().Type.String()))
 	}
 	return strings.Join(res, ", ")
 }
 
-func (c *FieldsTmplContext) GraphqlGoArgsDefinition() string {
+func (c *FieldsTmplContext) GraphqlGoDefinition() string {
+	return c.GraphqlGoDefinitionFilterFunc(nil)
+}
+
+func (c *FieldsTmplContext) GraphqlGoDefinitionFilterFunc(filter func(IField) bool) string {
 	res := []string{}
 	for _, arg := range c.fields {
+		if filter != nil && !filter(arg) {
+			continue
+		}
 		typ := arg.Type().Type.String()
 		if pkg := arg.Type().Type.PackageInReference(); pkg != "" {
 			typ = pkg + "." + typ
@@ -166,39 +171,60 @@ func (c *FieldsTmplContext) GraphqlGoArgsDefinition() string {
 	return strings.Join(res, ", ")
 }
 
-func (c *FieldsTmplContext) CallGRPCArgsDefinition() string {
+func (c *FieldsTmplContext) CallGRPCDefinition() string {
+	return c.CallGRPCDefinitionFilterFunc(nil)
+}
+
+func (c *FieldsTmplContext) CallGRPCDefinitionFilterFunc(filter func(IField) bool) string {
 	res := []string{}
 	for _, arg := range c.fields {
+		if filter != nil && !filter(arg) {
+			continue
+		}
 		res = append(res, fmt.Sprintf("%s: %s", utils.SnakeStringToBigHump(utils.SnakeString(arg.Name())), arg.Name()))
 	}
 	return strings.Join(res, ", ")
 }
 
-func (c *FieldsTmplContext) CallGoReturnsDefinition() string {
-	res := []string{}
-	for i, arg := range c.fields {
-		name := arg.Name()
-		if name == "" {
-			if arg.Type().Name() == "error" {
-				name = "err"
-			} else {
-				name = fmt.Sprintf("ret%d", i)
-			}
-		}
-		res = append(res, name)
-	}
-	return strings.Join(res, ", ")
+func (c *FieldsTmplContext) CallGoDefinition() string {
+	return c.CallGoDefinitionFilterFunc(nil)
 }
 
-func (c *FieldsTmplContext) GRPCCallGoReturnsResponseDefinition() string {
+func (c *FieldsTmplContext) CallGoDefinitionFilterFunc(filter func(IField) bool) string {
 	res := []string{}
 	for i, arg := range c.fields {
+		if filter != nil && !filter(arg) {
+			continue
+		}
 		goName := arg.Name()
 		if goName == "" {
 			if arg.Type().Name() == "error" {
 				goName = "err"
 			} else {
-				goName = fmt.Sprintf("ret%d", i)
+				goName = fmt.Sprintf("v%d", i)
+			}
+		}
+		res = append(res, goName)
+	}
+	return strings.Join(res, ", ")
+}
+
+func (c *FieldsTmplContext) GRPCCallGoResponseDefinition() string {
+	return c.GRPCCallGoResponseDefinitionFilterFunc(nil)
+}
+
+func (c *FieldsTmplContext) GRPCCallGoResponseDefinitionFilterFunc(filter func(IField) bool) string {
+	res := []string{}
+	for i, arg := range c.fields {
+		if filter != nil && !filter(arg) {
+			continue
+		}
+		goName := arg.Name()
+		if goName == "" {
+			if arg.Type().Name() == "error" {
+				goName = "err"
+			} else {
+				goName = fmt.Sprintf("v%d", i)
 			}
 		}
 		res = append(res, fmt.Sprintf("%s: %s", utils.SnakeStringToBigHump(utils.SnakeString(arg.Name())), goName))
