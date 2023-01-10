@@ -44,6 +44,10 @@ func (e *ArgTmplContext) Doc() string {
 	return strings.Join(resList, "\n")
 }
 
+func (e *ArgTmplContext) DocLinesTrimAndJoin(joinStr string) string {
+	return docLinesTrimAndJoin(e.Doc(), joinStr)
+}
+
 func (e *ArgTmplContext) Name() string {
 	return e.Arg.GetName()
 }

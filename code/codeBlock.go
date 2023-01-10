@@ -87,35 +87,36 @@ func (b *Block) clone(parent *Block) *Block {
 }
 
 // subLevel = subIndex + 1
-func (b *Block) Find(typ BlockType, key string, targetSubLevel int) (subLevel int, findBlock *Block) {
-	{
+func (b *Block) Find(typ BlockType, key string, targetSubLevel int) (findBlock *Block) {
+	if targetSubLevel == 0 {
 		bKey := b.Key
 		findKey := key
 		if b.Type.KeyCaseIgnored || typ.KeyCaseIgnored {
 			findKey = strings.ToLower(findKey)
 			bKey = strings.ToLower(bKey)
 		}
-		if b.Type.Name == typ.Name && bKey == findKey && targetSubLevel <= 0 {
-			return 0, b
+		if b.Type.Name == typ.Name && bKey == findKey {
+			return b
+		}
+	} else {
+		for subIndex, subs := range b.SubList {
+			if subIndex+1 != targetSubLevel {
+				continue
+			}
+			for _, v := range subs {
+				vKey := v.Key
+				findKey := key
+				if v.Type.KeyCaseIgnored || typ.KeyCaseIgnored {
+					vKey = strings.ToLower(vKey)
+					findKey = strings.ToLower(findKey)
+				}
+				if v.Type.Name == typ.Name && vKey == findKey {
+					return v
+				}
+			}
 		}
 	}
-	for subIndex, subs := range b.SubList {
-		if targetSubLevel > 0 && subIndex+1 != targetSubLevel {
-			continue
-		}
-		for _, v := range subs {
-			vKey := v.Key
-			findKey := key
-			if v.Type.KeyCaseIgnored || typ.KeyCaseIgnored {
-				vKey = strings.ToLower(vKey)
-				findKey = strings.ToLower(findKey)
-			}
-			if v.Type.Name == typ.Name && vKey == findKey {
-				return subIndex + 1, v
-			}
-		}
-	}
-	return 0, nil
+	return nil
 }
 
 func (b *Block) getFirstSubBlock() *Block {
@@ -156,7 +157,14 @@ func (b *Block) getSubJoinString(targetSubIndex int) string {
 		oldSub := ""
 		subs := strings.Split(b.Type.SubsSeparator, "|")
 		for _, sub := range subs {
-			if len(b.SubList[targetSubIndex]) > 1 && strings.HasPrefix(strings.Split(b.SubOriginString[targetSubIndex], b.SubList[targetSubIndex][0].OriginString)[1], sub) {
+			var subSliceTail string
+			if len(b.SubList[targetSubIndex]) > 0 {
+				subSlice := strings.Split(b.SubOriginString[targetSubIndex], b.SubList[targetSubIndex][0].OriginString)
+				if len(subSlice) > 1 {
+					subSliceTail = subSlice[1]
+				}
+			}
+			if len(b.SubList[targetSubIndex]) > 1 && strings.HasPrefix(subSliceTail, sub) {
 				oldSub = sub
 				break
 			}

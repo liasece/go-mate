@@ -56,7 +56,7 @@ func TestProtoBlockFromString(t *testing.T) {
 			want: &Block{
 				OriginString:    protoContent1,
 				SubOriginString: []string{protoContent1},
-				Type:            BlockType{SubMergeType: []bool{true}, SubsSeparator: "\n"},
+				Type:            BlockType{SubMergeType: []*MergeConfig{{Append: true, ReplaceBlockType: nil}}, SubsSeparator: "\n"},
 				SubList: [][]*Block{
 					{
 						{

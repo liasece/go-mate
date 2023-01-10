@@ -61,6 +61,9 @@ type GameEntry implements Node {
   game: Game @goField(forceResolver: true)
 }
 
+"""
+这是 GameEntryUpdater 类型
+"""
 input GameEntryUpdater {
   justDelete: Boolean
 }
@@ -93,15 +96,17 @@ func TestGraphqlBlockFromString(t *testing.T) {
 			want: &Block{
 				OriginString:    graphqlContent1,
 				SubOriginString: []string{graphqlContent1},
-				Type:            BlockType{SubMergeType: []bool{true}, SubsSeparator: "\n"},
+				Type:            BlockType{SubMergeType: []*MergeConfig{{Append: true, ReplaceBlockType: nil}}, SubsSeparator: "\n"},
 				SubList: [][]*Block{
 					{
 						{
 							Key:             "GameEntry",
 							Type:            GraphqlBlockTypeType,
 							OriginString:    "type GameEntry implements Node {\n  id: ID!\n  name: String!\n  channelID: String!\n  createAt: Timestamp!\n  updateAt: Timestamp!\n  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n  visibilityType: Int!\n  ownerID: String!\n  groupID: String!\n  oldGameID: String!\n  oldGameVersion: String!\n  detailID: String!\n  indexWeight: Int!\n\n  detail: GameDetail @goField(forceResolver: true)\n  game: Game @goField(forceResolver: true)\n}\n",
-							SubOriginString: []string{"  id: ID!\n  name: String!\n  channelID: String!\n  createAt: Timestamp!\n  updateAt: Timestamp!\n  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n  visibilityType: Int!\n  ownerID: String!\n  groupID: String!\n  oldGameID: String!\n  oldGameVersion: String!\n  detailID: String!\n  indexWeight: Int!\n\n  detail: GameDetail @goField(forceResolver: true)\n  game: Game @goField(forceResolver: true)\n"},
+							SubOriginString: []string{"", "", "  id: ID!\n  name: String!\n  channelID: String!\n  createAt: Timestamp!\n  updateAt: Timestamp!\n  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n  visibilityType: Int!\n  ownerID: String!\n  groupID: String!\n  oldGameID: String!\n  oldGameVersion: String!\n  detailID: String!\n  indexWeight: Int!\n\n  detail: GameDetail @goField(forceResolver: true)\n  game: Game @goField(forceResolver: true)\n"},
 							SubList: [][]*Block{
+								nil,
+								nil,
 								{
 									{
 										Key:             "id",
@@ -148,7 +153,7 @@ func TestGraphqlBlockFromString(t *testing.T) {
 												{
 													Key:             "可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。",
 													Type:            GraphqlBlockExplain,
-													OriginString:    "  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"",
+													OriginString:    "  \"\"\"\n  可见性 0: 只有本人可见 1: 公开 2: 只有所属的队伍可见。\n  经过与讨论，在 dev channel 中，可见性有存在的必要；但是在 prod channel 中，可见性其实表现为是否上架，如果所有人可见就是已上架，如果只有本人可见就是未上架。\n  所以这个可见性在 workshop 游戏中是其本身含义，在线上游戏中表示为这个游戏是否上架。\n  \"\"\"\n",
 													SubOriginString: []string{},
 													SubList:         [][]*Block{},
 												},
@@ -219,9 +224,19 @@ func TestGraphqlBlockFromString(t *testing.T) {
 						{
 							Key:             "GameEntryUpdater",
 							Type:            GraphqlBlockTypeInput,
-							OriginString:    "input GameEntryUpdater {\n  justDelete: Boolean\n}\n",
-							SubOriginString: []string{"  justDelete: Boolean\n"},
+							OriginString:    "\"\"\"\n这是 GameEntryUpdater 类型\n\"\"\"\ninput GameEntryUpdater {\n  justDelete: Boolean\n}\n",
+							SubOriginString: []string{"\"\"\"\n这是 GameEntryUpdater 类型\n\"\"\"\n", "", "  justDelete: Boolean\n"},
 							SubList: [][]*Block{
+								{
+									{
+										Key:             "这是 GameEntryUpdater 类型",
+										Type:            GraphqlBlockExplain,
+										OriginString:    "\"\"\"\n这是 GameEntryUpdater 类型\n\"\"\"\n",
+										SubOriginString: []string{},
+										SubList:         [][]*Block{},
+									},
+								},
+								nil,
 								{
 									{
 										Key:             "justDelete",
@@ -237,8 +252,10 @@ func TestGraphqlBlockFromString(t *testing.T) {
 							Key:             "Query",
 							Type:            GraphqlBlockTypeType,
 							OriginString:    "extend type Query {\n  gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n}\n",
-							SubOriginString: []string{"  gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n"},
+							SubOriginString: []string{"", "", "  gameEntry(id: ID!): GameEntry! @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n  searchGameEntry(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!\n    @HasPermission(auth: { prefixAny: [GAME, PLAYER] })\n"},
 							SubList: [][]*Block{
+								nil,
+								nil,
 								{
 									{
 										Key:             "gameEntry",
@@ -380,6 +397,9 @@ type GameEntryNew {
   test: Int!
 }
 
+"""
+这是 GameEntry 的注释
+"""
 type GameEntry {
   test: Int!
   test2: Int!
@@ -402,6 +422,9 @@ extend type Query {
 `),
 			},
 			want: c.Parse(`
+"""
+这是 GameEntry 的注释
+"""
 type GameEntry implements Node {
   id: ID!
   name: String!
@@ -427,6 +450,9 @@ type GameEntry implements Node {
   test2: Int!
 }
 
+"""
+这是 GameEntryUpdater 类型
+"""
 input GameEntryUpdater {
   justDelete: Boolean
 }
@@ -467,6 +493,9 @@ input GameDetailUpdater {
 `),
 			args: args{
 				income: c.Parse(`
+"""
+这是 Query 类型
+"""
 extend type Query {
   """
   获取游戏详情页列表
@@ -476,12 +505,18 @@ extend type Query {
   newField: String!
 }
 
+"""
+这是 GameDetailUpdater 类型
+"""
 input GameDetailUpdater {
 	colorModifyMetaNin: [String!] @logConstraint(format: "max=100")
 }
 `),
 			},
 			want: c.Parse(`
+"""
+这是 Query 类型
+"""
 extend type Query {
   gameDetailByID(id: ID!): GameDetail! @HasPermission(auth: { any: [GAME_DETAIL] })
   """
@@ -498,6 +533,9 @@ extend type Query {
   newField: String!
 }
 
+"""
+这是 GameDetailUpdater 类型
+"""
 input GameDetailUpdater {
 	colorPanelKindIn: [Int!] @logConstraint(format: "max=100")
 	colorPanelKindNin: [Int!] @logConstraint(format: "max=100")
@@ -507,7 +545,39 @@ input GameDetailUpdater {
 `),
 		},
 		{
-			name: "merge",
+			name: "mergeDocNoChange",
+			b: c.Parse(`
+extend type Query {
+  """
+  该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空
+  newLine
+  """
+  colorModifyMeta: String!
+}
+`),
+			args: args{
+				income: c.Parse(`
+extend type Query {
+  """
+  该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空
+  newLine
+  """
+  colorModifyMeta: String!
+}
+`),
+			},
+			want: c.Parse(`
+extend type Query {
+  """
+  该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空
+  newLine
+  """
+  colorModifyMeta: String!
+}
+`),
+		},
+		{
+			name: "replaceDoc",
 			b: c.Parse(`
 extend type Query {
   """
@@ -520,7 +590,8 @@ extend type Query {
 				income: c.Parse(`
 extend type Query {
   """
-  该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空
+  该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空，测试
+  newLine
   """
   colorModifyMeta: String!
 }
@@ -529,7 +600,35 @@ extend type Query {
 			want: c.Parse(`
 extend type Query {
   """
-  该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空
+  该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空，测试
+  newLine
+  """
+  colorModifyMeta: String!
+}
+`),
+		},
+		{
+			name: "replaceDoc2Type",
+			b: c.Parse(`
+extend type Query {
+  "该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空"
+  colorModifyMeta: String!
+}
+`),
+			args: args{
+				income: c.Parse(`
+extend type Query {
+  """
+  该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空，测试
+  """
+  colorModifyMeta: String!
+}
+`),
+			},
+			want: c.Parse(`
+extend type Query {
+  """
+  该分类下的服装可修改颜色的元数据, 在 ColorModifiable 为 true 时，不可为空，测试
   """
   colorModifyMeta: String!
 }

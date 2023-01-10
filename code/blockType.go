@@ -6,6 +6,12 @@ import (
 	"regexp"
 )
 
+// MergeConfig is the config for merge code block.
+type MergeConfig struct {
+	Append           bool
+	ReplaceBlockType []string
+}
+
 type BlockType struct {
 	Name                   string
 	RegStr                 *regexp.Regexp
@@ -13,7 +19,7 @@ type BlockType struct {
 	RegKeyIndex            int
 	RegSubContentIndex     []int      // sub content in reg index list
 	RegSubContentTypeNames [][]string // sub content type name list
-	SubMergeType           []bool
+	SubMergeType           []*MergeConfig
 	ParentNames            []string
 	SubsSeparator          string // the sub body separator character, like "," or ";"
 	SubWarpChar            string // the sub body warp character, like "()" "{}" "[]" "((|))" `"""|"""`

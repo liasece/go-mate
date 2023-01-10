@@ -33,21 +33,21 @@ extend type Query {
   ): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`).SubList[0][0].SubList[0][0].SubList[2][4],
+`).SubList[0][0].SubList[2][0].SubList[2][4],
 			},
 			b: graphqlC.Parse(`
 extend type Query {
   gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`).SubList[0][0].SubList[0][0],
+`).SubList[0][0].SubList[2][0],
 			want: graphqlC.Parse(`
 extend type Query {
   gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!, test: Int!
 ): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`).SubList[0][0].SubList[0][0],
+`).SubList[0][0].SubList[2][0],
 		},
 	}
 	for _, tt := range tests {
@@ -92,7 +92,7 @@ extend type Query {
   gameEntries(filter: GameEntryFilter!, sorts: [GameEntrySorter!], offset: Int!, limit: Int!): GameEntryConnection!
     @HasPermission(auth: { prefixAny: [GAME, PLAYER] })
 }
-`).SubList[0][0].SubList[0][0],
+`).SubList[0][0].SubList[2][0],
 			want: ", ",
 		},
 	}

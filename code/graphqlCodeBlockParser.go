@@ -3,15 +3,141 @@ package code
 import "regexp"
 
 var (
-	GraphqlBlockTypeType         = BlockType{"type", regexp.MustCompile(`(?s)^\s*((\s*""".*?"""\n)?(\s*".*?"\n)?(extend\s+)?\s*type\s+(\w+)\s*(implements\s+\w+\s*)?\s*(\{\n?(.*?[^\n]*\n?)\s*\}\n?))\s*$`), 1, 5, []int{8}, [][]string{{"type_field", "explain", "explain2"}}, []bool{true}, nil, "\n", "{}", 5, false, nil}
-	GraphqlBlockTypeTypeField    = BlockType{"type_field", regexp.MustCompile(`(?s)^((\s*""".*?"""\n)?(\s*".*?"\n)?\s*(\w+)(\(\n?([\S\s]*?\n?)\n*?\s*\))?:\s*([\w!\[\]]+)(\s*@[^\n]*)*)\s*$`), 1, 4, []int{2, 3, 6}, [][]string{{"explain"}, {"explain2"}, {"type_field_arg"}}, []bool{true, true, false}, []string{"type"}, "\n|,", "()", 3, true, nil}
-	GraphqlBlockTypeTypeFieldArg = BlockType{"type_field_arg", regexp.MustCompile(`(?s)(\s*""".*?"""\n)?(\s*".*?"\n)?\s*((\w+):\s*([\w!\[\]]+)(\s*=\s*[\w]*)?(\s*@[^\n]*)?)\s*`), 3, 4, []int{1, 2}, [][]string{{"explain"}, {"explain2"}}, []bool{true, true}, []string{"type_field"}, "", "", 0, true, nil}
-	GraphqlBlockTypeInput        = BlockType{"input", regexp.MustCompile(`(?s)^(\s*""".*?"""\n)?(\s*".*?"\n)?\s*(extend\s+)?\s*input\s+(\w+)\s*(implements\s+\w+\s*)?\s*(\{\n?(.*?[^\n]*\n?)\s*\}\n?)\s*$`), 0, 4, []int{7}, [][]string{{"input_field", "explain", "explain2"}}, []bool{true}, nil, "\n", "{}", 4, false, nil}
-	GraphqlBlockTypeInputField   = BlockType{"input_field", regexp.MustCompile(`(?s)^((\s*""".*?"""\n)?(\s*".*?"\n)?\s*(\w+)(\(([\S\s]+)\))?:\s*([\w!\[\]]+)(\s*=\s*[\w]*)?(\s*@[^\n]*)*)\s*$`), 1, 4, []int{2, 3}, [][]string{{"explain"}, {"explain2"}}, []bool{true, true}, []string{"input"}, "\n|,", "()", 3, true, nil}
-	GraphqlBlockTypeEnum         = BlockType{"enum", regexp.MustCompile(`(?s)^\s*((extend\s+)?\s*enum\s+(\w+)\s*(implements\s+\w+\s*)?\s*(\{\s*(.*?)\s*\}))\s*$`), 1, 3, []int{6}, [][]string{{"enum_field", "explain", "explain2"}}, []bool{true}, nil, "\n", "{}", 5, false, nil}
-	GraphqlBlockTypeEnumField    = BlockType{"enum_field", regexp.MustCompile(`(?s)^\s*((\w+)(\s*@[^\n]*)*)\s*$`), 1, 2, []int{}, [][]string{}, []bool{}, []string{"enum"}, "\n|,", "()", 1, true, nil}
-	GraphqlBlockExplain          = BlockType{"explain", regexp.MustCompile(`(?s)\s*\"\"\"\s*([^\n]*)\s*\n(([^\n]*\s*\n)*)\s*\"\"\"\s*$`), 0, 1, []int{}, [][]string{}, []bool{}, nil, "", "", 0, false, nil}
-	GraphqlBlockExplain2         = BlockType{"explain2", regexp.MustCompile(`(?s)\s*\"\s*([^\n]*)\s*\"\s*$`), 0, 1, []int{}, [][]string{}, []bool{}, nil, "", "", 0, false, nil}
+	GraphqlBlockTypeType = BlockType{
+		Name:                   "type",
+		RegStr:                 regexp.MustCompile(`(?s)^\s*((\s*""".*?"""\n)?(\s*".*?"\n)?((extend\s+)?\s*type\s+(\w+))\s*(implements\s+\w+\s*)?\s*(\{\n?(.*?[^\n]*\n?)\s*\}\n?))\s*$`),
+		RegOriginIndex:         1,
+		RegKeyIndex:            6,
+		RegSubContentIndex:     []int{2, 3, 9},
+		RegSubContentTypeNames: [][]string{{"explain"}, {"explain2"}, {"type_field", "explain", "explain2"}},
+		SubMergeType:           []*MergeConfig{{Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, {Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, {Append: true, ReplaceBlockType: nil}},
+		ParentNames:            nil,
+		SubsSeparator:          "\n",
+		SubWarpChar:            "{}",
+		RegSubWarpContentIndex: 5,
+		KeyCaseIgnored:         false,
+		SubTailChar:            nil,
+	}
+	GraphqlBlockTypeTypeField = BlockType{
+		Name:                   "type_field",
+		RegStr:                 regexp.MustCompile(`(?s)^((\s*""".*?"""\n)?(\s*".*?"\n)?\s*(\w+)(\(\n?([\S\s]*?\n?)\n*?\s*\))?:\s*([\w!\[\]]+)(\s*@[^\n]*)*)\s*$`),
+		RegOriginIndex:         1,
+		RegKeyIndex:            4,
+		RegSubContentIndex:     []int{2, 3, 6},
+		RegSubContentTypeNames: [][]string{{"explain"}, {"explain2"}, {"type_field_arg"}},
+		SubMergeType:           []*MergeConfig{{Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, {Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, { /* arg can't append */ Append: false, ReplaceBlockType: nil}},
+		ParentNames:            []string{"type"},
+		SubsSeparator:          "\n|,",
+		SubWarpChar:            "()",
+		RegSubWarpContentIndex: 3,
+		KeyCaseIgnored:         true,
+		SubTailChar:            nil,
+	}
+	GraphqlBlockTypeTypeFieldArg = BlockType{
+		Name:                   "type_field_arg",
+		RegStr:                 regexp.MustCompile(`(?s)(\s*""".*?"""\n)?(\s*".*?"\n)?\s*((\w+):\s*([\w!\[\]]+)(\s*=\s*[\w]*)?(\s*@[^\n]*)?)\s*`),
+		RegOriginIndex:         3,
+		RegKeyIndex:            4,
+		RegSubContentIndex:     []int{1, 2},
+		RegSubContentTypeNames: [][]string{{"explain"}, {"explain2"}},
+		SubMergeType:           []*MergeConfig{{Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, {Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, nil},
+		ParentNames:            []string{"type_field"},
+		SubsSeparator:          "",
+		SubWarpChar:            "",
+		RegSubWarpContentIndex: 0,
+		KeyCaseIgnored:         true,
+		SubTailChar:            nil,
+	}
+	GraphqlBlockTypeInput = BlockType{
+		Name:                   "input",
+		RegStr:                 regexp.MustCompile(`(?s)^(\s*""".*?"""\n)?(\s*".*?"\n)?\s*((extend\s+)?\s*input\s+(\w+))\s*(implements\s+\w+\s*)?\s*(\{\n?(.*?[^\n]*\n?)\s*\}\n?)\s*$`),
+		RegOriginIndex:         0,
+		RegKeyIndex:            5,
+		RegSubContentIndex:     []int{1, 2, 8},
+		RegSubContentTypeNames: [][]string{{"explain"}, {"explain2"}, {"input_field", "explain", "explain2"}},
+		SubMergeType:           []*MergeConfig{{Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, {Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, {Append: true, ReplaceBlockType: nil}},
+		ParentNames:            nil,
+		SubsSeparator:          "\n",
+		SubWarpChar:            "{}",
+		RegSubWarpContentIndex: 4,
+		KeyCaseIgnored:         false,
+		SubTailChar:            nil,
+	}
+	GraphqlBlockTypeInputField = BlockType{
+		Name:                   "input_field",
+		RegStr:                 regexp.MustCompile(`(?s)^((\s*""".*?"""\n)?(\s*".*?"\n)?\s*(\w+)(\(([\S\s]+)\))?:\s*([\w!\[\]]+)(\s*=\s*[\w]*)?(\s*@[^\n]*)*)\s*$`),
+		RegOriginIndex:         1,
+		RegKeyIndex:            4,
+		RegSubContentIndex:     []int{2, 3},
+		RegSubContentTypeNames: [][]string{{"explain"}, {"explain2"}},
+		SubMergeType:           []*MergeConfig{{Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, {Append: false, ReplaceBlockType: []string{"explain", "explain2"}}},
+		ParentNames:            []string{"input"},
+		SubsSeparator:          "\n|,",
+		SubWarpChar:            "()",
+		RegSubWarpContentIndex: 3,
+		KeyCaseIgnored:         true,
+		SubTailChar:            nil,
+	}
+	GraphqlBlockTypeEnum = BlockType{
+		Name:                   "enum",
+		RegStr:                 regexp.MustCompile(`(?s)^\s*((extend\s+)?\s*enum\s+(\w+)\s*(implements\s+\w+\s*)?\s*(\{\s*(.*?)\s*\}))\s*$`),
+		RegOriginIndex:         1,
+		RegKeyIndex:            3,
+		RegSubContentIndex:     []int{6},
+		RegSubContentTypeNames: [][]string{{"enum_field", "explain", "explain2"}},
+		SubMergeType:           []*MergeConfig{{Append: true, ReplaceBlockType: nil}, {Append: false, ReplaceBlockType: []string{"explain", "explain2"}}, {Append: false, ReplaceBlockType: []string{"explain", "explain2"}}},
+		ParentNames:            nil,
+		SubsSeparator:          "\n",
+		SubWarpChar:            "{}",
+		RegSubWarpContentIndex: 5,
+		KeyCaseIgnored:         false,
+		SubTailChar:            nil,
+	}
+	GraphqlBlockTypeEnumField = BlockType{
+		Name:                   "enum_field",
+		RegStr:                 regexp.MustCompile(`(?s)^\s*((\w+)(\s*@[^\n]*)*)\s*$`),
+		RegOriginIndex:         1,
+		RegKeyIndex:            2,
+		RegSubContentIndex:     []int{},
+		RegSubContentTypeNames: [][]string{},
+		SubMergeType:           []*MergeConfig{},
+		ParentNames:            []string{"enum"},
+		SubsSeparator:          "\n|,",
+		SubWarpChar:            "()",
+		RegSubWarpContentIndex: 1,
+		KeyCaseIgnored:         true,
+		SubTailChar:            nil,
+	}
+	GraphqlBlockExplain = BlockType{
+		Name:                   "explain",
+		RegStr:                 regexp.MustCompile(`(?s)\s*\"\"\"\s*([^\n]*)\s*\n(([^\n]*\s*\n)*)\s*\"\"\"\n\s*$`),
+		RegOriginIndex:         0,
+		RegKeyIndex:            1,
+		RegSubContentIndex:     []int{},
+		RegSubContentTypeNames: [][]string{},
+		SubMergeType:           []*MergeConfig{},
+		ParentNames:            nil,
+		SubsSeparator:          "",
+		SubWarpChar:            "",
+		RegSubWarpContentIndex: 0,
+		KeyCaseIgnored:         false,
+		SubTailChar:            nil,
+	}
+	GraphqlBlockExplain2 = BlockType{
+		Name:                   "explain2",
+		RegStr:                 regexp.MustCompile(`(?s)\s*\"\s*([^\n]*)\s*\"\n\s*$`),
+		RegOriginIndex:         0,
+		RegKeyIndex:            1,
+		RegSubContentIndex:     []int{},
+		RegSubContentTypeNames: [][]string{},
+		SubMergeType:           []*MergeConfig{},
+		ParentNames:            nil,
+		SubsSeparator:          "",
+		SubWarpChar:            "",
+		RegSubWarpContentIndex: 0,
+		KeyCaseIgnored:         false,
+		SubTailChar:            nil,
+	}
 )
 
 func NewGraphqlCodeBlockParser() *BlockParser {

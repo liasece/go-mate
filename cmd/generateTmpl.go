@@ -41,21 +41,22 @@ func generateTmplToFile(ctx ccontext.ITmplContext, name string, toFile string, t
 		return
 	}
 	if tmpl.Merge {
+		codeStr := gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName(""))
 		switch tmpl.Type {
 		case config.TmplItemTypeProto:
-			err := writer.MergeProtoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+			err := writer.MergeProtoFromFile(toFile, codeStr)
 			if err != nil {
 				log.Fatal("generateEntity Tmpl MergeProtoFromFile error", log.ErrorField(err))
 				return
 			}
 		case config.TmplItemTypeGo:
-			err := writer.MergeGoFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+			err := writer.MergeGoFromFile(toFile, codeStr)
 			if err != nil {
 				log.Fatal("generateEntity Tmpl MergeGoFromFile error", log.ErrorField(err))
 				return
 			}
 		case config.TmplItemTypeGraphQL:
-			err := writer.MergeGraphQLFromFile(toFile, gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName("")))
+			err := writer.MergeGraphQLFromFile(toFile, codeStr)
 			if err != nil {
 				log.Fatal("generateEntity Tmpl MergeGraphQLFromFile error", log.ErrorField(err))
 				return

@@ -89,3 +89,11 @@ func (e *EntityStructFieldTmplContext) Doc() string {
 	}
 	return strings.Join(resList, "\n")
 }
+
+func (e *EntityStructFieldTmplContext) DocLinesTrimAndJoin(joinStr string) string {
+	return docLinesTrimAndJoin(e.Doc(), joinStr)
+}
+
+func (e *EntityStructFieldTmplContext) GetTmplContext() *TmplContext {
+	return e.TmplContext
+}

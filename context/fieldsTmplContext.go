@@ -60,6 +60,14 @@ func (c *FieldsTmplContext) GraphqlDefinition() string {
 	return c.GraphqlDefinitionFilterFunc(nil)
 }
 
+func docLinesTrimAndJoin(doc string, joinStr string) string {
+	ss := strings.Split(doc, "\n")
+	for i, s := range ss {
+		ss[i] = strings.TrimSpace(s)
+	}
+	return strings.Join(ss, joinStr)
+}
+
 func (c *FieldsTmplContext) GraphqlDefinitionFilterFunc(filter func(IField) bool) string {
 	res := ""
 	for _, arg := range c.fields {
@@ -78,7 +86,7 @@ func (c *FieldsTmplContext) GraphqlDefinitionFilterFunc(filter func(IField) bool
 		{
 			// add doc
 			if doc := c.getFieldDoc(arg); doc != "" {
-				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
+				res += fmt.Sprintf("  \"\"\"\n  %s\n  \"\"\"\n", docLinesTrimAndJoin(doc, "\n  "))
 			}
 		}
 		res += fmt.Sprintf("  %s\n", definitionStr)

@@ -78,3 +78,15 @@ func (e *EntityStructTmplContext) HasFieldsWithTagName(tagName string, l1Name st
 func (e *EntityStructTmplContext) HasFieldsWithTagNameL2(tagName string, l1Name string, l2Name string) bool {
 	return len(e.FieldsWithTag(fmt.Sprintf("%s:%s:%s", tagName, l1Name, l2Name))) > 0
 }
+
+func (e *EntityStructTmplContext) Doc() string {
+	resList := make([]string, 0)
+	for _, note := range e.Struct.Notes() {
+		resList = append(resList, note.GetContent())
+	}
+	return strings.Join(resList, "\n")
+}
+
+func (e *EntityStructTmplContext) DocLinesTrimAndJoin(joinStr string) string {
+	return docLinesTrimAndJoin(e.Doc(), joinStr)
+}

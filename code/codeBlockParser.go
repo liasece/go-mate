@@ -29,7 +29,7 @@ func (c *BlockParser) Parse(content string) *Block {
 		RegOriginStrings: nil,
 		RegOriginIndexes: nil,
 		SubOriginIndex:   nil,
-		Type:             BlockType{"", nil, 0, 0, nil, nil, []bool{true}, nil, "\n", "", 0, false, nil},
+		Type:             BlockType{"", nil, 0, 0, nil, nil, []*MergeConfig{{Append: true, ReplaceBlockType: nil}}, nil, "\n", "", 0, false, nil},
 	}
 	res.SubList = [][]*Block{c.protoBlocksFromString(res, res.SubOriginString[0], nil)}
 	return res
@@ -215,9 +215,6 @@ func (c *BlockParser) protoBlocksFromString(parent *Block, content string, mustT
 				currentBlockContent = ""
 			}
 		}
-	}
-	if currentBlockContent != "" && currentBlockContent[len(currentBlockContent)-1:] == "\n" {
-		currentBlockContent = currentBlockContent[:len(currentBlockContent)-1]
 	}
 	if currentBlockContent != "" {
 		res = append(res, c.protoBlockFromString(parent, currentBlockContent, mustTypeName)...)

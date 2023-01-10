@@ -1,7 +1,6 @@
 package context
 
 import (
-	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
@@ -12,7 +11,8 @@ import (
 type TypeTmplContext struct {
 	*TmplContext
 	gocoder.Type
-	fields []*EntityStructFieldTmplContext
+	fields          []*EntityStructFieldTmplContext
+	fieldFieldsTmpl *FieldsTmplContext
 }
 
 func NewTypeTmplContextList(ctx *TmplContext, methods []gocoder.Type) []*TypeTmplContext {
@@ -28,24 +28,29 @@ func NewTypeTmplContext(ctx *TmplContext, typ gocoder.Type) *TypeTmplContext {
 	if typ.Kind() == reflect.Struct {
 		fs = typ.GetFields()
 	}
-	return &TypeTmplContext{
-		TmplContext: ctx,
-		Type:        typ,
-		fields:      NewEntityStructFieldTmplContextList(ctx, fs),
+	fields := NewEntityStructFieldTmplContextList(ctx, fs)
+	res := &TypeTmplContext{
+		TmplContext:     ctx,
+		Type:            typ,
+		fields:          fields,
+		fieldFieldsTmpl: nil,
 	}
+	{
+		fieldFields := make([]IField, 0, len(fields))
+		for _, v := range fields {
+			fieldFields = append(fieldFields, v)
+		}
+		fieldFieldsTmpl := NewFieldsTmplContext(ctx, fieldFields)
+		res.fieldFieldsTmpl = fieldFieldsTmpl
+	}
+	return res
 }
 
 func (e *TypeTmplContext) Elem() *TypeTmplContext {
 	if next := e.Type.GetNext(); next != nil {
-		return &TypeTmplContext{
-			TmplContext: e.TmplContext,
-			Type:        next,
-		}
+		return NewTypeTmplContext(e.TmplContext, next)
 	}
-	return &TypeTmplContext{
-		TmplContext: e.TmplContext,
-		Type:        e.Type.Elem(),
-	}
+	return NewTypeTmplContext(e.TmplContext, e.Type.Elem())
 }
 
 func (e *TypeTmplContext) FinalElem() *TypeTmplContext {
@@ -193,47 +198,18 @@ func (e *TypeTmplContext) Doc() string {
 	return strings.Join(resList, "\n")
 }
 
+func (e *TypeTmplContext) DocLinesTrimAndJoin(joinStr string) string {
+	return docLinesTrimAndJoin(e.Doc(), joinStr)
+}
+
 func (e *TypeTmplContext) FieldsGraphqlDefinition() string {
-	res := ""
-	for _, arg := range e.fields {
-		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
-			continue
-		}
-		typeStr := arg.GraphqlDefinition()
-		if typeStr == "" {
-			continue
-		}
-		{
-			// add doc
-			doc := arg.Doc()
-			if doc != "" {
-				res += fmt.Sprintf("  \"\"\"\n%s\n\"\"\"\n", doc)
-			}
-		}
-		res += fmt.Sprintf("  %s\n", typeStr)
-	}
-	return strings.TrimSpace(res)
+	return e.fieldFieldsTmpl.GraphqlDefinitionFilterFunc(func(i IField) bool {
+		return i.Type().Name() != "error" && i.Type().Name() != "Context"
+	})
 }
 
 func (e *TypeTmplContext) FieldsProtoBuffDefinition() string {
-	res := ""
-	argIndex := 1
-	for _, arg := range e.fields {
-		if arg.Type().Name() == "error" || arg.Type().Name() == "Context" {
-			continue
-		}
-		typeStr := arg.ProtoBuffDefinition(argIndex)
-		if typeStr == "" {
-			continue
-		}
-		{
-			// add doc
-			if doc := arg.Doc(); doc != "" {
-				res += fmt.Sprintf("  // %s\n", doc)
-			}
-		}
-		res += fmt.Sprintf("  %s\n", typeStr)
-		argIndex++
-	}
-	return strings.TrimSpace(res)
+	return e.fieldFieldsTmpl.ProtoBuffDefinitionFilterFunc(func(i IField) bool {
+		return i.Type().Name() != "error" && i.Type().Name() != "Context"
+	})
 }

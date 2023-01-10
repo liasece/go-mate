@@ -32,7 +32,7 @@ func (b *Block) onOriginStringMerged() {
 					b.SubOriginIndex[subIndex] = []int{index1, index2}
 				}
 			}
-			subs := b.BlockParser.protoBlocksFromString(b, b.SubOriginString[subIndex], nil)
+			subs := b.BlockParser.protoBlocksFromString(b, b.SubOriginString[subIndex], b.Type.RegSubContentTypeNames[subIndex])
 			for _, sub := range b.SubList[subIndex] {
 				var newSub *Block
 				for _, v := range subs {
@@ -45,7 +45,13 @@ func (b *Block) onOriginStringMerged() {
 					sub.OriginString = newSub.OriginString
 					sub.onOriginStringMerged()
 				} else {
-					log.Warn("onOriginStringMerged not found int new sub list", log.String("subType", sub.Type.Name), log.String("subKey", sub.Key))
+					allNewSubTypes := []string{}
+					allNewSubKeys := []string{}
+					for _, v := range subs {
+						allNewSubTypes = append(allNewSubTypes, v.Type.Name)
+						allNewSubKeys = append(allNewSubKeys, v.Key)
+					}
+					log.Warn("onOriginStringMerged not found int new sub list", log.Any("bType", b.Type.Name), log.Any("bKey", b.Key), log.String("subType", sub.Type.Name), log.String("subKey", sub.Key), log.Any("allNewSubTypes", allNewSubTypes), log.Any("allNewSubKeys", allNewSubKeys), log.String("SubOriginString", b.SubOriginString[subIndex]))
 				}
 			}
 		}
@@ -98,6 +104,15 @@ func (b *Block) getInParentRegOriginStringsIndex() int {
 	return subRegOriginIndexesIndex
 }
 
+func (b *Block) findRegOriginStrings(str string) bool {
+	for _, v := range b.RegOriginStrings {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
 func (b *Block) getAddSubIntoOriginStringPos(income *Block, targetSubIndex int) (int, string) {
 	// get income in income's parent RegOriginStrings index
 	incomeInParentRegOriginStringsIndex := income.getInParentRegOriginStringsIndex()
@@ -113,19 +128,6 @@ func (b *Block) getAddSubIntoOriginStringPos(income *Block, targetSubIndex int) 
 	}
 
 	insertStringTailString := ""
-	{
-		// get sub list join string
-		subListJoinString := b.getSubJoinString(targetSubIndex)
-		if subListJoinString == "" && income.Parent != nil {
-			incomeParentSubJoinString := income.Parent.getSubJoinString(income.getInParentSubLevel() - 1)
-			if incomeParentSubJoinString != "" {
-				subListJoinString = incomeParentSubJoinString
-			}
-		}
-		if strings.Contains(subListJoinString, "\n") {
-			insertStringTailString = "\n"
-		}
-	}
 
 	{
 		// find next income's parent RegOriginStrings item in b's RegOriginStrings
@@ -159,8 +161,15 @@ func (b *Block) getAddSubIntoOriginStringPos(income *Block, targetSubIndex int) 
 			if income.Parent.RegOriginStrings[i] == "" {
 				continue
 			}
+			nextOKRegOriginStrings := ""
+			for j := i - 1; j >= 0; j-- {
+				if income.Parent.RegOriginStrings[j] != "" && strings.Contains(income.Parent.RegOriginStrings[j], income.Parent.RegOriginStrings[i]) {
+					nextOKRegOriginStrings = income.Parent.RegOriginStrings[j]
+					break
+				}
+			}
 			for j, v := range b.RegOriginStrings {
-				if v == income.Parent.RegOriginStrings[i] {
+				if v == income.Parent.RegOriginStrings[i] && (nextOKRegOriginStrings == "" || !b.findRegOriginStrings(nextOKRegOriginStrings)) {
 					// find ok
 					return b.RegOriginIndexes[j][1], resStr + insertStringTailString
 				}
@@ -258,7 +267,7 @@ func (b *Block) addSub(targetSubLevel int, income *Block) {
 		// log.Error("new sub list", log.Any("bKey", b.Key), log.Any("bType", b.Type.Name), log.Any("targetSubLevel", targetSubLevel), log.Any("incomeKey", income.Key), log.Any("incomeType", income.Type.Name), log.Any("newBOriginString", b.OriginString), log.Any("insertStr", insertStr))
 		b.onOriginStringMerged()
 		if b.Parent != nil {
-			newSubOriginString := strings.Replace(b.Parent.SubOriginString[targetSubIndex], myOldOriginString, b.OriginString, 1)
+			newSubOriginString := strings.Replace(b.Parent.SubOriginString[b.getInParentSubLevel()-1], myOldOriginString, b.OriginString, 1)
 			b.Parent.updateSubOriginString(b.getInParentSubLevel()-1, newSubOriginString)
 		}
 	} else {
@@ -266,29 +275,103 @@ func (b *Block) addSub(targetSubLevel int, income *Block) {
 	}
 }
 
+func (b *Block) delSub(targetSubLevel int, target *Block) {
+	if targetSubLevel <= 0 {
+		targetSubLevel = 1
+	}
+	if len(b.SubList) < targetSubLevel {
+		panic(fmt.Sprintf("delSub error: %s(%s) targetSubLevel: %d", b.Key, b.Type.Name, targetSubLevel))
+	}
+	targetSubIndex := targetSubLevel - 1
+
+	{
+		var newSubList []*Block
+		for _, sub := range b.SubList[targetSubIndex] {
+			if sub.ID != target.ID {
+				newSubList = append(newSubList, sub)
+			}
+		}
+		b.SubList[targetSubIndex] = newSubList
+	}
+	if b.SubOriginString[targetSubIndex] != "" {
+		// append to sub list
+		newSubOriginString := strings.Replace(b.SubOriginString[targetSubIndex], target.OriginString, "", 1)
+		b.updateSubOriginString(targetSubIndex, newSubOriginString)
+	} else {
+		log.Panic("can't del sub list to this block", log.Any("bKey", b.Key), log.Any("bType", b.Type.Name), log.Any("targetSubLevel", targetSubLevel), log.Any("targetKey", target.Key), log.Any("targetType", target.Type.Name))
+	}
+}
+
+func (b *Block) replaceSub(targetSubLevel int, replaceBlockType []string, target *Block) {
+	delBlockList := make(map[string][]*Block, 0)
+	for _, subList := range b.SubList {
+		for _, sub := range subList {
+			del := false
+			for _, replaceBlockTypeItem := range replaceBlockType {
+				if sub.Type.Name == replaceBlockTypeItem {
+					del = true
+					break
+				}
+			}
+			if del {
+				delBlockList[sub.Type.Name] = append(delBlockList[sub.Type.Name], sub)
+			}
+		}
+	}
+
+	var updateBlock *Block
+	// del
+	for typeName, delBlockList := range delBlockList {
+		maxIndex := len(delBlockList) - 1
+		if typeName == target.Type.Name {
+			maxIndex = len(delBlockList) - 2
+		}
+		for i := 0; i <= maxIndex; i++ {
+			b.delSub(delBlockList[i].getInParentSubLevel(), delBlockList[i])
+		}
+		if typeName == target.Type.Name && len(delBlockList) > 0 {
+			updateBlock = delBlockList[len(delBlockList)-1]
+		}
+	}
+
+	if updateBlock != nil {
+		// update
+		inParentSubLevel := updateBlock.getInParentSubLevel()
+		newSubBlock := target.Clone()
+		newSubBlock.Parent = b
+		b.SubList[inParentSubLevel-1] = []*Block{newSubBlock}
+		newSubOriginString := strings.Replace(b.SubOriginString[inParentSubLevel-1], updateBlock.OriginString, newSubBlock.OriginString, 1)
+		b.updateSubOriginString(inParentSubLevel-1, newSubOriginString)
+	} else {
+		// add
+		b.addSub(targetSubLevel, target)
+	}
+}
+
 // subLevel = subIndex + 1
 func (b *Block) Merge(targetSubLevel int, income *Block) *Block {
 	// log.Warn("in Merge", log.Any("bKey", b.Key), log.Any("targetSubLevel", targetSubLevel), log.Any("incomeKey", income.Key))
-	subLevel, findBlock := b.Find(income.Type, income.Key, targetSubLevel)
+	findBlock := b.Find(income.Type, income.Key, targetSubLevel)
 	if findBlock == nil {
-		if b.Type.Name != income.Type.Name {
-			subLevel = targetSubLevel
-		}
-
-		// log.Warn("Merge not exists, add sub", log.Any("bKey", b.Key), log.Any("bType", b.Type.Name), log.Any("targetSubLevel", targetSubLevel), log.Any("incomeKey", income.Key), log.Any("incomeType", income.Type.Name), log.Any("subLevel", subLevel))
-		// append to current block
-		b.addSub(subLevel, income)
+		// not find any block, append to current block sub list
+		// log.Warn("Merge not exists, add sub", log.Any("bKey", b.Key), log.Any("bType", b.Type.Name), log.Any("targetSubLevel", targetSubLevel), log.Any("incomeKey", income.Key), log.Any("incomeType", income.Type.Name), log.Any("appendToSubLevel", appendToSubLevel))
+		b.addSub(targetSubLevel, income)
 	} else {
+		// find target block, maybe findBlock == this(b)
 		for subIndex, subs := range income.SubList {
 			for _, v := range subs {
-				mergeAble := false
-				if targetSubLevel == 0 {
-					mergeAble = true
-				} else if (subLevel <= 0 || findBlock.Type.SubMergeType[subLevel-1]) && income.Type.SubMergeType[subIndex] {
-					mergeAble = true
+				mergeType := income.Type.SubMergeType[subIndex]
+				{
+					// append to findBlock's sub list
+					if mergeType != nil && mergeType.Append {
+						findBlock.Merge(subIndex+1, v)
+					}
 				}
-				if mergeAble {
-					findBlock.Merge(subIndex+1, v)
+				{
+					// replace findBlock's sub list
+					if mergeType != nil && len(mergeType.ReplaceBlockType) > 0 {
+						findBlock.replaceSub(subIndex+1, mergeType.ReplaceBlockType, v)
+					}
 				}
 			}
 		}
