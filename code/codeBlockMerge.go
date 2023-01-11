@@ -9,6 +9,9 @@ import (
 
 func (b *Block) onOriginStringMerged() {
 	if b.Type.RegStr == nil {
+		for i := range b.SubOriginString {
+			b.SubOriginString[i] = b.OriginString
+		}
 		return
 	}
 	// syntax
@@ -114,6 +117,10 @@ func (b *Block) findRegOriginStrings(str string) bool {
 }
 
 func (b *Block) getAddSubIntoOriginStringPos(income *Block, targetSubIndex int) (int, string) {
+	if b.OriginString == "" {
+		return 0, income.OriginString
+	}
+
 	// get income in income's parent RegOriginStrings index
 	incomeInParentRegOriginStringsIndex := income.getInParentRegOriginStringsIndex()
 	if incomeInParentRegOriginStringsIndex < 0 {
@@ -271,7 +278,7 @@ func (b *Block) addSub(targetSubLevel int, income *Block) {
 			b.Parent.updateSubOriginString(b.getInParentSubLevel()-1, newSubOriginString)
 		}
 	} else {
-		log.Panic("can't add sub list to this block", log.Any("bKey", b.Key), log.Any("bType", b.Type.Name), log.Any("targetSubLevel", targetSubLevel), log.Any("incomeKey", income.Key), log.Any("incomeType", income.Type.Name))
+		log.Panic("can't add sub list to this block", log.Any("bKey", b.Key), log.Any("bType", b.Type.Name), log.Any("bOrigin", b.OriginString), log.Any("b.SubOriginString[targetSubIndex]", b.SubOriginString[targetSubIndex]), log.Any("targetSubLevel", targetSubLevel), log.Any("targetSubIndex", targetSubIndex), log.Any("incomeKey", income.Key), log.Any("incomeType", income.Type.Name))
 	}
 }
 
