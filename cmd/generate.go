@@ -38,7 +38,7 @@ func Generate(genCfg *GenerateCfg) {
 
 	{
 		// build entity info
-		codePaths := []string{}
+		codePaths := append([]string{}, cfg.ImportGoCodePath...)
 		for _, entityCfg := range cfg.Entity {
 			entityCfg.CodeName = entityCfg.Name
 			if entityCfg.EntityRealName != "" {

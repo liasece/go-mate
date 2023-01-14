@@ -59,6 +59,7 @@ type Config struct {
 	BuildEntityWithPrefab yaml.MapSlice                `json:"buildEntityWithPrefab,omitempty" yaml:"buildEntityWithPrefab,omitempty"`
 	Env                   map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	LogLevel              string                       `json:"logLevel,omitempty" yaml:"logLevel,omitempty"`
+	ImportGoCodePath      []string                     `json:"importGoCodePath,omitempty" yaml:"importGoCodePath,omitempty"`
 }
 
 type EntityPrefab struct {
