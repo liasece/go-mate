@@ -55,7 +55,7 @@ func (e *TypeTmplContext) Elem() *TypeTmplContext {
 
 func (e *TypeTmplContext) FinalElem() *TypeTmplContext {
 	elem := e
-	for elem.KindIsPointer() || elem.KindIsSlice() || elem.KindIsArray() || elem.KindIsChan() || elem.KindIsMap() || elem.Type.GetNext() != nil {
+	for elem.KindIsPointer() || elem.KindIsSlice() || elem.KindIsArray() || elem.KindIsChan() || elem.KindIsMap() {
 		elem = elem.Elem()
 	}
 	return elem
@@ -65,7 +65,7 @@ func (e *TypeTmplContext) ExternalTypeString() string {
 	str := e.Type.Name()
 	finalElem := e.FinalElem()
 	finalElemPkg := finalElem.PackageInReference()
-	if finalElem.KindIsStruct() && finalElemPkg != "" {
+	if finalElemPkg != "" {
 		str = strings.ReplaceAll(str, finalElem.Name(), finalElemPkg+"."+finalElem.Name())
 	}
 	return str

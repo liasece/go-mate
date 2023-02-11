@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"regexp"
 
 	"github.com/liasece/go-mate/config"
 	ccontext "github.com/liasece/go-mate/context"
@@ -13,6 +14,49 @@ import (
 
 type GenerateCfg struct {
 	ConfigFile string `arg:"name: config file; short: f; usage: the config file path of target entity; required;"`
+}
+
+func newAstCoder(cfg *config.Config) (*coder_ast.CodeDecoder, error) {
+	codePaths := append([]string{}, cfg.ImportGoCodePath...)
+	for _, entityCfg := range cfg.Entity {
+		entityCfg.CodeName = entityCfg.Name
+		if entityCfg.EntityRealName != "" {
+			entityRealName, err := utils.TemplateRaw(entityCfg.EntityRealName, &ccontext.ConfigTmplContext{
+				VEntityName:  entityCfg.Name,
+				VServiceName: entityCfg.Service,
+			})
+			if err != nil {
+				log.Fatal("Generate EntityRealName TemplateRaw error", log.ErrorField(err))
+				return nil, err
+			}
+			entityCfg.CodeName = entityRealName
+		}
+		entityPath, err := utils.TemplateRaw(entityCfg.EntityPath, &ccontext.ConfigTmplContext{
+			VEntityName:  entityCfg.Name,
+			VServiceName: entityCfg.Service,
+		})
+		if err != nil {
+			log.Fatal("Generate TemplateRaw error", log.ErrorField(err))
+			return nil, err
+		}
+		entityCfg.DecodedEntityPath = entityPath
+		if entityCfg.Pkg == "" {
+			entityCfg.Pkg = coder_ast.GetDirGoPackage(entityPath)
+		}
+		if entityCfg.Pkg == "" {
+			if entityCfg.GetEnv("go", "mod") != "" {
+				entityCfg.Pkg = entityCfg.GetEnv("go", "mod") + "/" + entityPath
+			} else {
+				entityCfg.Pkg = calGoFilePkgName(entityPath)
+			}
+		}
+		codePaths = append(codePaths, entityPath)
+	}
+	astCoder, err := coder_ast.NewCodeDecoder(codePaths...)
+	if err != nil {
+		return nil, err
+	}
+	return astCoder, nil
 }
 
 func Generate(genCfg *GenerateCfg) {
@@ -37,43 +81,53 @@ func Generate(genCfg *GenerateCfg) {
 	}
 
 	{
-		// build entity info
-		codePaths := append([]string{}, cfg.ImportGoCodePath...)
-		for _, entityCfg := range cfg.Entity {
-			entityCfg.CodeName = entityCfg.Name
-			if entityCfg.EntityRealName != "" {
-				entityRealName, err := utils.TemplateRaw(entityCfg.EntityRealName, &ccontext.ConfigTmplContext{
-					VEntityName:  entityCfg.Name,
-					VServiceName: entityCfg.Service,
-				})
-				if err != nil {
-					log.Fatal("Generate EntityRealName TemplateRaw error", log.ErrorField(err))
-					return
-				}
-				entityCfg.CodeName = entityRealName
-			}
-			entityPath, err := utils.TemplateRaw(entityCfg.EntityPath, &ccontext.ConfigTmplContext{
-				VEntityName:  entityCfg.Name,
-				VServiceName: entityCfg.Service,
-			})
-			if err != nil {
-				log.Fatal("Generate TemplateRaw error", log.ErrorField(err))
-				return
-			}
-			entityCfg.DecodedEntityPath = entityPath
-			if entityCfg.Pkg == "" {
-				entityCfg.Pkg = coder_ast.GetDirGoPackage(entityPath)
-			}
-			if entityCfg.Pkg == "" {
-				if entityCfg.GetEnv("go", "mod") != "" {
-					entityCfg.Pkg = entityCfg.GetEnv("go", "mod") + "/" + entityPath
-				} else {
-					entityCfg.Pkg = calGoFilePkgName(entityPath)
-				}
-			}
-			codePaths = append(codePaths, entityPath)
+		// search entity names
+		var appendEntity []*config.Entity
+		astCoder, err := newAstCoder(cfg)
+		if err != nil {
+			log.Fatal("Generate NewCodeDecoder error", log.ErrorField(err))
+			return
 		}
-		astCoder, err := coder_ast.NewCodeDecoder(codePaths...)
+		for i, entityCfg := range cfg.Entity {
+			if entityCfg.Name == regexp.QuoteMeta(entityCfg.Name) {
+				continue
+			}
+			switch entityCfg.EntityKind {
+			case "methods":
+				// log.Fatal("type name search not support in methods", log.ErrorField(err), log.Any("entityCfg", entityCfg))
+				continue
+			case "interface":
+				// log.Fatal("type name search not support in interface", log.ErrorField(err), log.Any("entityCfg", entityCfg))
+				continue
+			default:
+				entityNames := astCoder.SearchTypeNames(entityCfg.Pkg, entityCfg.Name)
+				if len(entityNames) == 1 && entityNames[0] == entityCfg.Name {
+					// no change
+					continue
+				} else {
+					// replace this entity to newEntity
+					log.Info("Generate appendEntity", log.Any("entityCfg.Pkg", entityCfg.Pkg), log.Any("entityNames", entityNames))
+					cfg.Entity[i] = nil
+					for _, entityName := range entityNames {
+						newEntity := *entityCfg
+						newEntity.Name = entityName
+						appendEntity = append(appendEntity, &newEntity)
+					}
+				}
+			}
+		}
+		newEntityList := make([]*config.Entity, 0, len(cfg.Entity)+len(appendEntity))
+		for _, v := range cfg.Entity {
+			if v != nil {
+				newEntityList = append(newEntityList, v)
+			}
+		}
+		newEntityList = append(newEntityList, appendEntity...)
+		cfg.Entity = newEntityList
+	}
+	{
+		// build entity info
+		astCoder, err := newAstCoder(cfg)
 		if err != nil {
 			log.Fatal("Generate NewCodeDecoder error", log.ErrorField(err))
 			return

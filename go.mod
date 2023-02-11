@@ -3,7 +3,7 @@ module github.com/liasece/go-mate
 go 1.17
 
 require (
-	github.com/liasece/gocoder v0.0.17
+	github.com/liasece/gocoder v0.0.18
 	github.com/liasece/log v0.0.3
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.5.0
@@ -59,4 +59,4 @@ require (
 	howett.net/plist v1.0.0 // indirect
 )
 
-// replace github.com/liasece/gocoder => /Users/jansen/src/gocoder
+// replace github.com/liasece/gocoder => /workspaces/src/gocoder
