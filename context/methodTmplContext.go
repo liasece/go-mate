@@ -2,6 +2,7 @@ package context
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/liasece/gocoder"
 )
@@ -168,4 +169,9 @@ func (c *MethodTmplContext) GRPCCallGoReturnsResponseDefinition() string {
 	return c.returnFieldsTmpl.GRPCCallGoResponseDefinitionFilterFunc(func(i IField) bool {
 		return i.Type().Name() != "error"
 	})
+}
+
+func (c *MethodTmplContext) IsInternal() bool {
+	// internal method name start with lower case
+	return strings.ToLower(c.Name()[0:1]) == c.Name()[0:1]
 }
