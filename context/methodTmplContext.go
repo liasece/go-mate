@@ -52,7 +52,7 @@ func NewMethodTmplContext(ctx *TmplContext, method gocoder.Func) *MethodTmplCont
 			returnFields = append(returnFields, v)
 		}
 		returnFieldsTmpl := NewFieldsTmplContext(ctx, returnFields)
-		returnFieldsTmpl.docReader = res.GetParamStdDoc
+		returnFieldsTmpl.docReader = res.GetReturnStdDoc
 
 		res.returnFieldsTmpl = returnFieldsTmpl
 	}
