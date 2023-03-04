@@ -288,7 +288,11 @@ func ProtoBuffTypeStyleW(fieldName string, typeName string, writeType string) st
 		} else {
 			res = "string"
 		}
-	case "int", "int32", "int64", "uint", "uint32", "uint64", "float32", "float64", "bool":
+	case "int":
+		res = "int64"
+	case "uint":
+		res = "uint64"
+	case "int32", "int64", "uint32", "uint64", "float32", "float64", "bool":
 		res = typeName
 	case "time.Time":
 		res = "google.protobuf.Timestamp"
