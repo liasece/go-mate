@@ -1,8 +1,16 @@
 package context
 
 import (
+	"sort"
+
 	"github.com/liasece/gocoder"
 )
+
+type MethodsTmplSortByName []*MethodTmplContext
+
+func (a MethodsTmplSortByName) Len() int           { return len(a) }
+func (a MethodsTmplSortByName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a MethodsTmplSortByName) Less(i, j int) bool { return a[i].Name() < a[j].Name() }
 
 type MethodsTmplContext struct {
 	*TmplContext
@@ -10,9 +18,11 @@ type MethodsTmplContext struct {
 }
 
 func NewMethodsTmplContext(ctx *TmplContext, methods []gocoder.Func) *MethodsTmplContext {
+	list := NewMethodTmplContextList(ctx, methods)
+	sort.Sort(MethodsTmplSortByName(list))
 	return &MethodsTmplContext{
 		TmplContext: ctx,
-		methods:     NewMethodTmplContextList(ctx, methods),
+		methods:     list,
 	}
 }
 
