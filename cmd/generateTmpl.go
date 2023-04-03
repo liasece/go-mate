@@ -52,7 +52,7 @@ func generateTmplToFile(ctx ccontext.ITmplContext, name string, toFile string, t
 		case config.TmplItemTypeGo:
 			err := writer.MergeGoFromFile(toFile, codeStr)
 			if err != nil {
-				log.Fatal("generateEntity Tmpl MergeGoFromFile error", log.ErrorField(err))
+				log.Fatal("generateEntity Tmpl MergeGoFromFile error", log.ErrorField(err), log.Any("codeStr", codeStr))
 				return
 			}
 		case config.TmplItemTypeGraphQL:
