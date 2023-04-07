@@ -90,21 +90,35 @@ func (e *EntityTmplContext) EnvOr(k1 string, k2 string, or string) string {
 }
 
 func (e *EntityTmplContext) GetTagOn(filterReg string, targetTag string) string {
-	fieldNum := e.findFieldNumByTagOn(filterReg)
-	if fieldNum < 0 {
+	fieldNumList := e.findFieldNumByTagOn(filterReg)
+	if len(fieldNumList) == 0 {
 		return ""
 	}
+	fieldNum := fieldNumList[0]
 	if targetTag == "" {
 		return e.w.Entity().Field(fieldNum).GetName()
 	}
 	return reflect.StructTag(e.w.Entity().Field(fieldNum).GetTag()).Get(targetTag)
 }
 
+func (e *EntityTmplContext) ListFieldByTag(filterReg string) []*EntityStructFieldTmplContext {
+	fieldNumList := e.findFieldNumByTagOn(filterReg)
+	res := []*EntityStructFieldTmplContext{}
+	for _, fieldNum := range fieldNumList {
+		res = append(res, &EntityStructFieldTmplContext{
+			w:     e.w,
+			Field: e.w.Entity().Field(fieldNum),
+		})
+	}
+	return res
+}
+
 func (e *EntityTmplContext) GetTypeByTagOn(filterReg string) string {
-	fieldNum := e.findFieldNumByTagOn(filterReg)
-	if fieldNum < 0 {
+	fieldNumList := e.findFieldNumByTagOn(filterReg)
+	if len(fieldNumList) == 0 {
 		return ""
 	}
+	fieldNum := fieldNumList[0]
 	return e.w.Entity().Field(fieldNum).GetType().String()
 }
 
@@ -124,13 +138,14 @@ func (e *EntityTmplContext) EntityGrpcSubPkg() string {
 	return e.w.EntityCfg.GrpcSubPkg
 }
 
-func (e *EntityTmplContext) findFieldNumByTagOn(filterReg string) int {
+func (e *EntityTmplContext) findFieldNumByTagOn(filterReg string) []int {
 	filterSS := strings.Split(filterReg, ":")
 	filterTag := filterSS[0]
 	filterValue := ""
 	if len(filterSS) > 1 {
 		filterValue = filterSS[1]
 	}
+	res := []int{}
 	for i := 0; i < e.w.Entity().NumField(); i++ {
 		t := reflect.StructTag(e.w.Entity().Field(i).GetTag())
 		find := false
@@ -147,12 +162,11 @@ func (e *EntityTmplContext) findFieldNumByTagOn(filterReg string) int {
 				}
 			}
 		}
-		if !find {
-			continue
+		if find {
+			res = append(res, i)
 		}
-		return i
 	}
-	return -1
+	return res
 }
 
 // get gorm indexes

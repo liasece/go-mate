@@ -18,6 +18,7 @@ var funcs = map[string]interface{}{
 	"ToUpper":              ToUpper,
 	"ToLower":              ToLower,
 	"ToLowerCamelCase":     ToLowerCamelCase,
+	"ToUpperCamelCase":     ToUpperCamelCase,
 	"Plural":               Plural,
 	"SplitCamelCase":       SplitCamelCase,
 	"GraphqlStyle":         GraphqlStyle,
@@ -61,6 +62,14 @@ func ToLowerCamelCase(str string) string {
 	}
 	words := SplitCamelCase(str)
 	return strings.ToLower(words[0]) + strings.Join(words[1:], "")
+}
+
+func ToUpperCamelCase(str string) string {
+	if str == "" {
+		return str
+	}
+	words := SplitCamelCase(str)
+	return strings.ToUpper(words[0]) + strings.Join(words[1:], "")
 }
 
 func ToCamelCase(str string) string {
@@ -159,12 +168,14 @@ func SplitCamelCase(src string) (entries []string) {
 			class = 2
 		case unicode.IsDigit(r):
 			class = 3
-		default:
+		case r == '_':
 			class = 4
+		default:
+			class = 5
 		}
 		if class == lastClass {
 			runes[len(runes)-1] = append(runes[len(runes)-1], r)
-		} else {
+		} else if class != 4 {
 			runes = append(runes, []rune{r})
 		}
 		lastClass = class
