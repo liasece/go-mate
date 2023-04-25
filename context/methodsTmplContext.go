@@ -44,6 +44,10 @@ func (c *MethodsTmplContext) FindMethods(nameReg string) []*MethodTmplContext {
 	return res
 }
 
+func (c *MethodsTmplContext) HaveMethodsByName(nameReg string) bool {
+	return len(c.FindMethods(nameReg)) > 0
+}
+
 func (c *MethodsTmplContext) FindMethodsNot(nameReg string) []*MethodTmplContext {
 	res := make([]*MethodTmplContext, 0)
 	for _, m := range c.methods {
@@ -54,6 +58,10 @@ func (c *MethodsTmplContext) FindMethodsNot(nameReg string) []*MethodTmplContext
 	return res
 }
 
+func (c *MethodsTmplContext) HaveMethodsNot(docReg string) bool {
+	return len(c.FindMethodsNot(docReg)) > 0
+}
+
 func (c *MethodsTmplContext) FindMethodsByDoc(docReg string) []*MethodTmplContext {
 	res := make([]*MethodTmplContext, 0)
 	for _, m := range c.methods {
@@ -62,4 +70,8 @@ func (c *MethodsTmplContext) FindMethodsByDoc(docReg string) []*MethodTmplContex
 		}
 	}
 	return res
+}
+
+func (c *MethodsTmplContext) HaveMethodsByDoc(docReg string) bool {
+	return len(c.FindMethodsByDoc(docReg)) > 0
 }

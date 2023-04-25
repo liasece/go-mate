@@ -1,7 +1,9 @@
 package context
 
 import (
+	"fmt"
 	"regexp"
+	"runtime/debug"
 	"strings"
 
 	"github.com/liasece/gocoder"
@@ -131,7 +133,20 @@ func (c *MethodTmplContext) ProtoBuffArgsDefinition() string {
 	})
 }
 
+func (c *MethodTmplContext) debugString() string {
+	res := c.method.GetName()
+	return res
+}
+
 func (c *MethodTmplContext) ProtoBuffReturnsDefinition() string {
+	defer func() {
+		if err := recover(); err != nil {
+			// show error and stack
+			fmt.Println(err)
+			fmt.Println(c.debugString())
+			debug.PrintStack()
+		}
+	}()
 	return c.returnFieldsTmpl.ProtoBuffDefinitionFilterFunc(func(i IField) bool {
 		return i.Name() != "error"
 	})

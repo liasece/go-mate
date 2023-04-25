@@ -98,12 +98,27 @@ func (c *FieldsTmplContext) ProtoBuffDefinition() string {
 	return c.ProtoBuffDefinitionFilterFunc(nil)
 }
 
+func (c *FieldsTmplContext) debugString() string {
+	res := ""
+	for _, v := range c.fields {
+		if v == nil {
+			res += "nil\n"
+		} else {
+			res += fmt.Sprintf("%s\n", v.Name())
+		}
+	}
+	return res
+}
+
 func (c *FieldsTmplContext) ProtoBuffDefinitionFilterFunc(filter func(IField) bool) string {
 	res := ""
 	argIndex := 1
 	for _, arg := range c.fields {
 		if filter != nil && !filter(arg) {
 			continue
+		}
+		if arg == nil || arg.Type() == nil {
+			panic(c.debugString())
 		}
 		argType := NewTypeTmplContext(arg.GetTmplContext(), arg.Type().UnPtr())
 		if argType.IsStruct() && strings.HasSuffix(argType.Name(), "Input") {
