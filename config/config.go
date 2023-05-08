@@ -60,6 +60,12 @@ type Config struct {
 	Env                   map[string]map[string]string `json:"env,omitempty" yaml:"env,omitempty"`
 	LogLevel              string                       `json:"logLevel,omitempty" yaml:"logLevel,omitempty"`
 	ImportGoCodePath      []string                     `json:"importGoCodePath,omitempty" yaml:"importGoCodePath,omitempty"`
+	Raw                   *Raw                         `json:"raw,omitempty" yaml:"raw,omitempty"`
+}
+
+type Raw struct {
+	Config string      `json:"config" yaml:"config"`
+	Tmpl   []*TmplItem `json:"tmpl,omitempty" yaml:"tmpl,omitempty"`
 }
 
 type EntityPrefab struct {
@@ -497,12 +503,8 @@ func (p *EntityPrefab) ApplyToEntity(entity *Entity) {
 }
 
 func LoadConfig(path string) (*Config, error) {
-	content, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
 	var res Config
-	err = decodeFromYaml(string(content), &res)
+	err := LoadConfigTo(path, &res)
 	if err != nil {
 		return nil, err
 	}
@@ -510,7 +512,19 @@ func LoadConfig(path string) (*Config, error) {
 	return &res, nil
 }
 
-func decodeFromYaml(content string, cfg *Config) error {
+func LoadConfigTo(path string, res interface{}) error {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	err = decodeFromYaml(string(content), res)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func decodeFromYaml(content string, cfg interface{}) error {
 	err := yaml.Unmarshal([]byte(content), cfg)
 	if err != nil {
 		return err

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/liasece/go-mate/config"
@@ -13,24 +14,36 @@ import (
 	"github.com/liasece/log"
 )
 
-func generateTmplToFile(ctx ccontext.ITmplContext, name string, toFile string, tmpl *config.TmplItem) {
-	log.Debug(fmt.Sprintf("%s: generating %s", name, toFile))
-	beginTime := time.Now()
-	defer func() {
-		log.Info(fmt.Sprintf("%s: generated %s (%.2fs)", name, toFile, float64(time.Since(beginTime))/float64(time.Second)))
-	}()
-
+func generateTmplCheck(tmpl *config.TmplItem, toFile string) bool {
 	if tmpl.OnlyCreate {
 		notExists := false
 		if _, err := os.Stat(toFile); errors.Is(err, os.ErrNotExist) {
 			notExists = true
 		} else if err != nil {
 			log.Fatal("generateEntity tmpl check OnlyCreate os.Stat error", log.ErrorField(err))
-			return
+			return false
 		}
 		if !notExists {
-			return
+			return false
 		}
+	}
+	return true
+}
+
+func generateEntityTmplToFile(ctx ccontext.ITmplContext, name string, toFile string, tmpl *config.TmplItem) {
+	log.Debug(fmt.Sprintf("%s: generating %s", name, toFile))
+	beginTime := time.Now()
+	defer func() {
+		log.Info(fmt.Sprintf("%s: generated %s (%.2fs)", name, toFile, float64(time.Since(beginTime))/float64(time.Second)))
+	}()
+	ctx.ToFilePath(toFile)
+	generateTmplToFile(ctx, tmpl)
+}
+
+func generateTmplToFile(ctx ccontext.ITmplContext, tmpl *config.TmplItem) {
+	toFile := ctx.GetToFilePath()
+	if toFile != "" && !generateTmplCheck(tmpl, toFile) {
+		return
 	}
 	c, err := ccontext.GetCodeFromTmpl(ctx, tmpl.From)
 	if ctx.GetTerminate() {
@@ -39,6 +52,27 @@ func generateTmplToFile(ctx ccontext.ITmplContext, name string, toFile string, t
 	if err != nil {
 		log.Fatal("generateEntity Tmpl GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err), log.Any("tmpl.From", tmpl.From))
 		return
+	}
+	if ctx.GetToFilePath() != "" && ctx.GetToFilePath() != toFile && !generateTmplCheck(tmpl, toFile) {
+		return
+	}
+	toFile = ctx.GetToFilePath()
+	if toFile == "" {
+		log.Fatal("generateEntity Tmpl GetToFilePath toFile == \"\"", log.Any("tmpl", tmpl))
+		return
+	}
+	if tmpl.Type == "" {
+		switch {
+		case strings.HasSuffix(toFile, ".proto"):
+			tmpl.Type = config.TmplItemTypeProto
+		case strings.HasSuffix(toFile, ".go"):
+			tmpl.Type = config.TmplItemTypeGo
+		case strings.HasSuffix(toFile, ".graphql"):
+			tmpl.Type = config.TmplItemTypeGraphQL
+		default:
+			log.Fatal("generateEntity Tmpl Type == \"\"", log.Any("tmpl", tmpl))
+			return
+		}
 	}
 	if tmpl.Merge {
 		codeStr := gocoder.ToCode(c, gocoder.NewToCodeOpt().PkgName(""))

@@ -71,6 +71,13 @@ func TestTmplUtilsFunc_SplitCamelCase(t *testing.T) {
 			},
 			want: []string{"[]*", "i", "Phone"},
 		},
+		{
+			name: "test8",
+			args: args{
+				str: "createAt",
+			},
+			want: []string{"create", "At"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

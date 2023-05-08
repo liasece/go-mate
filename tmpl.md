@@ -1,36 +1,58 @@
 # the Tmpl API
 
+## Terminate tmpl
+
+```go
+{{- if false }}
+{{- $t := .Terminate -}}
+{{- end -}}
+```
+
 ## Glob
 
 ### ToLowerCamelCase
 
 convert string to lower camel case
 
-return: string
+-   string
 
-{{- ToLowerCamelCase "HelloWorld" }}
+`{{- ToLowerCamelCase "HelloWorld" }}`
 
-output: helloWorld
+> helloWorld
 
 ### ToUpperCamelCase
 
 convert string to upper camel case
 
-return: string
+-   string
 
-{{- ToUpperCamelCase "helloWorld" }}
+`{{- ToUpperCamelCase "helloWorld" }}`
 
-output: HelloWorld
+> HelloWorld
 
 ### SnakeStringToBigHump
 
 convert snake string to big hump
 
-return: string
+-   string
 
-{{- ToUpperCamelCase "hello_world" }}
+`{{- ToUpperCamelCase "hello_world" }}`
 
-output: HelloWorld
+> HelloWorld
+
+### Contains
+
+check if string contains substring or a string in a string array
+
+-   bool
+
+`{{- Contains "hello_world" "hello" }}`
+
+> true
+
+`{{- Contains []string{"hello"} "hello_world" }}`
+
+> false
 
 ## Entity
 
@@ -38,6 +60,6 @@ output: HelloWorld
 
 get all field by tag
 
-return: []Field
+-   []Field
 
-{{- range (.ListFieldByTag "gomate:getter") }}
+`{{- range (.ListFieldByTag "gomate:getter") }}`

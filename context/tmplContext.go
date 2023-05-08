@@ -21,10 +21,13 @@ func GetCodeFromTmpl(ctx interface{}, tmplPath string) (gocoder.Code, error) {
 type ITmplContext interface {
 	Terminate() bool
 	GetTerminate() bool
+	ToFilePath(path string) string
+	GetToFilePath() string
 }
 
 type BaseTmplContext struct {
-	terminate bool
+	terminate  bool
+	toFilePath string
 }
 
 func (e *BaseTmplContext) Terminate() bool {
@@ -34,6 +37,15 @@ func (e *BaseTmplContext) Terminate() bool {
 
 func (e *BaseTmplContext) GetTerminate() bool {
 	return e.terminate
+}
+
+func (e *BaseTmplContext) ToFilePath(path string) string {
+	e.toFilePath = path
+	return e.toFilePath
+}
+
+func (e *BaseTmplContext) GetToFilePath() string {
+	return e.toFilePath
 }
 
 type TmplContext struct {

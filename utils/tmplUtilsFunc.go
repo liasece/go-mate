@@ -7,6 +7,8 @@ import (
 	"unicode/utf8"
 
 	"github.com/liasece/gocoder"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var funcs = map[string]interface{}{
@@ -69,7 +71,15 @@ func ToUpperCamelCase(str string) string {
 		return str
 	}
 	words := SplitCamelCase(str)
-	return strings.ToUpper(words[0]) + strings.Join(words[1:], "")
+
+	word1 := cases.Title(language.Und).String(words[0])
+	if word1 == "Id" {
+		word1 = "ID"
+	}
+	if len(words) == 1 {
+		return word1
+	}
+	return word1 + strings.Join(words[1:], "")
 }
 
 func ToCamelCase(str string) string {
@@ -87,8 +97,27 @@ func HasSuffix(s, suffix string) bool {
 	return strings.HasSuffix(s, suffix)
 }
 
-func Contains(s, substr string) bool {
-	return strings.Contains(s, substr)
+func Contains(s interface{}, target string) bool {
+	switch s := s.(type) {
+	case string:
+		return strings.Contains(s, target)
+	case []string:
+		for _, v := range s {
+			if v == target {
+				return true
+			}
+		}
+		return false
+	case []interface{}:
+		for _, v := range s {
+			if v.(string) == target {
+				return true
+			}
+		}
+		return false
+	default:
+		return false
+	}
 }
 
 func ToUpper(s string) string {

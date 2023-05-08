@@ -72,7 +72,7 @@ func Generate(genCfg *GenerateCfg) {
 	}
 	log.Debug("generate LoadConfig finish", log.Any("genCfg", genCfg), log.Any("cfg", cfg))
 	{
-		j, err := json.MarshalIndent(cfg.Entity, "", "\t")
+		j, err := json.MarshalIndent(cfg, "", "\t")
 		if err != nil {
 			log.Fatal("Generate MarshalIndent error", log.ErrorField(err))
 			return
@@ -186,5 +186,10 @@ func Generate(genCfg *GenerateCfg) {
 		default:
 			generateEntity(entityCfg)
 		}
+	}
+
+	if cfg.Raw != nil {
+		// generate raw
+		generateRaw(cfg.Raw)
 	}
 }

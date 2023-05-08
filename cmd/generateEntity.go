@@ -75,5 +75,5 @@ func generateEntityTmplItem(entityCfg *config.Entity, enGameEntry *repo.Reposito
 		return
 	}
 	tmplCtx := ccontext.NewEntityTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), enGameEntry)
-	generateTmplToFile(tmplCtx, entityCfg.CodeName, toFile, tmpl)
+	generateEntityTmplToFile(tmplCtx, entityCfg.CodeName, toFile, tmpl)
 }

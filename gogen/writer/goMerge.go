@@ -98,6 +98,7 @@ func mergeGoFromFile(protoFile string, newContent string) error {
 			originFileContent = string(content)
 		}
 	}
+	newContent = regexp.MustCompile(`import\s*\(\s*\)`).ReplaceAllString(newContent, "")
 	toContent := mergeGo(originFileContent, newContent)
 	if toContent != originFileContent {
 		bytes, err := imports.Process(protoFile, []byte(toContent), &imports.Options{

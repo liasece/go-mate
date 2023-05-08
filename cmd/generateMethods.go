@@ -29,5 +29,5 @@ func generateMethodsTmplItem(entityCfg *config.Entity, tmpl *config.TmplItem, me
 		return
 	}
 	tmplCtx := ccontext.NewMethodsTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), methods)
-	generateTmplToFile(tmplCtx, entityCfg.CodeName, toFile, tmpl)
+	generateEntityTmplToFile(tmplCtx, entityCfg.CodeName, toFile, tmpl)
 }
