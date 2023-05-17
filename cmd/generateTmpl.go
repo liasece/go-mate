@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -16,14 +16,20 @@ import (
 
 func generateTmplCheck(tmpl *config.TmplItem, toFile string) bool {
 	if tmpl.OnlyCreate {
-		notExists := false
-		if _, err := os.Stat(toFile); errors.Is(err, os.ErrNotExist) {
-			notExists = true
-		} else if err != nil {
+		fileExists := false
+		toFileName := filepath.Base(toFile)
+		files, err := os.ReadDir(filepath.Dir(toFile))
+		if err != nil {
 			log.Fatal("generateEntity tmpl check OnlyCreate os.Stat error", log.ErrorField(err))
 			return false
 		}
-		if !notExists {
+		for _, f := range files {
+			if strings.EqualFold(f.Name(), toFileName) {
+				fileExists = true
+				break
+			}
+		}
+		if fileExists {
 			return false
 		}
 	}
