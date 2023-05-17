@@ -63,3 +63,25 @@ get all field by tag
 -   []Field
 
 `{{- range (.ListFieldByTag "gomate:getter") }}`
+
+## Type
+
+### UnEnum
+
+convert enum to type
+
+-   type Enum int32
+
+`{{- typ.UnEnum }}`
+
+> int32
+
+### UnEnumString
+
+convert enum string to string
+
+-   type Enum int32
+
+`{{- typ.UnEnumString }}`
+
+> int32

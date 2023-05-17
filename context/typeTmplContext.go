@@ -61,6 +61,72 @@ func (e *TypeTmplContext) FinalElem() *TypeTmplContext {
 	return elem
 }
 
+func unEnumType(typ gocoder.Type) gocoder.Type {
+	switch typ.Kind() {
+	case reflect.String:
+		if typ.String() != "string" {
+			return gocoder.NewTypeI("string")
+		}
+	case reflect.Int:
+		if typ.String() != "int" {
+			return gocoder.NewTypeI(int(0))
+		}
+	case reflect.Int8:
+		if typ.String() != "int8" {
+			return gocoder.NewTypeI(int8(0))
+		}
+	case reflect.Int16:
+		if typ.String() != "int16" {
+			return gocoder.NewTypeI(int16(0))
+		}
+	case reflect.Int32:
+		if typ.String() != "int32" {
+			return gocoder.NewTypeI(int32(0))
+		}
+	case reflect.Int64:
+		if typ.String() != "int64" {
+			return gocoder.NewTypeI(int64(0))
+		}
+	case reflect.Uint:
+		if typ.String() != "uint" {
+			return gocoder.NewTypeI(uint(0))
+		}
+	case reflect.Uint8:
+		if typ.String() != "uint8" {
+			return gocoder.NewTypeI(uint8(0))
+		}
+	case reflect.Uint16:
+		if typ.String() != "uint16" {
+			return gocoder.NewTypeI(uint16(0))
+		}
+	case reflect.Uint32:
+		if typ.String() != "uint32" {
+			return gocoder.NewTypeI(uint32(0))
+		}
+	case reflect.Uint64:
+		if typ.String() != "uint64" {
+			return gocoder.NewTypeI(uint64(0))
+		}
+	case reflect.Ptr:
+		newType := unEnumType(typ.Elem())
+		return newType.TackPtr()
+	case reflect.Slice:
+		newType := unEnumType(typ.Elem())
+		return newType.Slice()
+	default:
+		return typ
+	}
+	return typ
+}
+
+func (e *TypeTmplContext) UnEnum() *TypeTmplContext {
+	return NewTypeTmplContext(e.TmplContext, unEnumType(e.Type))
+}
+
+func (e *TypeTmplContext) UnEnumString() string {
+	return e.UnEnum().String()
+}
+
 func (e *TypeTmplContext) ExternalTypeString() string {
 	str := e.Type.Name()
 	finalElem := e.FinalElem()
