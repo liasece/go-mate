@@ -2,6 +2,7 @@ package context
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/liasece/go-mate/utils"
@@ -189,6 +190,8 @@ func (c *FieldsTmplContext) GraphqlGoDefinitionFilterFunc(filter func(IField) bo
 		if pkg := arg.Type().Type.PackageInReference(); pkg != "" {
 			typ = pkg + "." + typ
 		}
+		typ = strings.ReplaceAll(typ, "int32", "int")
+		typ = strings.ReplaceAll(typ, "int64", "int")
 		res = append(res, fmt.Sprintf("%s %s", arg.Name(), typ))
 	}
 	return strings.Join(res, ", ")
@@ -204,7 +207,14 @@ func (c *FieldsTmplContext) CallGRPCDefinitionFilterFunc(filter func(IField) boo
 		if filter != nil && !filter(arg) {
 			continue
 		}
-		res = append(res, fmt.Sprintf("%s: %s", utils.SnakeStringToBigHump(utils.SnakeString(arg.Name())), arg.Name()))
+		value := arg.Name()
+		if arg.Type().KindIsNumber() {
+			value = "int64(" + value + ")"
+		}
+		if arg.Type().Kind() == reflect.Slice && arg.Type().Elem().KindIsNumber() {
+			value = "func() []int64 {res := []int64{}; for _,v := range " + value + " { res = append(res, int64(v)) }; return res } ()"
+		}
+		res = append(res, fmt.Sprintf("%s: %s", utils.SnakeStringToBigHump(utils.SnakeString(arg.Name())), value))
 	}
 	return strings.Join(res, ", ")
 }
