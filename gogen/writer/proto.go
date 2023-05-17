@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -199,6 +200,20 @@ func buildProtoContent(originContent string, t gocoder.Type, indent string) stri
 			typ = "float"
 		case "float64":
 			typ = "double"
+		default:
+			tailType := f.GetType()
+			for tailType.Kind() == reflect.Ptr || tailType.Kind() == reflect.Slice {
+				tailType = tailType.Elem()
+			}
+			switch tailType.Kind() {
+			case reflect.Int:
+				typ = "int64"
+			case reflect.String:
+				typ = "string"
+			case reflect.Bool:
+				typ = "bool"
+			default:
+			}
 		}
 		name := utils.SnakeString(f.GetName())
 		opt := ""
