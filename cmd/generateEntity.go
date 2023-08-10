@@ -51,14 +51,19 @@ func generateEntityProtoType(entityCfg *config.Entity, enGameEntry *repo.Reposit
 			// build pb updater
 			updater, _ = enGameEntry.GetUpdaterTypeStructCode(repo.TypeOptAddSlicePBEmpty(true))
 		}
+		simple := ccontext.EntityEnv(entityCfg, "interface", "simple") == "true"
 		ts := []gocoder.Type{
 			entityCfg.CodeType.(gocoder.Type),
-			enGameEntry.Filter,
 			updater,
-			enGameEntry.Sorter,
 		}
-		if entityCfg.NoSelector == nil || !*entityCfg.NoSelector {
-			ts = append(ts, enGameEntry.Selector)
+		if !simple {
+			ts = append(ts, []gocoder.Type{
+				enGameEntry.Filter,
+				enGameEntry.Sorter,
+			}...)
+			if entityCfg.NoSelector == nil || !*entityCfg.NoSelector {
+				ts = append(ts, enGameEntry.Selector)
+			}
 		}
 		err = writer.StructToProto(protoTypeFile, entityCfg.ProtoTypeFileIndent, ts...)
 		if err != nil {
@@ -69,11 +74,16 @@ func generateEntityProtoType(entityCfg *config.Entity, enGameEntry *repo.Reposit
 }
 
 func generateEntityTmplItem(entityCfg *config.Entity, enGameEntry *repo.RepositoryWriter, tmpl *config.TmplItem) {
+	fromFile, err := utils.TemplateRaw(tmpl.From, ccontext.NewEntityTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), enGameEntry))
+	if err != nil {
+		log.Fatal("generateEntity TemplateRaw error", log.ErrorField(err))
+		return
+	}
 	toFile, err := utils.TemplateRaw(tmpl.To, ccontext.NewEntityTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), enGameEntry))
 	if err != nil {
 		log.Fatal("generateEntity TemplateRaw error", log.ErrorField(err))
 		return
 	}
 	tmplCtx := ccontext.NewEntityTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), enGameEntry)
-	generateEntityTmplToFile(tmplCtx, entityCfg.CodeName, toFile, tmpl)
+	generateEntityTmplToFile(tmplCtx, entityCfg.CodeName, fromFile, toFile, tmpl)
 }

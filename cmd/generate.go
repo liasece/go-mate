@@ -133,6 +133,7 @@ func Generate(genCfg *GenerateCfg) {
 			return
 		}
 		for _, entityCfg := range cfg.Entity {
+			entityCfg.ConfigFilePath = genCfg.ConfigFile
 			entityCodeName := entityCfg.CodeName
 			log.Debug("Generate begin", log.Any("entityCodeName", entityCodeName), log.Any("entityFile", entityCfg.DecodedEntityPath), log.Any("entityPkg", entityCfg.Pkg), log.Any("entityKind", entityCfg.EntityKind))
 			switch entityCfg.EntityKind {

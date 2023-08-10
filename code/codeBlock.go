@@ -144,7 +144,16 @@ func (b *Block) getSubJoinString(targetSubIndex int) string {
 		firstSubAndJoinString := strings.Split(b.SubOriginString[targetSubIndex], rightString)[0]
 		joinString := strings.Split(firstSubAndJoinString, leftString)
 		if len(joinString) > 1 {
-			return joinString[len(joinString)-1]
+			res := joinString[len(joinString)-1]
+			reg := regexp.MustCompile(`[\t ]*//.*?\n`)
+			for {
+				if sub := reg.FindString(res); sub != "" {
+					res = strings.Replace(res, sub, "", 1)
+				} else {
+					break
+				}
+			}
+			return res
 		}
 	}
 	var firstSubAndJoinString string

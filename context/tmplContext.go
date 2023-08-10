@@ -1,6 +1,7 @@
 package context
 
 import (
+	"path/filepath"
 	"strings"
 
 	"github.com/liasece/go-mate/config"
@@ -21,13 +22,16 @@ func GetCodeFromTmpl(ctx interface{}, tmplPath string) (gocoder.Code, error) {
 type ITmplContext interface {
 	Terminate() bool
 	GetTerminate() bool
+	FromFilePath(path string) string
 	ToFilePath(path string) string
 	GetToFilePath() string
+	GetFromFilePath() string
 }
 
 type BaseTmplContext struct {
-	terminate  bool
-	toFilePath string
+	terminate    bool
+	toFilePath   string
+	fromFilePath string
 }
 
 func (e *BaseTmplContext) Terminate() bool {
@@ -44,8 +48,17 @@ func (e *BaseTmplContext) ToFilePath(path string) string {
 	return e.toFilePath
 }
 
+func (e *BaseTmplContext) FromFilePath(path string) string {
+	e.fromFilePath = path
+	return e.fromFilePath
+}
+
 func (e *BaseTmplContext) GetToFilePath() string {
 	return e.toFilePath
+}
+
+func (e *BaseTmplContext) GetFromFilePath() string {
+	return e.fromFilePath
 }
 
 type TmplContext struct {
@@ -74,6 +87,10 @@ func (e *TmplContext) ServiceName() string {
 	return e.EntityCfg.Service
 }
 
+func (e *TmplContext) ConfigFileDir() string {
+	return filepath.Dir(e.EntityCfg.ConfigFilePath)
+}
+
 func (e *TmplContext) ServiceNameTitle() string {
 	s := e.ServiceName()
 	if s == "" {
@@ -89,13 +106,18 @@ func (e *TmplContext) EntityGrpcSubPkg() string {
 	return e.EntityCfg.GrpcSubPkg
 }
 
+func EntityEnv(entityCfg *config.Entity, k1 string, k2 string) string {
+	if _, ok := entityCfg.Env[k1]; ok {
+		if v, ok := entityCfg.Env[k1][k2]; ok {
+			return v
+		}
+	}
+	return ""
+}
+
 func (e *TmplContext) Env(k1 string, k2 string) string {
 	if e.EntityCfg != nil {
-		if _, ok := e.EntityCfg.Env[k1]; ok {
-			if v, ok := e.EntityCfg.Env[k1][k2]; ok {
-				return v
-			}
-		}
+		return EntityEnv(e.EntityCfg, k1, k2)
 	}
 	return ""
 }

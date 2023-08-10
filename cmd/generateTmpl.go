@@ -36,12 +36,13 @@ func generateTmplCheck(tmpl *config.TmplItem, toFile string) bool {
 	return true
 }
 
-func generateEntityTmplToFile(ctx ccontext.ITmplContext, name string, toFile string, tmpl *config.TmplItem) {
+func generateEntityTmplToFile(ctx ccontext.ITmplContext, name string, fromFile string, toFile string, tmpl *config.TmplItem) {
 	log.Debug(fmt.Sprintf("%s: generating %s", name, toFile))
 	beginTime := time.Now()
 	defer func() {
 		log.Info(fmt.Sprintf("%s: generated %s (%.2fs)", name, toFile, float64(time.Since(beginTime))/float64(time.Second)))
 	}()
+	ctx.FromFilePath(fromFile)
 	ctx.ToFilePath(toFile)
 	generateTmplToFile(ctx, tmpl)
 }
@@ -51,12 +52,17 @@ func generateTmplToFile(ctx ccontext.ITmplContext, tmpl *config.TmplItem) {
 	if toFile != "" && !generateTmplCheck(tmpl, toFile) {
 		return
 	}
-	c, err := ccontext.GetCodeFromTmpl(ctx, tmpl.From)
+	fromFile := ctx.GetFromFilePath()
+	if fromFile == "" {
+		log.Fatal("generateEntity Tmpl GetEntityRepositoryCodeFromTmpl error: fromFile not set", log.Any("fromFile", fromFile))
+		return
+	}
+	c, err := ccontext.GetCodeFromTmpl(ctx, fromFile)
 	if ctx.GetTerminate() {
 		return
 	}
 	if err != nil {
-		log.Fatal("generateEntity Tmpl GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err), log.Any("tmpl.From", tmpl.From))
+		log.Fatal("generateEntity Tmpl GetEntityRepositoryCodeFromTmpl error", log.ErrorField(err), log.Any("fromFile", fromFile))
 		return
 	}
 	if ctx.GetToFilePath() != "" && ctx.GetToFilePath() != toFile && !generateTmplCheck(tmpl, toFile) {

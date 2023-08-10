@@ -107,7 +107,8 @@ type Entity struct {
 	OutputCopierProtoPkgSuffix string                       `json:"outputCopierProtoPkgSuffix,omitempty" yaml:"outputCopierProtoPkgSuffix,omitempty"`
 	NoSelector                 *bool                        `json:"noSelector,omitempty" yaml:"noSelector,omitempty"`
 
-	CodeType gocoder.Codable `json:"-" yaml:"-"`
+	CodeType       gocoder.Codable `json:"-" yaml:"-"`
+	ConfigFilePath string          `json:"-" yaml:"-"`
 }
 
 type EntityFieldType string

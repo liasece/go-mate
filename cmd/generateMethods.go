@@ -23,11 +23,16 @@ func generateMethods(entityCfg *config.Entity) {
 }
 
 func generateMethodsTmplItem(entityCfg *config.Entity, tmpl *config.TmplItem, methods []gocoder.Func) {
+	fromFile, err := utils.TemplateRaw(tmpl.From, ccontext.NewMethodsTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), methods))
+	if err != nil {
+		log.Fatal("generateMethods TemplateRaw error", log.ErrorField(err))
+		return
+	}
 	toFile, err := utils.TemplateRaw(tmpl.To, ccontext.NewMethodsTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), methods))
 	if err != nil {
 		log.Fatal("generateMethods TemplateRaw error", log.ErrorField(err))
 		return
 	}
 	tmplCtx := ccontext.NewMethodsTmplContext(ccontext.NewTmplContext(tmpl, entityCfg), methods)
-	generateEntityTmplToFile(tmplCtx, entityCfg.CodeName, toFile, tmpl)
+	generateEntityTmplToFile(tmplCtx, entityCfg.CodeName, fromFile, toFile, tmpl)
 }
