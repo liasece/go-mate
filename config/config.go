@@ -217,12 +217,15 @@ func (c *Config) AfterLoad() {
 		prefab.Env = mergeEnv(prefab.Env, c.Env)
 	}
 
-	for _, prefab := range c.EntityPrefab {
+	for ptr, prefab := range c.EntityPrefab {
 		for _, innerPrefab := range prefab.Prefab {
 			var findEntityPrefab *EntityPrefab
-			for _, v := range c.EntityPrefab {
+			for index, v := range c.EntityPrefab {
 				if v.Name == innerPrefab {
 					findEntityPrefab = v
+					if index > ptr {
+						log.Error("Prefab dependency order is wrong, "+prefab.Name+" tries to reference uninitialized "+v.Name, log.Any("prefab", prefab), log.Any("innerPrefab", innerPrefab))
+					}
 					break
 				}
 			}

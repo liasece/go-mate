@@ -18,6 +18,7 @@ type GenerateCfg struct {
 
 func newAstCoder(cfg *config.Config) (*coder_ast.CodeDecoder, error) {
 	codePaths := append([]string{}, cfg.ImportGoCodePath...)
+	var entityPathMap = make(map[string]bool)
 	for _, entityCfg := range cfg.Entity {
 		entityCfg.CodeName = entityCfg.Name
 		if entityCfg.EntityRealName != "" {
@@ -50,10 +51,17 @@ func newAstCoder(cfg *config.Config) (*coder_ast.CodeDecoder, error) {
 				entityCfg.Pkg = calGoFilePkgName(entityPath)
 			}
 		}
-		codePaths = append(codePaths, entityPath)
+		if entityPath == "" {
+			log.Error("generate entityPath is empty", log.Any("entityCfg", entityCfg))
+		}
+		if !entityPathMap[entityPath] {
+			codePaths = append(codePaths, entityPath)
+			entityPathMap[entityPath] = true
+		}
 	}
 	astCoder, err := coder_ast.NewCodeDecoder(codePaths...)
 	if err != nil {
+		log.Error("generate NewCodeDecoder error", log.ErrorField(err), log.Any("codePaths", codePaths))
 		return nil, err
 	}
 	return astCoder, nil
