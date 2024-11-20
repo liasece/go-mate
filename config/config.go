@@ -224,7 +224,8 @@ func (c *Config) AfterLoad() {
 				if v.Name == innerPrefab {
 					findEntityPrefab = v
 					if index > ptr {
-						log.Error("Prefab dependency order is wrong, "+prefab.Name+" tries to reference uninitialized "+v.Name, log.Any("prefab", prefab), log.Any("innerPrefab", innerPrefab))
+						log.Fatal("Prefab dependency order is wrong, "+prefab.Name+" tries to reference uninitialized "+v.Name, log.Any("prefab", prefab), log.Any("innerPrefab", innerPrefab))
+						return
 					}
 					break
 				}
