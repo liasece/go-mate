@@ -140,6 +140,7 @@ func Generate(genCfg *GenerateCfg) {
 			log.Fatal("Generate NewCodeDecoder error", log.ErrorField(err))
 			return
 		}
+		// 生成 entity 实现代码
 		for _, entityCfg := range cfg.Entity {
 			entityCfg.ConfigFilePath = genCfg.ConfigFile
 			entityCodeName := entityCfg.CodeName
@@ -169,7 +170,7 @@ func Generate(genCfg *GenerateCfg) {
 				// get entity type
 				entityType := astCoder.GetType(entityCfg.Pkg + "." + entityCodeName)
 				if entityType == nil {
-					log.Debug("Generate entity LoadTypeFromSource not found", log.Any("entityCodeName", entityCodeName), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
+					log.Fatal("Generate entity LoadTypeFromSource not found", log.Any("entityCodeName", entityCodeName), log.Any("entityCfg", entityCfg), log.Any("entityKind", entityCfg.EntityKind))
 					continue
 				}
 				entityType.SetNamed(entityCodeName)

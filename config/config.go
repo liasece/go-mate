@@ -267,7 +267,8 @@ func (c *Config) AfterLoad() {
 	}
 
 	for _, v := range c.BuildEntityWithPrefab {
-		prefabName, entityNameList := v.Key.(string), interfaceToStringList(v.Value)
+		prefabName := v.Key.(string)
+		entityNameList := interfaceToStringList(v.Value)
 		prefab := c.getPrefab(prefabName)
 		for _, entityName := range entityNameList {
 			find := false
