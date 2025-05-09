@@ -87,7 +87,7 @@ func (c *FieldsTmplContext) GraphqlDefinitionFilterFunc(filter func(IField) bool
 		{
 			// add doc
 			if doc := c.getFieldDoc(arg); doc != "" {
-				res += fmt.Sprintf("\t\"\"\"\n\t%s\n\t\"\"\"\n", docLinesTrimAndJoin(doc, "\n  "))
+				res += fmt.Sprintf("\t\"\"\"\n\t%s\n\t\"\"\"\n", docLinesTrimAndJoin(doc, "\n\t"))
 			}
 		}
 		res += fmt.Sprintf("\t%s\n", definitionStr)
